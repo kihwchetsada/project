@@ -1,0 +1,111 @@
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
+}
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+h1, h2 {
+    text-align: center;
+    color: #333;
+}
+form {
+    margin-bottom: 20px;
+}
+input[type="text"] {
+    width: calc(50% - 100px);
+    padding: 10px;
+    margin-right: 50px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+}
+button {
+    padding: 10px 20px;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:hover {
+    background: #0056b3;
+}
+ul {
+    list-style: none;
+    padding: 0;
+}
+li {
+    background: #e9ecef;
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 4px;
+}
+.error {
+    color: red;
+    text-align: center;
+    margin-bottom: 20px;
+}
+/* From Uiverse.io by marcos700x */ 
+.containerInput {
+    background-color: #000;
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    padding: 0 0 4px 0;
+    z-index: 1;
+    font-size: 15px;
+  }
+  
+  .containerInput::before {
+    content: '';
+    width: 110%;
+    aspect-ratio: 1;
+    position: absolute;
+    inset: 0 0 0 0;
+    margin: auto;
+    animation: rotate6234 2.5s ease-in-out infinite;
+    z-index: -1;
+    background-image: conic-gradient(from 0deg at 50% 50%, #073AFF00 0%, #FF0000FF 25%, #073AFF00 25%);
+  }
+  
+  .containerInput > input {
+    width: 210px;
+    height: 50px;
+    font-size: inherit;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    background-color: #0a0a0a;
+    outline: 5px solid #0a0a0a;
+  }
+  
+  .containerInput > input:focus {
+    outline: none;
+  }
+  
+  .containerInput > input:not(:placeholder-shown) {
+    outline: none;
+  }
+  
+  .containerInput > input:not(:placeholder-shown):valid {
+    outline: 4px solid rgb(0, 255, 183);
+    border-radius: 0;
+  }
+  
+  @keyframes rotate6234 {
+    from {
+      transform: rotate(0deg);
+    }
+  
+    to {
+      transform: rotate(360deg);
+    }
+  }

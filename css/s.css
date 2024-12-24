@@ -1,0 +1,83 @@
+body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(to bottom, #1a0033, #4b0082);
+    color: white;
+    overflow-x: hidden;
+}
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #2e004e;
+}
+.navbar .logo {
+    display: flex;
+    align-items: center;
+}
+.navbar .logo img {
+    width: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+.navbar a {
+    text-decoration: none;
+    color: white;
+    margin: 0 15px;
+    padding: 5px 10px;
+}
+.navbar a:hover {
+    background-color: #f6fe03;
+    border-radius: 5px;
+}
+.hero {
+    text-align: center;
+    padding: 50px 20px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+.hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+.hero h1 {
+    font-size: 3em;
+    margin: 0;
+}
+.hero p {
+    font-size: 1.5em;
+    margin: 10px 0;
+}
+.hero .btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 15px 30px;
+    font-size: 1em;
+    color: white;
+    background-color: #ff0000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+}
+.hero .btn:hover {
+    background-color: #cc0000;
+}
+.footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #2e004e;
+    color: white;
+    margin-top: 20px;
+}
