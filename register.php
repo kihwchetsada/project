@@ -1,21 +1,19 @@
 <?php
-// ตั้งค่าการเชื่อมต่อฐานข้อมูล
 $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "competition_system";
 
-// สร้างการเชื่อมต่อ
 try {
     $conn = new mysqli($servername, $username, $password, $dbname);
     if ($conn->connect_error) {
         throw new Exception("Connection failed: " . $conn->connect_error);
     }
+    $conn->set_charset("utf8");
 } catch (Exception $e) {
     die("ไม่สามารถเชื่อมต่อฐานข้อมูลได้: " . $e->getMessage());
 }
 
-// ฟังก์ชันสำหรับ validate ข้อมูล
 function validateInput($data) {
     $data = trim($data);
     $data = stripslashes($data);
@@ -33,22 +31,21 @@ function validatePhone($phone) {
 
 function getCompetitions($conn) {
     try {
-        $sql = "SELECT id, name, type FROM competitions WHERE status = 'active'";
+        $sql = "SELECT id, name FROM competitions_1 WHERE is_open = 1 
+                AND CURDATE() BETWEEN start_date AND end_date";
         $result = $conn->query($sql);
         
         if ($result === false) {
-            throw new Exception("Error executing query: " . $conn->error);
+            throw new Exception($conn->error);
         }
         
         $competitions = [];
-        if ($result->num_rows > 0) {
-            while($row = $result->fetch_assoc()) {
-                $competitions[] = $row;
-            }
+        while($row = $result->fetch_assoc()) {
+            $competitions[] = $row;
         }
         return $competitions;
     } catch (Exception $e) {
-        error_log("Database error in getCompetitions: " . $e->getMessage());
+        error_log($e->getMessage());
         return [];
     }
 }
@@ -56,11 +53,10 @@ function getCompetitions($conn) {
 $errors = [];
 $success = false;
 
-// ดึงข้อมูลการแข่งขัน
 try {
     $competitions = getCompetitions($conn);
     if (empty($competitions)) {
-        $errors[] = "ไม่พบข้อมูลการแข่งขันที่เปิดรับสมัคร หรือเกิดข้อผิดพลาดในการดึงข้อมูล";
+        $errors[] = "ไม่พบข้อมูลการแข่งขันที่เปิดรับสมัคร";
     }
 } catch (Exception $e) {
     $errors[] = "เกิดข้อผิดพลาดในการดึงข้อมูลการแข่งขัน: " . $e->getMessage();
@@ -68,7 +64,6 @@ try {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        // Validate team data
         $team_name = validateInput($_POST['team_name'] ?? '');
         $competition_id = isset($_POST['competition_id']) ? (int)$_POST['competition_id'] : 0;
         $advisor = validateInput($_POST['advisor'] ?? '');
@@ -79,25 +74,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = "กรุณากรอกชื่อทีม";
         }
 
-        // ตรวจสอบ competition_id
         if ($competition_id <= 0) {
             $errors[] = "กรุณาเลือกรายการแข่งขัน";
         } else {
-            // ตรวจสอบว่า competition_id มีอยู่จริง
-            $sql_check = "SELECT id FROM competitions WHERE id = ? AND status = 'active'";
+            $sql_check = "SELECT id FROM competitions_1 WHERE id = ? AND is_open = 1 
+                         AND CURDATE() BETWEEN start_date AND end_date";
             $stmt_check = $conn->prepare($sql_check);
             if (!$stmt_check) {
-                throw new Exception("Error preparing check statement: " . $conn->error);
+                throw new Exception($conn->error);
             }
             
             $stmt_check->bind_param("i", $competition_id);
             if (!$stmt_check->execute()) {
-                throw new Exception("Error executing check statement: " . $stmt_check->error);
+                throw new Exception($stmt_check->error);
             }
             
             $result_check = $stmt_check->get_result();
             if ($result_check->num_rows === 0) {
-                $errors[] = "รายการแข่งขันที่เลือกไม่ถูกต้องหรือไม่ได้เปิดรับสมัคร";
+                $errors[] = "รายการแข่งขันที่เลือกไม่ถูกต้องหรือปิดรับสมัคร";
             }
             $stmt_check->close();
         }
@@ -114,7 +108,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = "รูปแบบอีเมลไม่ถูกต้อง";
         }
 
-        // Validate team members
         $member_names = $_POST['member_name'] ?? [];
         $roles = $_POST['role'] ?? [];
         
@@ -125,29 +118,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($errors)) {
             $conn->begin_transaction();
 
-            // บันทึกข้อมูลทีม
-            $sql_team = "INSERT INTO teams (team_name, competition_id, advisor, contact, email) 
-                        VALUES (?, ?, ?, ?, ?)";
+            $sql_team = "INSERT INTO teams (team_name, competition_id, advisor, contact, email, registration_date) 
+                        VALUES (?, ?, ?, ?, ?, NOW())";
             $stmt_team = $conn->prepare($sql_team);
             
             if (!$stmt_team) {
-                throw new Exception("Error preparing team statement: " . $conn->error);
+                throw new Exception($conn->error);
             }
 
             $stmt_team->bind_param("sisss", $team_name, $competition_id, $advisor, $contact, $email);
             
             if (!$stmt_team->execute()) {
-                throw new Exception("Error executing team statement: " . $stmt_team->error);
+                throw new Exception($stmt_team->error);
             }
 
             $team_id = $stmt_team->insert_id;
 
-            // บันทึกข้อมูลสมาชิก
             $sql_member = "INSERT INTO team_members (team_id, player_name, role) VALUES (?, ?, ?)";
             $stmt_member = $conn->prepare($sql_member);
 
             if (!$stmt_member) {
-                throw new Exception("Error preparing member statement: " . $conn->error);
+                throw new Exception($conn->error);
             }
 
             for ($i = 0; $i < count($member_names); $i++) {
@@ -158,7 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt_member->bind_param("iss", $team_id, $member_name, $role);
                     
                     if (!$stmt_member->execute()) {
-                        throw new Exception("Error inserting member: " . $stmt_member->error);
+                        throw new Exception($stmt_member->error);
                     }
                 }
             }
@@ -167,7 +158,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success = true;
             $stmt_member->close();
             $stmt_team->close();
-
         }
     } catch (Exception $e) {
         $conn->rollback();
@@ -182,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ROV Tournament Hub</title>
-    <link rel="icon" type="image/png" href="img/logo.jpg">
+    <link rel="icon" type="image/png" href="../img/logo.jpg">
     <link rel="stylesheet" href="css/r.css">
 </head>
 <body>
@@ -212,7 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php foreach ($competitions as $competition): ?>
                     <option value="<?php echo htmlspecialchars($competition['id']); ?>"
                         <?php echo (isset($_POST['competition_id']) && $_POST['competition_id'] == $competition['id']) ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($competition['name'] . ' - ' . $competition['type']); ?>
+                        <?php echo htmlspecialchars($competition['name']); ?>
                     </option>
                 <?php endforeach; ?>
             </select>
