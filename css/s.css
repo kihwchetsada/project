@@ -1,83 +1,363 @@
-body {
+* {
     margin: 0;
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(to bottom, #1a0033, #4b0082);
-    color: white;
-    overflow-x: hidden;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #8e44ad;
+    --accent-color: #e74c3c;
+    --dark-bg: #0a0e17;
+    --light-text: #ffffff;
+    --nav-hover: #2980b9;
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: var(--light-text);
+    background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url("../img/game-bg.jpg");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
-    background-color: #2e004e;
+    padding: 15px 5%;
+    background-color: rgba(10, 14, 23, 0.9);
+    -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(15px);
+    border-bottom: 2px solid var(--primary-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
 }
-.navbar .logo {
+
+.logo {
     display: flex;
     align-items: center;
 }
-.navbar .logo img {
-    width: 50px;
-    border-radius: 50%;
-    margin-right: 10px;
+
+.logo img {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 3px solid var(--primary-color);
+    margin-right: 15px;
+    box-shadow: 0 0 15px rgba(52, 152, 219, 0.7);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.navbar a {
+
+.logo img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(52, 152, 219, 0.9);
+}
+
+.logo h2 {
+    color: var(--primary-color);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+    transition: color 0.3s ease;
+}
+
+.logo:hover h2 {
+    color: #2ecc71;
+    text-shadow: 0 0 15px rgba(46, 204, 113, 0.6);
+}
+
+nav {
+    display: flex;
+    gap: 25px;
+}
+
+nav a {
+    color: var(--light-text);
     text-decoration: none;
-    color: white;
-    margin: 0 15px;
-    padding: 5px 10px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.95rem;
 }
-.navbar a:hover {
-    background-color: #f6fe03;
-    border-radius: 5px;
+
+nav a:hover {
+    color: var(--primary-color);
+    background-color: rgba(52, 152, 219, 0.1);
+    transform: translateY(-3px);
 }
-.hero {
-    text-align: center;
-    padding: 50px 20px;
+
+nav a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 3px;
+    background-color: var(--primary-color);
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: width 0.3s ease;
+    border-radius: 3px;
+}
+
+nav a:hover::after {
+    width: 70%;
+}
+
+#banner {
+    width: 100%;
+    height: 720px;
+    background-image: url("../img/ชมรมอีสปอร์ตXกิจกรรมนันทนาการการแข่งขันROV.gif");
     background-size: cover;
     background-position: center;
     position: relative;
+    border-bottom: 3px solid var(--secondary-color);
 }
-.hero::after {
+
+
+.hero {
+    height: 720px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.hero-content {
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    padding: 40px;
+    background: rgba(10, 14, 23, 0.7);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border-radius: 15px;
+    border: 2px solid rgba(52, 152, 219, 0.5);
+    box-shadow: 0 0 40px rgba(52, 152, 219, 0.4);
+    animation: pulse 3s infinite;
+    min-width: 450px;
+    max-width: 650px;
+    transform: translateY(-20px);
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 30px rgba(52, 152, 219, 0.4);
+        border: 2px solid rgba(52, 152, 219, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 50px rgba(142, 68, 173, 0.6);
+        border: 2px solid rgba(142, 68, 173, 0.6);
+    }
+    100% {
+        box-shadow: 0 0 30px rgba(52, 152, 219, 0.4);
+        border: 2px solid rgba(52, 152, 219, 0.5);
+    }
+}
+
+.hero-content h1 {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    color: var(--light-text);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 0 0 15px rgba(52, 152, 219, 0.8);
+    font-weight: 800;
+    background: -webkit-linear-gradient(#3498db, #8e44ad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+}
+
+.hero-content p {
+    font-size: 1.3rem;
+    margin-bottom: 35px;
+    max-width: 600px;
+    color: #ecf0f1;
+    line-height: 1.6;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.btn {
+    display: inline-block;
+    padding: 16px 40px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: var(--light-text);
+    border: none;
+    border-radius: 50px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-decoration: none;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    cursor: pointer;
+    font-size: 1rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.4s ease;
 }
-.hero-content {
-    position: relative;
-    z-index: 1;
+
+.btn:hover::before {
+    opacity: 1;
 }
-.hero h1 {
-    font-size: 3em;
-    margin: 0;
+
+.btn:hover {
+    transform: translateY(-7px);
+    box-shadow: 0 15px 25px rgba(52, 152, 219, 0.4);
+    letter-spacing: 3px;
 }
-.hero p {
-    font-size: 1.5em;
-    margin: 10px 0;
+
+.btn:active {
+    transform: translateY(-3px);
 }
-.hero .btn {
-    display: inline-block;
-    margin-top: 20px;
-    padding: 15px 30px;
-    font-size: 1em;
-    color: white;
-    background-color: #ff0000;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-decoration: none;
-}
-.hero .btn:hover {
-    background-color: #cc0000;
-}
+
 .footer {
     text-align: center;
-    padding: 20px;
-    background-color: #2e004e;
-    color: white;
-    margin-top: 20px;
+    padding: 25px;
+    background-color: rgba(10, 14, 23, 0.95);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-top: 2px solid var(--primary-color);
+    margin-top: 50px;
+    position: relative;
+}
+
+.footer::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--primary-color), transparent);
+}
+
+.footer p {
+    color: #bdc3c7;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    position: relative;
+    display: inline-block;
+}
+
+.footer p::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background-color: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+.footer p:hover::after {
+    width: 100%;
+}
+
+/* สำหรับมือถือ */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        padding: 15px;
+    }
+    
+    .logo {
+        margin-bottom: 20px;
+    }
+    
+    nav {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    nav a {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .hero-content {
+        min-width: 90%;
+        padding: 30px 20px;
+    }
+    
+    .hero-content h1 {
+        font-size: 2.2rem;
+    }
+    
+    .hero-content p {
+        font-size: 1.1rem;
+    }
+    
+    #banner, .hero {
+        height: 500px;
+    }
+    
+    .btn {
+        padding: 12px 25px;
+        font-size: 0.9rem;
+    }
+}
+
+/* สำหรับอุปกรณ์ขนาดเล็กมาก */
+@media (max-width: 480px) {
+    .navbar {
+        padding: 10px;
+    }
+    
+    .logo img {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .logo h2 {
+        font-size: 1.2rem;
+    }
+    
+    .hero-content h1 {
+        font-size: 1.8rem;
+    }
+    
+    .hero-content p {
+        font-size: 1rem;
+    }
+    
+    #banner, .hero {
+        height: 400px;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        font-size: 0.85rem;
+    }
 }

@@ -10,7 +10,7 @@
 <body>
     <div class="navbar">
         <div class="logo">
-            <img src="img/logo.jpg" alt="ROV Tournament Hub Logo"> <!-- สำหรับเปลี่ยนโลโก้ -->
+            <img src="img/logo.jpg" alt="ROV Tournament Hub Logo">
             <h2>ROV Tournament Hub</h2>
         </div>
         <nav>
@@ -20,15 +20,19 @@
             <a href="#">ประกาศ</a>
         </nav>
     </div> 
-    <section id="banner" width="100%" >   
-    <section class="hero">
-        <div class="hero-content">
-            <a href="register.php" class="btn">สมัครทีม</a>
-        </div>
+    
+    <section id="banner">   
+        <section class="hero">
+            <div class="hero-content">
+                <h1>ROV Tournament</h1>
+                <p>ร่วมแข่งขันเพื่อค้นหาสุดยอดทีม ROV ประจำปี 2025</p>
+                <a href="register.php" class="btn">สมัครทีม</a>
+            </div>
+        </section>
     </section>
-    </section>
-</body>
-<footer class="footer">
-        <p>© by Chetsadaphon wongwiwong</p>
+    
+    <footer class="footer">
+        <p>© 2025 ROV Tournament Hub by Chetsadaphon wongwiwong</p>
     </footer>
+</body>
 </html>
