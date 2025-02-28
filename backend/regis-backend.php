@@ -5,7 +5,7 @@ session_start();
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "rov_tournament";
+$dbname = "competition_system";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
