@@ -219,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="email" id="email" name="email" required
                 value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
 
-            <h3>ข้อมูลสมาชิกทีม (สูงสุด 7 คน) *</h3>
+            <h3>ข้อมูลสมาชิกทีม (สูงสุด 8 คน) *</h3>
             <div id="members">
                 <div class="member">
                     <label for="member_name_1" class="required">ชื่อสมาชิก</label>
@@ -239,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         let memberCount = 1;
 
         function addMember() {
-            if (memberCount < 7) {
+            if (memberCount < 8) {
                 memberCount++;
                 const membersDiv = document.getElementById('members');
                 const memberDiv = document.createElement('div');
@@ -253,7 +253,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 `;
                 membersDiv.appendChild(memberDiv);
             } else {
-                alert('เพิ่มสมาชิกได้สูงสุด 7 คนเท่านั้น');
+                alert('เพิ่มสมาชิกได้สูงสุด 8 คนเท่านั้น');
             }
         }
 

@@ -18,14 +18,16 @@
             <a href="#">ข้อมูลการแข่งขัน</a>
             <a href="register.php">สมัครทีม</a>
             <a href="#">ประกาศ</a>
+            <a href="">ติดต่อเรา</a>
+            <a href="">เข้าสู่ระบบ</a>
         </nav>
     </div> 
     
     <section id="banner">   
         <section class="hero">
             <div class="hero-content">
-                <h1>ROV Tournament</h1>
-                <p>ร่วมแข่งขันเพื่อค้นหาสุดยอดทีม ROV ประจำปี 2025</p>
+                <h1>ROV Tournament System</h1>
+                <p>ราชมงคลอีสปอร์ต ROV ประจำปี 2025</p>
                 <a href="register.php" class="btn">สมัครทีม</a>
             </div>
         </section>
