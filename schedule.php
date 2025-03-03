@@ -13,10 +13,15 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
+// เริ่มต้น session
+session_start();
+
 // ฟังก์ชันสำหรับดึงข้อมูลทีมทั้งหมดจากฐานข้อมูล
 function getTeams($conn) {
     $teams = array();
-    $sql = "SELECT id, team_name FROM teams ORDER BY RAND()";
+    $total = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS total FROM teams"))["total"];
+    $random_offset = rand(0, max(0, $total - 10));  // ดึงข้อมูลแบบสุ่ม
+    $sql = "SELECT id, team_name FROM teams LIMIT 10 OFFSET $random_offset";
     $result = mysqli_query($conn, $sql);
     
     // ตรวจสอบว่า query สำเร็จหรือไม่
@@ -93,23 +98,66 @@ function saveBracket($conn, $bracket) {
             $team1Id = $match["team1"]["id"];
             $team2Id = $match["team2"]["id"];
             $team1Score = isset($match["team1_score"]) ? $match["team1_score"] : 0;
-            $team2Score = isset($match["team2_score"]) ? $match["team2_score"] : 0;
-            
-            $sql = "INSERT INTO matches (round, match_number, team1_id, team2_id, team1_score, team2_score) 
-                    VALUES ($roundNumber, $matchNumber, $team1Id, $team2Id, $team1Score, $team2Score)";
+            $team2Score = isset($match["team2_score"]) ? $match["team2_score"] : 0;  
+            $values = [];
+            foreach ($bracket as $roundNumber => $round) {
+                foreach ($round as $matchNumber => $match) {
+                    $team1Id = $match["team1"]["id"];
+                    $team2Id = $match["team2"]["id"];
+                    $team1Score = $match["team1_score"];
+                    $team2Score = $match["team2_score"];
+                    $values[] = "($roundNumber, $matchNumber, $team1Id, $team2Id, $team1Score, $team2Score)";
+                }
+            }
+
+            $sql = "INSERT INTO matches (round, match_number, team1_id, team2_id, team1_score, team2_score) VALUES " . implode(",", $values);
             mysqli_query($conn, $sql);
-            
+
             $matchNumber++;
         }
         $roundNumber++;
     }
 }
 
-// ฟังก์ชันบันทึกผลการแข่งขัน
+// ฟังก์ชันส่งทีมผู้ชนะเข้ารอบถัดไป
+function advanceWinnerToNextRound($roundIndex, $matchIndex) {
+    global $conn;  // ใช้ตัวแปร global แทน $GLOBALS
+    
+    // ตรวจสอบว่ามีรอบถัดไปหรือไม่
+    if (!$_SESSION["bracket"][$roundIndex + 1] ?? false) return;
+
+    
+    // คำนวณ matchIndex ในรอบถัดไป
+    $nextMatchIndex = floor($matchIndex / 2);
+    
+    // ดึงข้อมูลผู้ชนะจากรอบปัจจุบัน
+    $winner = $_SESSION["bracket"][$roundIndex][$matchIndex]["winner"];
+    if (!$winner) return; // ถ้ายังไม่มีผู้ชนะ ให้หยุดการทำงาน
+    
+    // กำหนดทีมในรอบถัดไป (ทีม 1 หรือ ทีม 2)
+    if ($matchIndex % 2 == 0) {
+        $_SESSION["bracket"][$roundIndex + 1][$nextMatchIndex]["team1"] = $winner;
+    } else {
+        $_SESSION["bracket"][$roundIndex + 1][$nextMatchIndex]["team2"] = $winner;
+    }
+    
+    // อัปเดตฐานข้อมูล
+    $roundNumber = $roundIndex + 2; // รอบถัดไป
+    $matchNumber = $nextMatchIndex + 1;
+    
+    $team1Id = $_SESSION["bracket"][$roundIndex + 1][$nextMatchIndex]["team1"]["id"] ?? 0;
+    $team2Id = $_SESSION["bracket"][$roundIndex + 1][$nextMatchIndex]["team2"]["id"] ?? 0;
+    
+    $sql = "UPDATE matches SET team1_id = $team1Id, team2_id = $team2Id 
+            WHERE round = $roundNumber AND match_number = $matchNumber";
+    mysqli_query($conn, $sql);
+}
+
+// ฟังก์ชันบันทึกผลการแข่งขัน - แก้ไขให้ทำงานได้อย่างถูกต้อง
 function updateMatchScore($conn, $matchId, $team1Score, $team2Score) {
     list($roundIndex, $matchIndex) = explode('-', $matchId);
-    $roundNumber = $roundIndex + 1;
-    $matchNumber = $matchIndex + 1;
+    $roundNumber = (int)$roundIndex + 1;
+    $matchNumber = (int)$matchIndex + 1;
     
     $sql = "UPDATE matches SET team1_score = $team1Score, team2_score = $team2Score 
             WHERE round = $roundNumber AND match_number = $matchNumber";
@@ -117,43 +165,69 @@ function updateMatchScore($conn, $matchId, $team1Score, $team2Score) {
     return mysqli_query($conn, $sql);
 }
 
-// เริ่มต้น session
-session_start();
-
 // ประมวลผลคำขอ AJAX สำหรับการบันทึกคะแนน
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_score') {
     $matchId = $_POST['match_id'];
     $team1Score = $_POST['team1_score'];
     $team2Score = $_POST['team2_score'];
     
-    // บันทึกคะแนนลงฐานข้อมูล
-    $result = updateMatchScore($conn, $matchId, $team1Score, $team2Score);
+    // ป้องกัน SQL Injection โดยการแปลงเป็นตัวเลข
+    $team1Score = intval($team1Score);
+    $team2Score = intval($team2Score);
     
-    // อัปเดตข้อมูลใน session
-    if ($result && isset($_SESSION["bracket"])) {
-        list($roundIndex, $matchIndex) = explode('-', $matchId);
-        $roundIndex = (int)$roundIndex;
-        $matchIndex = (int)$matchIndex;
+    // บันทึกผลลัพธ์
+    $success = false;
+    $error_message = "";
+    
+    try {
+        // บันทึกคะแนนลงฐานข้อมูล
+        $result = updateMatchScore($conn, $matchId, $team1Score, $team2Score);
         
-        if (isset($_SESSION["bracket"][$roundIndex][$matchIndex])) {
-            $_SESSION["bracket"][$roundIndex][$matchIndex]["team1_score"] = $team1Score;
-            $_SESSION["bracket"][$roundIndex][$matchIndex]["team2_score"] = $team2Score;
+        // ตรวจสอบผลการบันทึก
+        if (!$result) {
+            $error_message = "Database error: " . mysqli_error($conn);
+        } else {
+            $success = true;
             
-            // กำหนดผู้ชนะตามคะแนน
-            if ($team1Score > $team2Score) {
-                $_SESSION["bracket"][$roundIndex][$matchIndex]["winner"] = $_SESSION["bracket"][$roundIndex][$matchIndex]["team1"];
-            } elseif ($team2Score > $team1Score) {
-                $_SESSION["bracket"][$roundIndex][$matchIndex]["winner"] = $_SESSION["bracket"][$roundIndex][$matchIndex]["team2"];
+            // อัปเดตข้อมูลใน session
+            if (isset($_SESSION["bracket"])) {
+                list($roundIndex, $matchIndex) = explode('-', $matchId);
+                $roundIndex = (int)$roundIndex;
+                $matchIndex = (int)$matchIndex;
+                
+                if (isset($_SESSION["bracket"][$roundIndex][$matchIndex])) {
+                    $_SESSION["bracket"][$roundIndex][$matchIndex]["team1_score"] = $team1Score;
+                    $_SESSION["bracket"][$roundIndex][$matchIndex]["team2_score"] = $team2Score;
+                    
+                    // กำหนดผู้ชนะตามคะแนน
+                    if ($team1Score > $team2Score) {
+                        $_SESSION["bracket"][$roundIndex][$matchIndex]["winner"] = $_SESSION["bracket"][$roundIndex][$matchIndex]["team1"];
+                    } elseif ($team2Score > $team1Score) {
+                        $_SESSION["bracket"][$roundIndex][$matchIndex]["winner"] = $_SESSION["bracket"][$roundIndex][$matchIndex]["team2"];
+                    } else {
+                        // กรณีคะแนนเท่ากัน
+                        $_SESSION["bracket"][$roundIndex][$matchIndex]["winner"] = null;
+                    }
+                    
+                    // ดำเนินการส่งทีมเข้ารอบถัดไป
+                    advanceWinnerToNextRound($roundIndex, $matchIndex);
+                } else {
+                    $error_message = "Match not found in session";
+                }
             } else {
-                // กรณีคะแนนเท่ากัน (อาจต้องกำหนดกฎเพิ่มเติม)
-                $_SESSION["bracket"][$roundIndex][$matchIndex]["winner"] = null;
+                $error_message = "Bracket not found in session";
             }
         }
+    } catch (Exception $e) {
+        $error_message = "Exception: " . $e->getMessage();
     }
     
     // ส่งผลลัพธ์กลับเป็น JSON
     header('Content-Type: application/json');
-    echo json_encode(['success' => (bool)$result]);
+    echo json_encode([
+        'success' => $success, 
+        'error' => $error_message
+    ]);
     exit;
 }
 
@@ -167,7 +241,12 @@ if (isset($_POST["generate"])) {
         saveBracket($conn, $bracket);
         
         // เก็บข้อมูลใน session
-        $_SESSION["bracket"] = $bracket;
+        $_SESSION["bracket"] = array_map(function($round) {
+            return array_map(function($match) {
+                return ["id" => $match["id"], "winner" => $match["winner"]["id"] ?? null];
+            }, $round);
+        }, $bracket);
+        
         
         // กำหนดข้อความแจ้งเตือนความสำเร็จ
         $_SESSION["message"] = "สร้างตารางการแข่งขันเรียบร้อยแล้ว";
@@ -198,156 +277,16 @@ unset($_SESSION["error"]);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ตารางการแข่งขัน</title>
-    <style>
-        body {
-            font-family: 'Sarabun', Arial, sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1, h2 {
-            color: #333;
-        }
-        .button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .button:hover {
-            background-color: #45a049;
-        }
-        .tournament-bracket {
-            display: flex;
-            margin-top: 30px;
-            overflow-x: auto;
-        }
-        .round {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            width: 220px;
-            margin-right: 40px;
-        }
-        .match {
-            display: flex;
-            flex-direction: column;
-            min-height: 120px;
-            margin-bottom: 20px;
-            position: relative;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 10px;
-            background-color: #fafafa;
-        }
-        .team {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            background-color: #f1f1f1;
-            margin-bottom: 5px;
-            border-radius: 4px;
-            cursor: pointer;
-            position: relative;
-        }
-        .team.winner {
-            background-color: #e6f7e6;
-            border-left: 4px solid #4CAF50;
-        }
-        .team img {
-            width: 20px;
-            height: 20px;
-            margin-right: 8px;
-        }
-        .team .team-name {
-            flex-grow: 1;
-        }
-        .connector {
-            position: absolute;
-            right: -40px;
-            top: 50%;
-            width: 40px;
-            height: 2px;
-            background-color: #777;
-        }
-        .connector:after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: -50px;
-            width: 2px;
-            height: 100px;
-            background-color: #777;
-        }
-        .round-title {
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #555;
-        }
-        .message {
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-        }
-        .success {
-            background-color: #dff0d8;
-            color: #3c763d;
-        }
-        .error {
-            background-color: #f2dede;
-            color: #a94442;
-        }
-        .score-input {
-            width: 40px;
-            text-align: center;
-            margin: 0 5px;
-            padding: 3px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-        }
-        .score-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 5px;
-        }
-        .save-score {
-            background-color: #337ab7;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            padding: 3px 8px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .save-score:hover {
-            background-color: #286090;
-        }
-        .score-display {
-            font-weight: bold;
-            margin: 0 5px;
-        }
-        .bye-team {
-            color: #999;
-            font-style: italic;
-        }
-    </style>
+    <title>ตารางการแข่งขัน RoV Tournament</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/schedule.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>ตารางการแข่งขันแบบแพ้คัดออก</h1>
+        <h1>ตารางการแข่งขัน RoV Tournament</h1>
+        
+        <div id="notification" style="display: none; padding: 10px; margin-bottom: 15px; border-radius: 5px;"></div>
         
         <?php if (!empty($message)): ?>
         <div class="message success"><?php echo $message; ?></div>
@@ -372,20 +311,18 @@ unset($_SESSION["error"]);
                 <div class="round-title"><?php echo $roundName; ?></div>
                 <?php foreach ($round as $matchIndex => $match): ?>
                 <div class="match" data-round="<?php echo $roundIndex; ?>" data-match-index="<?php echo $matchIndex; ?>" data-match-id="<?php echo $roundIndex . '-' . $matchIndex; ?>">
-                    <div class="team <?php echo (isset($match["winner"]) && isset($match["winner"]["id"]) && isset($match["team1"]["id"]) && $match["winner"]["id"] == $match["team1"]["id"]) ? "winner" : ""; ?>" data-team-id="<?php echo $match["team1"]["id"]; ?>">
-                        <span class="team-name <?php echo ($match["team1"]["team_name"] == "BYE") ? "bye-team" : ""; ?>"><?php echo htmlspecialchars($match["team1"]["team_name"]); ?></span>
+                    <div class="team <?php echo (isset($match["winner"]) && isset($match["winner"]["id"]) && isset($match["team1"]["id"]) && $match["winner"]["id"] == $match["team1"]["id"]) ? "winner" : ""; ?>" data-team-id="<?php echo isset($match["team1"]["id"]) ? $match["team1"]["id"] : 0; ?>">
+                        <span class="team-name <?php echo (isset($match["team1"]["team_name"]) && $match["team1"]["team_name"] == "BYE") ? "bye-team" : ""; ?>"><?php echo isset($match["team1"]["team_name"]) ? htmlspecialchars($match["team1"]["team_name"]) : "รอทีม"; ?></span>
                     </div>
-                    <div class="team <?php echo (isset($match["winner"]) && isset($match["winner"]["id"]) && isset($match["team2"]["id"]) && $match["winner"]["id"] == $match["team2"]["id"]) ? "winner" : ""; ?>" data-team-id="<?php echo $match["team2"]["id"]; ?>">
-                        <span class="team-name <?php echo ($match["team2"]["team_name"] == "BYE") ? "bye-team" : ""; ?>"><?php echo htmlspecialchars($match["team2"]["team_name"]); ?></span>
+                    <div class="team <?php echo (isset($match["winner"]) && isset($match["winner"]["id"]) && isset($match["team2"]["id"]) && $match["winner"]["id"] == $match["team2"]["id"]) ? "winner" : ""; ?>" data-team-id="<?php echo isset($match["team2"]["id"]) ? $match["team2"]["id"] : 0; ?>">
+                        <span class="team-name <?php echo (isset($match["team2"]["team_name"]) && $match["team2"]["team_name"] == "BYE") ? "bye-team" : ""; ?>"><?php echo isset($match["team2"]["team_name"]) ? htmlspecialchars($match["team2"]["team_name"]) : "รอทีม"; ?></span>
                     </div>
                     
-                    <?php if ($match["team1"]["team_name"] != "BYE" && $match["team2"]["team_name"] != "BYE"): ?>
+                    <?php if (isset($match["team1"]["team_name"]) && isset($match["team2"]["team_name"]) && $match["team1"]["team_name"] != "BYE" && $match["team2"]["team_name"] != "BYE"): ?>
                     <div class="score-container" data-match-id="<?php echo $roundIndex . '-' . $matchIndex; ?>">
-                        <span class="score-display team1-score-display"><?php echo isset($match["team1_score"]) ? $match["team1_score"] : "0"; ?></span>
                         <input type="number" class="score-input team1-score" value="<?php echo isset($match["team1_score"]) ? $match["team1_score"] : "0"; ?>" min="0">
-                        <span>vs</span>
+                        <span class="vs-label">VS</span>
                         <input type="number" class="score-input team2-score" value="<?php echo isset($match["team2_score"]) ? $match["team2_score"] : "0"; ?>" min="0">
-                        <span class="score-display team2-score-display"><?php echo isset($match["team2_score"]) ? $match["team2_score"] : "0"; ?></span>
                         <button class="save-score">บันทึก</button>
                     </div>
                     <?php endif; ?>
@@ -399,150 +336,98 @@ unset($_SESSION["error"]);
             <?php endforeach; ?>
         </div>
         <?php else: ?>
-        <p>กรุณาคลิกปุ่ม "สร้างตารางการแข่งขันใหม่" เพื่อเริ่มต้นสร้างตารางการแข่งขัน</p>
+        <p style="text-align: center; margin-top: 30px;">กรุณาคลิกปุ่ม "สร้างตารางการแข่งขันใหม่" เพื่อเริ่มต้นสร้างตารางการแข่งขัน</p>
         <?php endif; ?>
-    </div>
-    
+    </div> 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-                        let tournamentData = { rounds: [] };
-
-                        fetchTournamentData();
-                        addScoreEventListeners();
-
-                        function fetchTournamentData() {
-                            const rounds = document.querySelectorAll('.round');
-                            tournamentData.rounds = Array.from(rounds).map((round, roundIndex) => {
-                                return {
-                                    matches: Array.from(round.querySelectorAll('.match')).map((match, matchIndex) => {
-                                        const teams = match.querySelectorAll('.team');
-                                        const team1 = {
-                                            id: teams[0].dataset.teamId || 0,
-                                            name: teams[0].querySelector('.team-name').textContent.trim(),
-                                            isWinner: teams[0].classList.contains('winner'),
-                                            score: parseInt(match.querySelector('.team1-score-display')?.textContent || "0") || 0
-                                        };
-                                        const team2 = {
-                                            id: teams[1].dataset.teamId || 0,
-                                            name: teams[1].querySelector('.team-name').textContent.trim(),
-                                            isWinner: teams[1].classList.contains('winner'),
-                                            score: parseInt(match.querySelector('.team2-score-display')?.textContent || "0") || 0
-                                        };
-
-                                        return {
-                                            team1,
-                                            team2,
-                                            winner: team1.isWinner ? team1 : (team2.isWinner ? team2 : null),
-                                            matchId: match.dataset.matchId || `${roundIndex}-${matchIndex}`
-                                        };
+    $(document).ready(function() {
+        // ฟังก์ชันแสดงข้อความแจ้งเตือน
+        function showNotification(message, isSuccess) {
+            var notification = $('#notification');
+            
+            // กำหนดสีพื้นหลังตามสถานะ
+            if (isSuccess) {
+                notification.css('background-color', '#4CAF50').css('color', 'white');
+            } else {
+                notification.css('background-color', '#f44336').css('color', 'white');
+            }
+            
+            // แสดงข้อความ
+            notification.text(message).fadeIn();
+            
+            // ซ่อนข้อความหลังจาก 3 วินาที
+            setTimeout(function() {
+                notification.fadeOut();
+            }, 3000);
+        }
+        
+        // จัดการการบันทึกคะแนน
+        $('.save-score').on('click', function() {
+            var container = $(this).closest('.score-container');
+            var matchId = container.data('match-id');
+            var team1Score = container.find('.team1-score').val();
+            var team2Score = container.find('.team2-score').val();
+            
+            // แสดง loading
+            var saveButton = $(this);
+            saveButton.prop('disabled', true).text('กำลังบันทึก...');
+            
+            // ส่งคำขอ AJAX ไปยังเซิร์ฟเวอร์
+            $.ajax({
+                url: window.location.href,
+                type: 'POST',
+                data: {
+                    action: 'update_score',
+                    match_id: matchId,
+                    team1_score: team1Score,
+                    team2_score: team2Score
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // แสดงข้อความแจ้งเตือนสำเร็จ
+                        showNotification('บันทึกคะแนนเรียบร้อยแล้ว', true);
+                        
+                        // รีโหลดหน้าเพื่ออัปเดตการแสดงผล
+                        fetch(window.location.href, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                        body: new URLSearchParams({ action: 'update_score', match_id: matchId, team1_score: team1Score, team2_score: team2Score })
                                     })
-                                };
-                            });
-
-                            addEventListeners();
-                        }
-
-                        function addScoreEventListeners() {
-                            document.querySelectorAll('.save-score').forEach(button => {
-                                button.addEventListener('click', function () {
-                                    const scoreContainer = this.closest('.score-container');
-                                    const matchId = scoreContainer.dataset.matchId;
-                                    const team1ScoreInput = scoreContainer.querySelector('.team1-score');
-                                    const team2ScoreInput = scoreContainer.querySelector('.team2-score');
-
-                                    let team1Score = parseInt(team1ScoreInput.value) || 0;
-                                    let team2Score = parseInt(team2ScoreInput.value) || 0;
-
-                                    saveScore(matchId, team1Score, team2Score, function (success) {
-                                        if (success) {
-                                            updateWinnerByScore(matchId, team1Score, team2Score);
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            showNotification('บันทึกคะแนนเรียบร้อย', true);
+                                            container.find('.team1-score').attr('disabled', true);
+                                            container.find('.team2-score').attr('disabled', true);
                                         } else {
-                                            alert('เกิดข้อผิดพลาดในการบันทึกคะแนน');
+                                            showNotification('เกิดข้อผิดพลาด: ' + data.error, false);
                                         }
                                     });
-                                });
-                            });
-                        }
-
-                        function saveScore(matchId, team1Score, team2Score, callback) {
-                            const formData = new FormData();
-                            formData.append('action', 'update_score');
-                            formData.append('match_id', matchId);
-                            formData.append('team1_score', team1Score);
-                            formData.append('team2_score', team2Score);
-
-                            fetch(window.location.href, {
-                                method: 'POST',
-                                body: formData
-                            })
-                            .then(response => response.json())
-                            .then(data => callback(data.success))
-                            .catch(error => {
-                                console.error('Error:', error);
-                                callback(false);
-                            });
-                        }
-
-                        function updateWinnerByScore(matchId, team1Score, team2Score) {
-                            const match = document.querySelector(`.match[data-match-id="${matchId}"]`);
-                            if (!match) return;
-
-                            const teams = match.querySelectorAll('.team');
-                            const team1 = teams[0];
-                            const team2 = teams[1];
-
-                            let winner = null;
-                            if (team1Score > team2Score) {
-                                team1.classList.add('winner');
-                                team2.classList.remove('winner');
-                                winner = team1;
-                            } else if (team2Score > team1Score) {
-                                team2.classList.add('winner');
-                                team1.classList.remove('winner');
-                                winner = team2;
-                            } else {
-                                team1.classList.remove('winner');
-                                team2.classList.remove('winner');
-                            }
-
-                            if (winner) {
-                                const [roundIndex, matchIndex] = matchId.split('-').map(Number);
-                                tournamentData.rounds[roundIndex].matches[matchIndex].winner = {
-                                    id: winner.dataset.teamId,
-                                    name: winner.querySelector('.team-name').textContent,
-                                    score: winner === team1 ? team1Score : team2Score
-                                };
-
-                                advanceToNextRound(roundIndex, matchIndex, tournamentData.rounds[roundIndex].matches[matchIndex].winner);
-                            }
-                        }
-
-                        function advanceToNextRound(currentRound, matchIndex, winner) {
-                            const nextRoundIndex = currentRound + 1;
-                            const nextMatchIndex = Math.floor(matchIndex / 2);
-
-                            if (nextRoundIndex < tournamentData.rounds.length) {
-                                const nextRound = tournamentData.rounds[nextRoundIndex];
-                                const nextMatch = nextRound.matches[nextMatchIndex];
-
-                                if (matchIndex % 2 === 0) {
-                                    nextMatch.team1 = winner;
-                                } else {
-                                    nextMatch.team2 = winner;
-                                }
-
-                                const nextMatchElement = document.querySelector(`.match[data-round="${nextRoundIndex}"][data-match-index="${nextMatchIndex}"]`);
-                                if (nextMatchElement) {
-                                    const nextTeams = nextMatchElement.querySelectorAll('.team');
-                                    if (matchIndex % 2 === 0) {
-                                        nextTeams[0].querySelector('.team-name').textContent = winner.name;
-                                        nextTeams[0].dataset.teamId = winner.id;
-                                    } else {
-                                        nextTeams[1].querySelector('.team-name').textContent = winner.name;
-                                        nextTeams[1].dataset.teamId = winner.id;
+                    } else {
+                        // แสดงข้อความแจ้งเตือนข้อผิดพลาด
+                        var errorMsg = response.error ? response.error : 'เกิดข้อผิดพลาดในการบันทึกคะแนน';
+                        showNotification(errorMsg, false);
+                        saveButton.prop('disabled', false).text('บันทึก');
                     }
+                },
+                error: function(xhr, status, error) {
+                    // แสดงข้อความแจ้งเตือนข้อผิดพลาดการเชื่อมต่อ
+                    console.error(xhr.responseText);
+                    showNotification('เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์', false);
+                    saveButton.prop('disabled', false).text('บันทึก');
                 }
+            });
+        });
+        
+        // จัดการสีพื้นหลังผู้ชนะ
+        $('.match').each(function() {
+            var winner = $(this).find('.team.winner');
+            if (winner.length > 0) {
+                winner.css('background-color', '#9acd32');
             }
-        }
+        });
     });
     </script>
+</body>
+</html>

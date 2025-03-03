@@ -6,7 +6,7 @@
 }
 
 :root {
-    --primary-color: #3498db;
+    --primary-color: #2e91ca;
     --secondary-color: #8e44ad;
     --accent-color: #e74c3c;
     --dark-bg: #0a0e17;
@@ -46,17 +46,17 @@ body {
 .logo img {
     width: 60px;
     height: 60px;
-    border-radius: 12px;
+    border-radius: 30px;
     object-fit: cover;
     border: 3px solid var(--primary-color);
     margin-right: 15px;
     box-shadow: 0 0 15px rgba(52, 152, 219, 0.7);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
 }
 
 .logo img:hover {
     transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(52, 152, 219, 0.9);
+    box-shadow: 0 0 20px rgba(41, 45, 244, 0.9);
 }
 
 .logo h2 {
@@ -64,13 +64,13 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 2px;
-    text-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+    text-shadow: 0 0 10px rgba(219, 52, 52, 0.5);
     transition: color 0.3s ease;
 }
 
 .logo:hover h2 {
-    color: #2ecc71;
-    text-shadow: 0 0 15px rgba(46, 204, 113, 0.6);
+    color: #992222;
+    text-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
 }
 
 nav {
@@ -144,7 +144,7 @@ nav a:hover::after {
     border-radius: 15px;
     border: 2px solid rgba(52, 152, 219, 0.5);
     box-shadow: 0 0 40px rgba(52, 152, 219, 0.4);
-    animation: pulse 3s infinite;
+    animation: pulse 4s infinite;
     min-width: 450px;
     max-width: 650px;
     transform: translateY(-20px);
@@ -182,7 +182,7 @@ nav a:hover::after {
 
 .hero-content p {
     font-size: 1.3rem;
-    margin-bottom: 350px;
+    margin-bottom: 35px;
     max-width: 600px;
     color: #ecf0f1;
     line-height: 1.6;
@@ -320,7 +320,7 @@ nav a:hover::after {
     }
     
     #banner, .hero {
-        height: 500px;
+        height: 300px;
     }
     
     .btn {
@@ -353,7 +353,7 @@ nav a:hover::after {
     }
     
     #banner, .hero {
-        height: 400px;
+        height: 100px;
     }
     
     .btn {

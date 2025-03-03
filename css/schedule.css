@@ -1,0 +1,214 @@
+body {
+    font-family: 'Sarabun', Arial, sans-serif;
+    background-color: #0a1a2d;
+    color: #eaeaea;
+    padding: 20px;
+    margin: 0;
+}
+.container {
+    max-width: 2200px;
+    margin: 0 auto;
+    background-color: #1c2c3d;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.3);
+}
+h1, h2 {
+    color: #4ecbff;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.button {
+    background-color: #4ecbff;
+    color: #0a1a2d;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: block;
+    margin: 20px auto;
+    transition: all 0.3s ease;
+}
+.button:hover {
+    background-color: #3aa8d9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+.tournament-bracket {
+    display: flex;
+    margin-top: 30px;
+    overflow-x: auto;
+    padding-bottom: 20px;
+}
+.round {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 250px;
+    margin-right: 50px;
+}
+.match {
+    display: flex;
+    flex-direction: column;
+    min-height: 140px;
+    margin-bottom: 30px;
+    position: relative;
+    border: 1px solid #324a67;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #243548;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+.match:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    border-color: #4ecbff;
+}
+.team {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background-color: #324a67;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+.team:hover {
+    background-color: #3d5a7d;
+}
+.team.winner {
+    background-color: #2c5f3f;
+    border-left: 4px solid #4eca78;
+}
+.team.winner:hover {
+    background-color: #34704a;
+}
+.team img {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    border-radius: 50%;
+}
+.team .team-name {
+    flex-grow: 1;
+    font-weight: 500;
+}
+.connector {
+    position: absolute;
+    right: -50px;
+    top: 50%;
+    width: 50px;
+    height: 3px;
+    background-color: #4ecbff;
+}
+.connector:after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -60px;
+    width: 3px;
+    height: 120px;
+    background-color: #4ecbff;
+    border-radius: 2px;
+}
+.round-title {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 25px;
+    color: #ffa200;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.message {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+.success {
+    background-color: #2c5f3f;
+    color: #b0ffc2;
+    border-left: 5px solid #4eca78;
+}
+.error {
+    background-color: #5f2c2c;
+    color: #ffb0b0;
+    border-left: 5px solid #ca4e4e;
+}
+.score-input {
+    width: 50px;
+    text-align: center;
+    margin: 0 8px;
+    padding: 6px;
+    border: 1px solid #3d5a7d;
+    border-radius: 4px;
+    background-color: #1c2c3d;
+    color: #eaeaea;
+    font-weight: bold;
+}
+.score-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #2a3c51;
+    border-radius: 4px;
+}
+.save-score {
+    background-color: #ffa200;
+    color: #0a1a2d;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+.save-score:hover {
+    background-color: #ff8c00;
+    transform: translateY(-2px);
+}
+.score-display {
+    font-weight: bold;
+    margin: 0 8px;
+    color: #4ecbff;
+}
+.bye-team {
+    color: #6d7f8e;
+    font-style: italic;
+}
+.vs-label {
+    font-weight: bold;
+    color: #ffa200;
+}
+.back-link {
+    display: inline-block;
+    color: #4ecbff;
+    text-decoration: none;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+.back-link:hover {
+    text-decoration: underline;
+}
+@media (max-width: 768px) {
+    .tournament-bracket {
+        padding-bottom: 30px;
+    }
+    .round {
+        width: 100px;
+        margin-right: 40px;
+    }
+    .connector {
+        right: -40px;
+        width: 40px;
+    }
+}
