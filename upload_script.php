@@ -152,10 +152,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('การเข้ารหัสล้มเหลว: ' . openssl_error_string());
         }
 
-        // สร้างชื่อไฟล์แบบสุ่ม
-        $encrypted_filename = bin2hex(random_bytes(8)) . '.enc';
-        $key_filename = bin2hex(random_bytes(8)) . '_key.txt';
-        $iv_filename = bin2hex(random_bytes(8)) . '_iv.txt';
+        // ใช้เวลาในการสร้างชื่อไฟล์
+        $timestamp = time();  // หรือใช้ date('YmdHis') เพื่อให้รูปแบบเหมือนวันที่และเวลา
+        $encrypted_filename = $timestamp . '.enc';
+        $key_filename = $timestamp . '_key.txt';
+        $iv_filename = $timestamp . '_iv.txt';
+
         
         // บันทึกไฟล์เข้ารหัสและกำหนดสิทธิ์ไฟล์
         if (file_put_contents($upload_dir . '/' . $encrypted_filename, $encrypted_image) === false) {
