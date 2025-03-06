@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         error_log('ข้อผิดพลาดการเข้ารหัสภาพ: ' . $e->getMessage());
         
         // แจ้งเตือนผ่านอีเมล
-         mail('chatsadaphon.wo@rmuti.ac.th', 'ระบบเข้ารหัสภาพเกิดข้อผิดพลาด', $e->getMessage());
+       //  mail('chatsadaphon.wo@rmuti.ac.th', 'ระบบเข้ารหัสภาพเกิดข้อผิดพลาด', $e->getMessage());
         
         $encryption_error = $e->getMessage();
     }
