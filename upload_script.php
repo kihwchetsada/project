@@ -182,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // บันทึก tag เมื่อใช้ GCM mode
         if ($cipher === 'aes-256-gcm' && !empty($tag)) {
-            $tag_filename = bin2hex(random_bytes(8)) . '_tag.txt';
+            $tag_filename = $timestamp . '_tag.txt';
             if (file_put_contents($keys_dir . '/' . $tag_filename, base64_encode($tag)) === false) {
                 throw new Exception('ไม่สามารถบันทึก authentication tag ได้');
             }
@@ -194,8 +194,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // บันทึก error log
         error_log('ข้อผิดพลาดการเข้ารหัสภาพ: ' . $e->getMessage());
         
-        // ถ้าต้องการส่งอีเมลแจ้งเตือน ให้เปิดคอมเมนต์บรรทัดนี้
-        // mail('chatsadaphon.wo@rmuti.ac.th', 'ระบบเข้ารหัสภาพเกิดข้อผิดพลาด', $e->getMessage());
+        // แจ้งเตือนผ่านอีเมล
+         mail('chatsadaphon.wo@rmuti.ac.th', 'ระบบเข้ารหัสภาพเกิดข้อผิดพลาด', $e->getMessage());
         
         $encryption_error = $e->getMessage();
     }

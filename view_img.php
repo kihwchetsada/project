@@ -9,32 +9,82 @@ $keys_dir = 'keys/';
 // ตรวจสอบการเข้าถึง (เพิ่มการตรวจสอบผู้ใช้ตามต้องการ)
 $auth_error = '';
 $images = [];
+if (is_dir($upload_dir) && is_dir($keys_dir)) {
+    $encrypted_files = glob($upload_dir . '*.enc');
+    
+    foreach ($encrypted_files as $encrypted_file) {
+        $filename = basename($encrypted_file);
+        $file_id = pathinfo($filename, PATHINFO_FILENAME); // ชื่อไฟล์ไม่รวมนามสกุล
+        $key_file = $keys_dir . $file_id . '_key.txt';
+        
+        if (file_exists($key_file)) {
+            // ดึงข้อมูลวันที่อัปโหลด
+            $upload_date = date('d/m/Y H:i', filemtime($encrypted_file));
+            
+            // ขนาดไฟล์
+            $file_size = round(filesize($encrypted_file) / 1024, 2); // ขนาดเป็น KB
+            
+            $images[] = [
+                'id' => $file_id,
+                'encrypted_file' => $encrypted_file,
+                'key_file' => $key_file,
+                'upload_date' => $upload_date,
+                'file_size' => $file_size
+            ];
+        }
+    }
+    
+    // เรียงลำดับตามวันที่อัปโหลดล่าสุด
+    usort($images, function($a, $b) {
+        return filemtime($b['encrypted_file']) - filemtime($a['encrypted_file']);
+    });
+}
 
 // ฟังก์ชั่นสำหรับถอดรหัสรูปภาพ
-function decryptImage($encrypted_file, $key_file) {
-    if (!file_exists($encrypted_file) || !file_exists($key_file)) {
+function decryptImage($encrypted_file, $file_id) {
+    global $keys_dir;
+    $key_file = $keys_dir . $file_id . '_key.txt';
+    $iv_file = $keys_dir . $file_id . '_iv.txt';
+    $tag_file = $keys_dir . $file_id . '_tag.txt';
+    
+    if (!file_exists($encrypted_file) || !file_exists($key_file) || !file_exists($iv_file)) {
         return false;
     }
     
-    // อ่านไฟล์คีย์
-    $key_data = file_get_contents($key_file);
-    $key_parts = json_decode($key_data, true);
+    // อ่าน key และ IV
+    $encryption_key = base64_decode(file_get_contents($key_file));
+    $iv = base64_decode(file_get_contents($iv_file));
     
-    if (!$key_parts || !isset($key_parts['key']) || !isset($key_parts['iv'])) {
-        return false;
-    }
-    
-    // อ่านไฟล์ที่เข้ารหัส
+    // อ่านข้อมูลที่เข้ารหัสแล้ว
     $encrypted_data = file_get_contents($encrypted_file);
     
-    // ถอดรหัส
-    $decrypted_data = openssl_decrypt(
-        $encrypted_data,
-        'AES-256-CBC',
-        base64_decode($key_parts['key']),
-        0,
-        base64_decode($key_parts['iv'])
-    );
+    // ตรวจสอบว่ามี GCM tag หรือไม่
+    if (file_exists($tag_file)) {
+        $tag = base64_decode(file_get_contents($tag_file));
+        $cipher = 'aes-256-gcm';
+    } else {
+        $cipher = 'aes-256-cbc';
+    }
+    
+    // ถอดรหัสข้อมูล
+    if ($cipher === 'aes-256-gcm') {
+        $decrypted_data = openssl_decrypt(
+            $encrypted_data,
+            $cipher,
+            $encryption_key,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+    } else {
+        $decrypted_data = openssl_decrypt(
+            $encrypted_data,
+            $cipher,
+            $encryption_key,
+            OPENSSL_RAW_DATA,
+            $iv
+        );
+    }
     
     if ($decrypted_data === false) {
         return false;
@@ -86,7 +136,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
     foreach ($images as $img) {
         if ($img['id'] === $image_id) {
             $image_found = true;
-            $decrypted_data = decryptImage($img['encrypted_file'], $img['key_file']);
+            $decrypted_data = decryptImage($img['encrypted_file'], $img['id']);
             
             if ($decrypted_data !== false) {
                 // ตรวจสอบ MIME type
