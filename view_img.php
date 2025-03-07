@@ -1,4 +1,7 @@
 <?php
+// ตั้งค่า timezone เป็นประเทศไทย
+date_default_timezone_set('Asia/Bangkok');
+
 // สคริปต์สำหรับการถอดรหัสและแสดงรูปภาพ
 session_start();
 
