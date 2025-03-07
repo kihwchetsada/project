@@ -115,6 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // ตรวจสอบว่า OpenSSL รองรับ GCM mode
         if (!in_array('aes-256-gcm', openssl_get_cipher_methods())) {
+
             // หากไม่รองรับ GCM ให้ใช้ CBC แทน
             $cipher = 'aes-256-cbc';
         } else {
@@ -153,7 +154,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // ใช้เวลาในการสร้างชื่อไฟล์
-        $timestamp = time();  // หรือใช้ date('YmdHis') เพื่อให้รูปแบบเหมือนวันที่และเวลา
+        date_default_timezone_set('Asia/Bangkok'); 
+        $timestamp = time();  
         $encrypted_filename = $timestamp . '.enc';
         $key_filename = $timestamp . '_key.txt';
         $iv_filename = $timestamp . '_iv.txt';
@@ -193,9 +195,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (Exception $e) {
         // บันทึก error log
         error_log('ข้อผิดพลาดการเข้ารหัสภาพ: ' . $e->getMessage());
-        
-        // แจ้งเตือนผ่านอีเมล
-       //  mail('chatsadaphon.wo@rmuti.ac.th', 'ระบบเข้ารหัสภาพเกิดข้อผิดพลาด', $e->getMessage());
         
         $encryption_error = $e->getMessage();
     }

@@ -93,36 +93,6 @@ function decryptImage($encrypted_file, $file_id) {
     return $decrypted_data;
 }
 
-// ดึงข้อมูลรายการรูปภาพที่เข้ารหัสไว้
-if (is_dir($upload_dir) && is_dir($keys_dir)) {
-    $encrypted_files = glob($upload_dir . '*.enc');
-    
-    foreach ($encrypted_files as $encrypted_file) {
-        $filename = basename($encrypted_file);
-        $file_id = pathinfo($filename, PATHINFO_FILENAME); // ชื่อไฟล์ไม่รวมนามสกุล
-        $key_file = $keys_dir . $file_id . '.key';
-        
-        // ดึงข้อมูลวันที่อัปโหลด
-        $upload_date = date('d/m/Y H:i', filemtime($encrypted_file));
-        
-        // ขนาดไฟล์
-        $file_size = round(filesize($encrypted_file) / 1024, 2); // ขนาดเป็น KB
-        
-        $images[] = [
-            'id' => $file_id,
-            'encrypted_file' => $encrypted_file,
-            'key_file' => $key_file,
-            'upload_date' => $upload_date,
-            'file_size' => $file_size
-        ];
-    }
-    
-    // เรียงลำดับตามวันที่อัปโหลดล่าสุด
-    usort($images, function($a, $b) {
-        return filemtime($b['encrypted_file']) - filemtime($a['encrypted_file']);
-    });
-}
-
 // ถ้ามีการขอดูภาพ
 $view_image = null;
 $image_error = null;
