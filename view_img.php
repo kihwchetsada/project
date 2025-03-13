@@ -2,317 +2,531 @@
 // ตั้งค่า timezone เป็นประเทศไทย
 date_default_timezone_set('Asia/Bangkok');
 
-// สคริปต์สำหรับการถอดรหัสและแสดงรูปภาพ
 session_start();
 
-// กำหนดค่าตำแหน่งที่เก็บไฟล์
-$upload_dir = 'uploads/';
-$keys_dir = 'keys/';
+$upload_dir = __DIR__ . '/uploads/';
+$keys_dir = __DIR__ . '/keys/';
+$teams_dir = __DIR__ . '/teams/';
 
-// ตรวจสอบการเข้าถึง (เพิ่มการตรวจสอบผู้ใช้ตามต้องการ)
-$auth_error = '';
-$images = [];
-if (is_dir($upload_dir) && is_dir($keys_dir)) {
-    $encrypted_files = glob($upload_dir . '*.enc');
-    
-    foreach ($encrypted_files as $encrypted_file) {
-        $filename = basename($encrypted_file);
-        $file_id = pathinfo($filename, PATHINFO_FILENAME); // ชื่อไฟล์ไม่รวมนามสกุล
-        $key_file = $keys_dir . $file_id . '_key.txt';
-        
-        if (file_exists($key_file)) {
-            // ดึงข้อมูลวันที่อัปโหลด
-            $upload_date = date('d/m/Y H:i', filemtime($encrypted_file));
-            
-            // ขนาดไฟล์
-            $file_size = round(filesize($encrypted_file) / 1024, 2); // ขนาดเป็น KB
-            
-            $images[] = [
-                'id' => $file_id,
-                'encrypted_file' => $encrypted_file,
-                'key_file' => $key_file,
-                'upload_date' => $upload_date,
-                'file_size' => $file_size
-            ];
-        }
-    }
-    
-    // เรียงลำดับตามวันที่อัปโหลดล่าสุด
-    usort($images, function($a, $b) {
-        return filemtime($b['encrypted_file']) - filemtime($a['encrypted_file']);
-    });
-}
-
-// ฟังก์ชั่นสำหรับถอดรหัสรูปภาพ
+// ฟังก์ชันถอดรหัสรูปภาพ
 function decryptImage($encrypted_file, $file_id) {
     global $keys_dir;
+    
     $key_file = $keys_dir . $file_id . '_key.txt';
     $iv_file = $keys_dir . $file_id . '_iv.txt';
     $tag_file = $keys_dir . $file_id . '_tag.txt';
-    
-    if (!file_exists($encrypted_file) || !file_exists($key_file) || !file_exists($iv_file)) {
+
+    if (!file_exists($encrypted_file) || !file_exists($key_file) || !file_exists($iv_file) || !file_exists($tag_file)) {
+        echo "❌ Key, IV หรือ Tag หายไป!<br>";
         return false;
     }
-    
-    // อ่าน key และ IV
+
+    // โหลด Key, IV, และ Tag
     $encryption_key = base64_decode(file_get_contents($key_file));
     $iv = base64_decode(file_get_contents($iv_file));
-    
-    // อ่านข้อมูลที่เข้ารหัสแล้ว
-    $encrypted_data = file_get_contents($encrypted_file);
-    
-    // ตรวจสอบว่ามี GCM tag หรือไม่
-    if (file_exists($tag_file)) {
-        $tag = base64_decode(file_get_contents($tag_file));
-        $cipher = 'aes-256-gcm';
-    } else {
-        $cipher = 'aes-256-cbc';
-    }
-    
-    // ถอดรหัสข้อมูล
-    if ($cipher === 'aes-256-gcm') {
-        $decrypted_data = openssl_decrypt(
-            $encrypted_data,
-            $cipher,
-            $encryption_key,
-            OPENSSL_RAW_DATA,
-            $iv,
-            $tag
-        );
-    } else {
-        $decrypted_data = openssl_decrypt(
-            $encrypted_data,
-            $cipher,
-            $encryption_key,
-            OPENSSL_RAW_DATA,
-            $iv
-        );
-    }
-    
-    if ($decrypted_data === false) {
+    $tag = base64_decode(file_get_contents($tag_file));
+
+    if (!$encryption_key || !$iv || !$tag) {
+        echo "❌ ข้อมูล Key, IV หรือ Tag ผิดพลาด!<br>";
         return false;
     }
-    
+
+    // โหลดข้อมูลไฟล์ที่เข้ารหัส
+    $encrypted_data = file_get_contents($encrypted_file);
+
+    // ถอดรหัสข้อมูล
+    $decrypted_data = openssl_decrypt(
+        $encrypted_data,
+        'aes-256-gcm',
+        $encryption_key,
+        OPENSSL_RAW_DATA,
+        $iv,
+        $tag
+    );
+
+    if ($decrypted_data === false) {
+        echo "❌ OpenSSL Error: " . openssl_error_string() . "<br>";
+    }
+
     return $decrypted_data;
 }
 
-// ถ้ามีการขอดูภาพ
-$view_image = null;
-$image_error = null;
-$image_mime = null;
+// โหลดข้อมูลทีมทั้งหมด
+$team_files = glob($teams_dir . '*.json');
+$teams_data = [];
+$log_message = "";
+$selected_team = isset($_GET['team']) ? $_GET['team'] : '';
+$search_query = isset($_GET['search']) ? $_GET['search'] : '';
 
-if (isset($_GET['view']) && !empty($_GET['view'])) {
-    $image_id = $_GET['view'];
-    
-    // ตรวจสอบว่ามีรูปภาพที่ต้องการหรือไม่
-    $image_found = false;
-    foreach ($images as $img) {
-        if ($img['id'] === $image_id) {
-            $image_found = true;
-            $decrypted_data = decryptImage($img['encrypted_file'], $img['id']);
-            
-            if ($decrypted_data !== false) {
-                // ตรวจสอบ MIME type
-                $finfo = new finfo(FILEINFO_MIME_TYPE);
-                $image_mime = $finfo->buffer($decrypted_data);
-                
-                // ตรวจสอบว่าเป็นรูปภาพจริงหรือไม่
-                if (strpos($image_mime, 'image/') === 0) {
-                    $view_image = [
-                        'id' => $img['id'],
-                        'data' => base64_encode($decrypted_data),
-                        'mime' => $image_mime,
-                        'upload_date' => $img['upload_date']
-                    ];
-                } else {
-                    $image_error = 'ไฟล์นี้ไม่ใช่รูปภาพที่รองรับ';
-                }
-            } else {
-                $image_error = 'ไม่สามารถถอดรหัสรูปภาพได้';
-            }
-            break;
+if ($team_files) {
+    foreach($team_files as $team_file) {
+        $json_data = file_get_contents($team_file);
+        $team = json_decode($json_data, true);
+        
+        if (json_last_error() === JSON_ERROR_NONE) {
+            // เพิ่มที่อยู่ไฟล์เพื่อใช้สำหรับการอ้างอิง
+            $team['file_path'] = $team_file;
+            $teams_data[] = $team;
+        } else {
+            $log_message .= "❌ JSON Error ในไฟล์ " . $team_file . ": " . json_last_error_msg() . "<br>";
         }
     }
     
-    if (!$image_found) {
-        $image_error = 'ไม่พบรูปภาพที่ต้องการ';
-    }
+    // เรียงลำดับทีมตามชื่อ
+    usort($teams_data, function($a, $b) {
+        return strcmp($a['team_name'], $b['team_name']);
+    });
+    
+    $log_message .= "📂 โหลดไฟล์ทีมทั้งหมด " . count($teams_data) . " ทีม<br>";
+} else {
+    $log_message = "⚠️ ไม่พบไฟล์ทีมในไดเร็กทอรี " . $teams_dir;
+}
+
+// ค้นหาทีมตามชื่อ
+$filtered_teams = $teams_data;
+if (!empty($search_query)) {
+    $filtered_teams = array_filter($teams_data, function($team) use ($search_query) {
+        return stripos($team['team_name'], $search_query) !== false;
+    });
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบดูรูปภาพที่อัปโหลด</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="css/view_img.css">
+    <title>ข้อมูลทีมและรูปภาพ</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --accent-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --error-color: #e74c3c;
+            --bg-color: #f5f8fa;
+            --card-bg: #ffffff;
+            --text-color: #34495e;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Sarabun', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .search-container {
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .search-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 0 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: var(--transition);
+        }
+
+        .search-button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .reset-button {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 0 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .reset-button:hover {
+            background-color: #7f8c8d;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+
+        .team-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .team-card {
+            background-color: #f9f9f9;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .team-card:hover {
+            background-color: #f0f8ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .team-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .team-card i {
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+        }
+
+        .member-count {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .member-details {
+            background-color: #fcfcfc;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 1px solid #eee;
+            display: none; /* เริ่มต้นซ่อนรายละเอียดสมาชิก */
+        }
+
+        .member-details.active {
+            display: block;
+        }
+
+        .member-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .member-name {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .member-name i {
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+        }
+
+        .id-card-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-top: 1rem;
+            border: 1px solid #eee;
+            transition: var(--transition);
+        }
+
+        .id-card-image:hover {
+            transform: scale(1.02);
+        }
+
+        .error-message {
+            background-color: #ffeaea;
+            border-left: 4px solid var(--error-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            color: var(--error-color);
+            border-radius: var(--border-radius);
+        }
+
+        .success-message {
+            background-color: #eaffea;
+            border-left: 4px solid var(--success-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #2d7d2d;
+            border-radius: var(--border-radius);
+        }
+
+        .log-container {
+            background-color: #f5f5f5;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-top: 2rem;
+            font-family: monospace;
+            color: #555;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #ccc;
+            margin-bottom: 1rem;
+        }
+
+        .back-to-teams {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .back-to-teams:hover {
+            text-decoration: underline;
+        }
+
+        .search-results {
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #f0f8ff;
+            border-radius: var(--border-radius);
+            color: var(--secondary-color);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            color: #777;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 1.5rem;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            .member-card {
+                padding: 1rem;
+            }
+
+            .team-list {
+                grid-template-columns: 1fr;
+            }
+
+            .search-container {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>รูปภาพที่อัปโหลดไว้</h1>
-            <a href="upload_img.php" class="upload-btn">
-                <i class="fas fa-cloud-upload-alt"></i>
-                อัปโหลดรูปภาพใหม่
-            </a>
-        </header>
+        <div class="header">
+            <h1><i class="fas fa-users"></i> ระบบข้อมูลทีม</h1>
+            <p>ระบบแสดงข้อมูลทีมและเอกสารประจำตัวของสมาชิก</p>
+        </div>
 
-        <?php if (!empty($auth_error)): ?>
-            <div class="error-message">
-                <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($auth_error); ?>
+        <?php if (!empty($log_message)): ?>
+        <div class="log-container">
+            <code><?php echo $log_message; ?></code>
+        </div>
+        <?php endif; ?>
+
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-search"></i> ค้นหาทีม</h2>
+            <form action="" method="GET" class="search-container">
+                <input type="text" name="search" class="search-input" placeholder="พิมพ์ชื่อทีมที่ต้องการค้นหา..." value="<?php echo htmlspecialchars($search_query); ?>">
+                <button type="submit" class="search-button"><i class="fas fa-search"></i> ค้นหา</button>
+                <?php if (!empty($search_query)): ?>
+                <a href="?" class="reset-button"><i class="fas fa-times"></i> ล้าง</a>
+                <?php endif; ?>
+            </form>
+
+            <?php if (!empty($search_query)): ?>
+            <div class="search-results">
+                <i class="fas fa-info-circle"></i> ผลการค้นหา "<?php echo htmlspecialchars($search_query); ?>": พบ <?php echo count($filtered_teams); ?> ทีม
             </div>
-        <?php elseif (empty($images)): ?>
-            <div class="no-images">
-                <i class="fas fa-image"></i>
-                <h2>ไม่พบรูปภาพที่อัปโหลดไว้</h2>
-                <p>คุณยังไม่ได้อัปโหลดรูปภาพใดๆ หรือไม่มีรูปภาพที่สามารถเข้าถึงได้</p>
-                <a href="upload_img.php" class="upload-btn">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    อัปโหลดรูปภาพแรกของคุณ
-                </a>
-            </div>
-        <?php else: ?>
-            <div class="image-grid">
-                <?php foreach ($images as $image): ?>
-                <div class="image-card" onclick="openImageViewer('<?php echo htmlspecialchars($image['id']); ?>')">
-                    <div class="image-placeholder">
-                        <i class="fas fa-image"></i>
+            <?php endif; ?>
+        </div>
+
+        <?php if (!empty($selected_team)): ?>
+            <?php
+            // หาข้อมูลทีมที่เลือก
+            $team_data = null;
+            foreach ($teams_data as $team) {
+                if ($team['file_path'] === $selected_team) {
+                    $team_data = $team;
+                    break;
+                }
+            }
+            ?>
+
+            <?php if ($team_data): ?>
+            <div class="card">
+                <a href="?" class="back-to-teams"><i class="fas fa-arrow-left"></i> กลับไปหน้ารายชื่อทีมทั้งหมด</a>
+                
+                <h2 class="card-title">ข้อมูลทีม: <?php echo htmlspecialchars($team_data['team_name']); ?></h2>
+                
+                <h3><i class="fas fa-user-friends"></i> สมาชิกทีม (<?php echo count($team_data['members']); ?> คน)</h3>
+                
+                <?php foreach ($team_data['members'] as $index => $member): ?>
+                    <div class="member-card">
+                        <h4 class="member-name">
+                            <i class="fas fa-user-circle"></i> 
+                            <?php echo htmlspecialchars($member['name']); ?> 
+                            <small>(สมาชิกคนที่ <?php echo $index + 1; ?>)</small>
+                        </h4>
+                        
+                        <?php if (!empty($member['id_card_image'])): ?>
+                            <?php
+                            $file_path = $upload_dir . $member['id_card_image'];
+                            $file_id = pathinfo($file_path, PATHINFO_FILENAME);
+                            $decrypted_image = decryptImage($file_path, $file_id);
+                            ?>
+                            
+                            <?php if ($decrypted_image): ?>
+                                <div class="image-container">
+                                    <img class="id-card-image" src="data:image/jpeg;base64,<?php echo base64_encode($decrypted_image); ?>" alt="รูปบัตรประจำตัวของ <?php echo htmlspecialchars($member['name']); ?>">
+                                </div>
+                            <?php else: ?>
+                                <div class="error-message">
+                                    <i class="fas fa-exclamation-triangle"></i> ไม่สามารถถอดรหัสภาพได้
+                                </div>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <div class="error-message">
+                                <i class="fas fa-image"></i> ไม่มีไฟล์รูปภาพสำหรับสมาชิกคนนี้
+                            </div>
+                        <?php endif; ?>
                     </div>
-                    <div class="image-info">
-                        <h3><?php echo htmlspecialchars($image['id']); ?></h3>
-                        <div class="image-meta">
-                            <span><i class="fas fa-calendar-alt"></i> <?php echo htmlspecialchars($image['upload_date']); ?></span>
-                            <span><i class="fas fa-file-alt"></i> <?php echo htmlspecialchars($image['file_size']); ?> KB</span>
-                        </div>
-                    </div>
-                </div>
                 <?php endforeach; ?>
             </div>
+            <?php else: ?>
+                <div class="card">
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p class="error-message">ไม่พบข้อมูลทีมที่เลือก</p>
+                        <a href="?" class="back-to-teams"><i class="fas fa-arrow-left"></i> กลับไปหน้ารายชื่อทีมทั้งหมด</a>
+                    </div>
+                </div>
+            <?php endif; ?>
+        <?php else: ?>
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-list"></i> รายชื่อทีมทั้งหมด (<?php echo count($filtered_teams); ?> ทีม)</h2>
+                
+                <?php if (!empty($filtered_teams)): ?>
+                    <div class="team-list">
+                        <?php foreach($filtered_teams as $team): ?>
+                            <a href="?team=<?php echo urlencode($team['file_path']); ?>" class="team-card">
+                                <div class="team-name">
+                                    <i class="fas fa-flag"></i> <?php echo htmlspecialchars($team['team_name']); ?>
+                                </div>
+                                <div class="member-count">
+                                    <i class="fas fa-user-friends"></i> จำนวนสมาชิก: <?php echo count($team['members']); ?> คน
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <p class="error-message">ไม่พบข้อมูลทีมที่ตรงกับการค้นหา</p>
+                    </div>
+                <?php endif; ?>
+            </div>
         <?php endif; ?>
-    </div>
-
-    <!-- Modal Image Viewer -->
-    <div id="imageModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">ดูรูปภาพ</div>
-                <button class="close-modal" onclick="closeImageViewer()">&times;</button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Content will be loaded here -->
-                <div class="loading">กำลังโหลดรูปภาพ...</div>
-            </div>
-            <div class="modal-meta" id="modalMeta">
-                <!-- Metadata will be loaded here -->
-            </div>
-            <div class="modal-actions">
-                <button class="download-btn" id="downloadBtn">
-                    <i class="fas fa-download"></i> ดาวน์โหลด
-                </button>
-                <button class="delete-btn" id="deleteBtn">
-                    <i class="fas fa-trash-alt"></i> ลบรูปภาพนี้
-                </button>
-            </div>
+        
+        <div class="footer">
+            <p>© <?php echo date('Y'); ?> ระบบดูข้อมูลทีมและรูปภาพ | ปรับปรุงล่าสุดเมื่อ: <?php echo date('d/m/Y H:i:s'); ?></p>
         </div>
     </div>
-
-    <script>
-        // ฟังก์ชั่นเปิดโมดัลแสดงรูปภาพ
-        function openImageViewer(imageId) {
-            const modal = document.getElementById('imageModal');
-            const modalBody = document.getElementById('modalBody');
-            const modalMeta = document.getElementById('modalMeta');
-            const downloadBtn = document.getElementById('downloadBtn');
-            const deleteBtn = document.getElementById('deleteBtn');
-            
-            // แสดงโมดัล
-            modal.style.display = 'block';
-            
-            // กำหนดการโหลดข้อมูล
-            modalBody.innerHTML = '<div style="text-align: center; padding: 30px;"><i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i><p style="margin-top: 10px;">กำลังโหลดรูปภาพ...</p></div>';
-            
-            // โหลดรูปภาพจาก URL
-            fetch('?view=' + encodeURIComponent(imageId))
-                .then(response => response.text())
-                .then(html => {
-                    // สร้าง parser สำหรับ HTML
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    
-                    // ตรวจสอบว่ามีข้อมูลรูปภาพหรือไม่
-                    if (doc.getElementById('viewImage')) {
-                        const imgSrc = doc.getElementById('viewImage').getAttribute('src');
-                        const uploadDate = doc.getElementById('imageDate').textContent;
-                        
-                        // แสดงรูปภาพในโมดัล
-                        modalBody.innerHTML = `<img src="${imgSrc}" class="modal-image" id="modalImage" alt="รูปภาพที่ดู">`;
-                        modalMeta.innerHTML = `<span><i class="fas fa-calendar-alt"></i> วันที่อัปโหลด: ${uploadDate}</span>`;
-                        
-                        // กำหนดปุ่มดาวน์โหลด
-                        downloadBtn.onclick = function() {
-                            const a = document.createElement('a');
-                            a.href = imgSrc;
-                            a.download = imageId + '.jpg'; // กำหนดชื่อไฟล์ดาวน์โหลด
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                        };
-                        
-                        // กำหนดปุ่มลบ (สามารถเพิ่มการยืนยันและฟังก์ชันลบได้ตามต้องการ)
-                        deleteBtn.onclick = function() {
-                            if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรูปภาพนี้?')) {
-                                alert('ฟังก์ชันลบรูปภาพยังไม่ได้ถูกพัฒนา กรุณาติดต่อผู้ดูแลระบบ');
-                                // ในกรณีที่ต้องการเพิ่มฟังก์ชันลบจริง สามารถใช้ fetch หรือ AJAX เพื่อส่งคำขอลบไปยังสคริปต์ PHP
-                            }
-                        };
-                    } else {
-                        // กรณีไม่พบรูปภาพหรือมีข้อผิดพลาด
-                        modalBody.innerHTML = '<div class="modal-error"><i class="fas fa-exclamation-circle"></i> ไม่สามารถโหลดรูปภาพได้</div>';
-                        modalMeta.innerHTML = '';
-                        
-                        downloadBtn.disabled = true;
-                        deleteBtn.disabled = true;
-                    }
-                })
-                .catch(error => {
-                    console.error('เกิดข้อผิดพลาดในการโหลดรูปภาพ:', error);
-                    modalBody.innerHTML = '<div class="modal-error"><i class="fas fa-exclamation-circle"></i> เกิดข้อผิดพลาดในการโหลดรูปภาพ</div>';
-                    modalMeta.innerHTML = '';
-                    
-                    downloadBtn.disabled = true;
-                    deleteBtn.disabled = true;
-                });
-        }
-        
-        // ฟังก์ชั่นปิดโมดัล
-        function closeImageViewer() {
-            const modal = document.getElementById('imageModal');
-            modal.style.display = 'none';
-            
-            // รีเซ็ตปุ่ม
-            document.getElementById('downloadBtn').disabled = false;
-            document.getElementById('deleteBtn').disabled = false;
-        }
-        
-        // ปิดโมดัลเมื่อคลิกนอกพื้นที่เนื้อหา
-        window.onclick = function(event) {
-            const modal = document.getElementById('imageModal');
-            if (event.target == modal) {
-                closeImageViewer();
-            }
-        }
-    </script>
-    
-    <?php if ($view_image || $image_error): ?>
-    <div style="display: none;">
-        <?php if ($view_image): ?>
-            <img id="viewImage" src="data:<?php echo htmlspecialchars($view_image['mime']); ?>;base64,<?php echo $view_image['data']; ?>" alt="รูปภาพที่ดู">
-            <div id="imageDate"><?php echo htmlspecialchars($view_image['upload_date']); ?></div>
-        <?php else: ?>
-            <div id="imageError"><?php echo htmlspecialchars($image_error); ?></div>
-        <?php endif; ?>
-    </div>
-    <?php endif; ?>
 </body>
 </html>

@@ -665,7 +665,7 @@ if (!isset($_SESSION['csrf_token'])) {
                             
                             // เปลี่ยนสีของ drop zone เมื่อมีการเลือกไฟล์
                             dropZone.style.borderColor = 'var(--success-color)';
-                            dropZone.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                            dropZone.style.backgroundColor = 'rgba(16, 185, 129, 0.57)';
                         }
                     });
                     

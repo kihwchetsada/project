@@ -34,7 +34,7 @@
     </section>
     
     <footer class="footer">
-        <p>© 2025 ROV Tournament Hub by Chetsadaphon wongwiwong</p>
+        <p>© 2025 RMUTI Tournament System by Chetsadaphon wongwiwong</p>
     </footer>
 </body>
 </html>

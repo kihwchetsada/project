@@ -1,114 +1,126 @@
 <?php
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "competition_system";
+// รวมโค้ด PHP จากไฟล์เดิม
+include 'upload_script.php';
 
-try {
-    $conn = new mysqli($servername, $username, $password, $dbname);
-    if ($conn->connect_error) {
-        throw new Exception("Connection failed: " . $conn->connect_error);
-    }
-    $conn->set_charset("utf8");
-} catch (Exception $e) {
-    die("ไม่สามารถเชื่อมต่อฐานข้อมูลได้: " . $e->getMessage());
-}
+// เพิ่มโค้ดสำหรับการจัดการข้อมูลทีม
+$team_success = false;
+$team_error = '';
 
-require_once 'backend/upload_script.php';
-
-function handleFileUpload($tmp_name, $name) {
-    $target_dir = "uploads/";
-    $encrypted_filename = md5(time() . $name) . '.' . pathinfo($name, PATHINFO_EXTENSION);
-    $target_file = $target_dir . $encrypted_filename;
-
-    if (move_uploaded_file($tmp_name, $target_file)) {
-        return $encrypted_filename;
+// ตรวจสอบการส่งฟอร์มข้อมูลทีม
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
+    // ตรวจสอบ CSRF token
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        $team_error = 'CSRF token ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง';
     } else {
-        throw new Exception("Sorry, there was an error uploading your file.");
-    }
-}
+        // ตรวจสอบข้อมูลทีม
+        $competition_type = $_POST['competition_type'] ?? '';
+        $team_name = trim($_POST['team_name'] ?? '');
+        $coach_name = trim($_POST['coach_name'] ?? '');
+        $coach_phone = trim($_POST['coach_phone'] ?? '');
+        $leader_school = trim($_POST['leader_school'] ?? '');
 
-function validateInput($data) {
-    $data = trim($data);
-    $data = stripslashes($data);
-    $data = htmlspecialchars($data);
-    return $data;
-}
+        if (empty($competition_type) || empty($team_name) || empty($coach_name) || empty($coach_phone) || empty($leader_school)) {
+            $team_error = 'กรุณากรอกข้อมูลทีมให้ครบถ้วน';
+        } else {
+            // นับจำนวนสมาชิกที่มีข้อมูล
+            $member_count = 0;
+            for ($i = 1; $i <= 8; $i++) {
+                if (!empty($_POST["member_name_$i"])) {
+                    $member_count++;
+                }
+            }
 
-function validateEmail($email) {
-    return filter_var($email, FILTER_VALIDATE_EMAIL);
-}
+            if ($member_count < 5) {
+                $team_error = 'กรุณากรอกข้อมูลสมาชิกอย่างน้อย 5 คน';
+            } else {
+                // บันทึกข้อมูลทีม
+                $team_data = [
+                    'competition_type' => $competition_type,
+                    'team_name' => $team_name,
+                    'coach' => [
+                        'name' => $coach_name,
+                        'phone' => $coach_phone,
+                        'school' => $leader_school
+                    ],
+                    'members' => []
+                ];
 
-function validatePhone($phone) {
-    return preg_match('/^[0-9]{10}$/', $phone);
-}
+                // รวบรวมข้อมูลสมาชิก
+                for ($i = 1; $i <= 8; $i++) {
+                    if (!empty($_POST["member_name_$i"])) {
+                        $id_card_image = '';
+                        $file_field = "member_id_card_$i";
 
-$success = false;
+                        if (!empty($_FILES[$file_field]['name'])) {
+                            $upload_dir = 'uploads/';
+                            $keys_dir = 'keys/';
 
+                            if (!is_dir($upload_dir)) {
+                                mkdir($upload_dir, 0755, true);
+                            }
+                            if (!is_dir($keys_dir)) {
+                                mkdir($keys_dir, 0755, true);
+                            }
 
-function getCompetitions($conn) {
-    try {
-        $sql = "SELECT id, name FROM competitions_1 WHERE is_open = 1 
-                AND CURDATE() BETWEEN start_date AND end_date";
-        $result = $conn->query($sql);
-        
-        if ($result === false) {
-            throw new Exception($conn->error);
-        }
-        
-        $competitions = [];
-        while($row = $result->fetch_assoc()) {
-            $competitions[] = $row;
-        }
-        return $competitions;
-    } catch (Exception $e) {
-        error_log($e->getMessage());
-        return [];
-    }
-}
+                            $image_data = file_get_contents($_FILES[$file_field]['tmp_name']);
 
-$competitions = getCompetitions($conn);
+                            $cipher = 'aes-256-gcm';
+                            $encryption_key = random_bytes(32);
+                            $iv_length = openssl_cipher_iv_length($cipher);
+                            $iv = random_bytes($iv_length);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        $team_name = validateInput($_POST['team_name'] ?? '');
-        $competition_id = isset($_POST['competition_id']) ? (int)$_POST['competition_id'] : 0;
-        $advisor = validateInput($_POST['advisor'] ?? '');
-        $contact = validateInput($_POST['contact'] ?? '');
-        $email = validateInput($_POST['email'] ?? '');
-        
-        $member_names = $_POST['member_name'] ?? [];
-        $id_card_images = $_FILES['id_card_image'] ?? [];
-        
-        $conn->begin_transaction();
-        
-        $sql_team = "INSERT INTO teams (team_name, competition_id, advisor, contact, email, registration_date) VALUES (?, ?, ?, ?, ?, NOW())";
-        $stmt_team = $conn->prepare($sql_team);
-        $stmt_team->bind_param("sisss", $team_name, $competition_id, $advisor, $contact, $email);
-        $stmt_team->execute();
-        $team_id = $stmt_team->insert_id;
-        
-        $sql_member = "INSERT INTO team_members (team_id, player_name, id_card_image) VALUES (?, ?, ?)";
-        $stmt_member = $conn->prepare($sql_member);
-        
-        
-        for ($i = 0; $i < count($member_names); $i++) {
-            if (!empty($member_names[$i]) && !empty($id_card_images['tmp_name'][$i])) {
-                $encrypted_filename = handleFileUpload($id_card_images['tmp_name'][$i], $id_card_images['name'][$i]);
-                
-                $stmt_member->bind_param("iss", $team_id, $member_names[$i], $encrypted_filename);
-                $stmt_member->execute();
+                            $tag = '';
+                            $encrypted_image = openssl_encrypt(
+                                $image_data,
+                                $cipher,
+                                $encryption_key,
+                                OPENSSL_RAW_DATA,
+                                $iv,
+                                $tag
+                            );
+
+                            $timestamp = time();
+                            $encrypted_filename = $upload_dir . $team_name . '_id_card_' . $i . '.enc';
+                            $key_filename = $keys_dir . $team_name . '_key_' . $i . '.txt';
+                            $iv_filename = $keys_dir . $team_name . '_iv_' . $i . '.txt';
+                            $tag_filename = $keys_dir . $team_name . '_tag_' . $i . '.txt';
+
+                            file_put_contents($encrypted_filename, $encrypted_image);
+                            file_put_contents($key_filename, base64_encode($encryption_key));
+                            file_put_contents($iv_filename, base64_encode($iv));
+                            file_put_contents($tag_filename, base64_encode($tag));
+
+                            $id_card_image = $encrypted_filename;
+                        }
+
+                        $team_data['members'][] = [
+                            'name' => $_POST["member_name_$i"],
+                            'game_name' => $_POST["member_game_name_$i"] ?? '',
+                            'age' => $_POST["member_age_$i"] ?? '',
+                            'phone' => $_POST["member_phone_$i"] ?? '',
+                            'position' => $_POST["member_position_$i"] ?? '',
+                            'id_card_image' => $id_card_image
+                        ];
+                    }
+                }
+
+                $team_data_file = 'teams/' . $team_name . '_' . time() . '.json';
+                if (!is_dir('teams')) {
+                    mkdir('teams', 0755, true);
+                }
+
+                if (file_put_contents($team_data_file, json_encode($team_data, JSON_PRETTY_PRINT))) {
+                    $team_success = true;
+                } else {
+                    $team_error = 'ไม่สามารถบันทึกข้อมูลทีมได้ กรุณาลองใหม่อีกครั้ง';
+                }
             }
         }
-        
-        $conn->commit();
-        $success = true;
-        echo "ลงทะเบียนสำเร็จ";
-
-    } catch (Exception $e) {
-        $conn->rollback();
-        echo "เกิดข้อผิดพลาด: " . $e->getMessage();
     }
+}
+
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 ?>
 
@@ -117,288 +129,596 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROV Tournament Hub - ลงทะเบียนทีม</title>
-    <link rel="icon" type="image/png" href="../img/logo.jpg">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap">
-    <link rel="stylesheet" href="css/r.css">
+    <title>ลงทะเบียนทีม</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --primary-dark: #2980b9;
+            --secondary-color: #2ecc71;
+            --secondary-dark: #27ae60;
+            --accent-color: #f1c40f;
+            --text-color: #333;
+            --light-color: #f9f9f9;
+            --grey-color: #ecf0f1;
+            --grey-dark: #bdc3c7;
+            --error-color: #e74c3c;
+            --success-color: #27ae60;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Prompt', 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-color);
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .form-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+            margin-bottom: 1rem;
+        }
+        
+        .form-group {
+            flex: 1 0 200px;
+            padding: 0 10px;
+            margin-bottom: 1rem;
+        }
+        
+        .form-group.full-width {
+            flex: 1 0 100%;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group label .required {
+            color: var(--error-color);
+            margin-left: 4px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid var(--grey-dark);
+            border-radius: 5px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+        
+        .file-input-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .file-input-preview {
+            width: 100%;
+            height: 120px;
+            background-color: var(--grey-color);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            border: 2px dashed var(--grey-dark);
+            overflow: hidden;
+        }
+        
+        .file-input-preview i {
+            font-size: 2rem;
+            color: var(--grey-dark);
+        }
+        
+        .file-input-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .custom-file-input {
+            cursor: pointer;
+        }
+        
+        .member-card {
+            background-color: var(--grey-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .member-card.optional {
+            border-left-color: var(--accent-color);
+        }
+        
+        .member-number {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            background-color: var(--primary-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .member-card.optional .member-number {
+            background-color: var(--accent-color);
+        }
+        
+        .required-tag {
+            background-color: var(--primary-dark);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+        
+        .optional-tag {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn i {
+            margin-right: 0.5rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: var(--secondary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert-error {
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--error-color);
+            color: var(--error-color);
+        }
+        
+        .alert-success {
+            background-color: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--success-color);
+            color: var(--success-color);
+        }
+        
+        .progress-container {
+            margin-bottom: 2rem;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+        
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            right: -50%;
+            width: 100%;
+            height: 3px;
+            background-color: var(--grey-dark);
+            z-index: 0;
+        }
+        
+        .step.active:not(:last-child)::after {
+            background-color: var(--primary-color);
+        }
+        
+        .step-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--grey-dark);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .step.active .step-icon {
+            background-color: var(--primary-color);
+        }
+        
+        .step.completed .step-icon {
+            background-color: var(--success-color);
+        }
+        
+        .step-text {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--grey-dark);
+        }
+        
+        .step.active .step-text {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .step.completed .step-text {
+            color: var(--success-color);
+        }
+        
+        footer {
+            background-color: var(--primary-dark);
+            color: white;
+            text-align: center;
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .form-group {
+                flex: 1 0 100%;
+            }
+            
+            .progress-steps {
+                flex-wrap: wrap;
+            }
+            
+            .step {
+                flex: 0 0 50%;
+                margin-bottom: 1rem;
+            }
+            
+            .step:not(:last-child)::after {
+                display: none;
+            }
+        }
+
+        /* เพิ่มสำหรับการแสดงผลทำเสร็จ */
+        .success-message {
+            text-align: center;
+            padding: 3rem 0;
+        }
+        
+        .success-icon {
+            font-size: 5rem;
+            color: var(--success-color);
+            margin-bottom: 1rem;
+        }
+        
+        .id-preview {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--grey-dark);
+        }
+    </style>
 </head>
 <body>
+    <header>
+        <div class="container">
+            <h1>ลงทะเบียนการแข่งขัน</h1>
+            <p>กรอกข้อมูลทีมของคุณเพื่อเข้าร่วมการแข่งขัน</p>
+        </div>
+    </header>
+    
     <div class="container">
-        <img src="img/logo.jpg" alt="ROV Tournament Logo" class="tournament-logo" width="100" height="100">
-        <h2>สมัครทีมแข่งขัน ROV</h2>
-        
-        <?php if (!empty($errors)): ?>
-            <?php foreach ($errors as $error): ?>
-                <div class="error">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    <?php echo htmlspecialchars($error); ?>
+        <?php if ($team_success): ?>
+            <div class="form-container success-message">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
                 </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-
-        <?php if ($success): ?>
-            <div class="success">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                บันทึกข้อมูลสำเร็จ! ขอบคุณที่สมัครเข้าร่วมการแข่งขัน
-            </div>
-        <?php endif; ?>
-
-        <?php if (empty($competitions)): ?>
-            <div class="error">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                ขณะนี้ยังไม่มีรายการแข่งขันที่เปิดรับสมัคร กรุณาติดตามประกาศเร็วๆ นี้
+                <h2>ลงทะเบียนสำเร็จ!</h2>
+                <p>ขอบคุณสำหรับการลงทะเบียน เราได้รับข้อมูลของทีม <?php echo htmlspecialchars($team_name); ?> เรียบร้อยแล้ว</p>
+                <p>ทางทีมงานจะติดต่อกลับไปที่หมายเลข <?php echo htmlspecialchars($coach_phone); ?> เพื่อยืนยันการลงทะเบียน</p>
+                <div style="margin-top: 2rem;">
+                    <a href="index.php" class="btn btn-primary">
+                        <i class="fas fa-home"></i> กลับสู่หน้าหลัก
+                    </a>
+                </div>
             </div>
         <?php else: ?>
-            <form method="POST" onsubmit="return validateForm()" enctype="multipart/form-data">
-                <div class="form-section team-info">
-                    <h3>ข้อมูลทีม</h3>
-                    
-                    <label for="team_name" class="required">ชื่อทีม</label>
-                    <input type="text" id="team_name" name="team_name" required 
-                        placeholder="กรอกชื่อทีมของคุณ"
-                        value="<?php echo htmlspecialchars($_POST['team_name'] ?? ''); ?>">
-
-                    <label for="competition_id" class="required">รายการแข่งขัน</label>
-                    <select id="competition_id" name="competition_id" required>
-                        <option value="">-- เลือกรายการแข่งขัน --</option>
-                        <?php foreach ($competitions as $competition): ?>
-                            <option value="<?php echo htmlspecialchars($competition['id']); ?>"
-                                <?php echo (isset($_POST['competition_id']) && $_POST['competition_id'] == $competition['id']) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($competition['name']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-
-                    <label for="advisor" class="required">ชื่อผู้ดูแลทีม / หัวหน้าทีม</label>
-                    <input type="text" id="advisor" name="advisor" required
-                        placeholder="ชื่อผู้ดูแลทีมหรือผู้จัดการทีม"
-                        value="<?php echo htmlspecialchars($_POST['advisor'] ?? ''); ?>">
-
-                    <label for="contact" class="required">เบอร์ติดต่อ</label>
-                    <input type="tel" id="contact" name="contact" pattern="[0-9]{10}" required
-                        placeholder="0812345678"
-                        value="<?php echo htmlspecialchars($_POST['contact'] ?? ''); ?>">
-
-                    <label for="email" class="required">อีเมล</label>
-                    <input type="email" id="email" name="email" required
-                        placeholder="example@email.com"
-                        value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
+            <div class="progress-container">
+                <div class="progress-steps">
+                    <div class="step active">
+                        <div class="step-icon">1</div>
+                        <div class="step-text">ข้อมูลทีม</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-icon">2</div>
+                        <div class="step-text">ข้อมูลสมาชิก</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-icon">3</div>
+                        <div class="step-text">ตรวจสอบ</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-icon">4</div>
+                        <div class="step-text">เสร็จสิ้น</div>
+                    </div>
                 </div>
-
-                <div class="form-section">
-                    <h3>ข้อมูลสมาชิกทีม (ต้องมีอย่างน้อย 5 คน, สูงสุด 8 คน)</h3>
-                    <div id="members">
-                        <div class="member">
-                            <div class="member-header">
-                                <span class="member-number">สมาชิกคนที่ 1</span>
-                            </div>
-                            
-                            <label for="member_name_1" class="required">ชื่อ-นามสกุล</label>
-                            <input type="text" name="member_name[]" id="member_name_1" required
-                                placeholder="ชื่อ-นามสกุลของผู้เล่น"
-                                value="<?php echo htmlspecialchars($_POST['member_name'][0] ?? ''); ?>">
-                            
-                            <label for="game_name_1" class="required">ชื่อในเกม</label>
-                            <input type="text" name="game_name[]" id="game_name_1" required
-                                placeholder="ชื่อที่ใช้ในเกม ROV"
-                                value="<?php echo htmlspecialchars($_POST['game_name'][0] ?? ''); ?>">
-                            
-                            <label for="role_1" class="required">ตำแหน่งที่เล่น</label>
-                            <input type="text" name="role[]" id="role_1" required
-                                placeholder="เช่น Midlane, Jungle, Roaming, ADC, Support"
-                                value="<?php echo htmlspecialchars($_POST['role'][0] ?? ''); ?>">
-                            
-                            <label for="age_1" class="required">อายุ</label>
-                            <input type="number" name="age[]" id="age_1" min="0" required
-                                placeholder="อายุผู้เล่น"
-                                value="<?php echo htmlspecialchars($_POST['age'][0] ?? ''); ?>">
-                            
-                            <label for="phone_1">เบอร์โทร</label>
-                            <input type="tel" name="phone[]" id="phone_1" pattern="[0-9]{10}"
-                                placeholder="0812345678 (ถ้ามี)"
-                                value="<?php echo htmlspecialchars($_POST['phone'][0] ?? ''); ?>">
-                            
-                            <label for="id_card_image_1" class="required">ภาพบัตรประชาชน (JPG, JPEG, PNG เท่านั้น, ขนาดไม่เกิน 5MB)</label>
-                            <input type="file" name="id_card_image[]" id="id_card_image_1" accept="image/jpeg,image/jpg,image/png" required 
-                                onchange="previewImage(this, 'preview_1')">
-                            <img id="preview_1" class="upload-preview" alt="ตัวอย่างภาพบัตรประชาชน">
+            </div>
+            
+            <?php if (!empty($team_error)): ?>
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($team_error); ?>
+                </div>
+            <?php endif; ?>
+            
+            <form action="" method="post" enctype="multipart/form-data" id="registrationForm">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                
+                <div class="form-container">
+                    <h3 class="section-title"><i class="fas fa-users-cog"></i> ข้อมูลทีม</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="competition_type">ประเภทการแข่งขัน <span class="required">*</span></label>
+                            <select id="competition_type" name="competition_type" class="form-control" required>
+                                <option value="">-- เลือกประเภท --</option>
+                                <option value="รุ่นเยาวชน">รุ่นเยาวชน</option>
+                                <option value="รุ่นประชาชน">รุ่นประชาชน</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="team_name">ชื่อทีม <span class="required">*</span></label>
+                            <input type="text" id="team_name" name="team_name" class="form-control" required>
                         </div>
                     </div>
-                    <button type="button" onclick="addMember()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                        เพิ่มสมาชิก
-                    </button>
-                    <button type="submit">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                        ยืนยันการสมัคร
-                    </button>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="coach_name">ชื่อผู้ควบคุมทีม <span class="required">*</span></label>
+                            <input type="text" id="coach_name" name="coach_name" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="coach_phone">เบอร์โทรผู้ควบคุมทีม <span class="required">*</span></label>
+                            <input type="tel" id="coach_phone" name="coach_phone" class="form-control" pattern="[0-9]{9,10}" placeholder="0xxxxxxxxx" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="leader_school">สังกัด/โรงเรียน <span class="required">*</span></label>
+                            <input type="text" id="leader_school" name="leader_school" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-container">
+                    <h3 class="section-title"><i class="fas fa-users"></i> ข้อมูลสมาชิก</h3>
+                    <p style="margin-bottom: 1.5rem;">กรุณากรอกข้อมูลสมาชิกในทีมของคุณ (จำเป็นต้องมีอย่างน้อย 5 คน, สูงสุด 8 คน)</p>
+                    
+                    <?php for ($i = 1; $i <= 8; $i++): ?>
+                        <div class="member-card <?php echo $i > 5 ? 'optional' : ''; ?>">
+                            <div class="member-number"><?php echo $i; ?></div>
+                            <h4>
+                                สมาชิกคนที่ <?php echo $i; ?> 
+                                <?php if ($i <= 5): ?>
+                                    <span class="required-tag">จำเป็น</span>
+                                <?php else: ?>
+                                    <span class="optional-tag">ไม่จำเป็น</span>
+                                <?php endif; ?>
+                            </h4>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="member_name_<?php echo $i; ?>">ชื่อ-นามสกุล <span class="required">*</span></label>
+                                    <input type="text" id="member_name_<?php echo $i; ?>" name="member_name_<?php echo $i; ?>" class="form-control" <?php echo $i <= 5 ? 'required' : ''; ?>>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="member_game_name_<?php echo $i; ?>">ชื่อในเกม</label>
+                                    <input type="text" id="member_game_name_<?php echo $i; ?>" name="member_game_name_<?php echo $i; ?>" class="form-control">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="member_age_<?php echo $i; ?>">อายุ</label>
+                                    <input type="number" id="member_age_<?php echo $i; ?>" name="member_age_<?php echo $i; ?>" min="7" max="99" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="member_phone_<?php echo $i; ?>">เบอร์โทรศัพท์</label>
+                                    <input type="tel" id="member_phone_<?php echo $i; ?>" name="member_phone_<?php echo $i; ?>" pattern="[0-9]{9,10}" placeholder="0xxxxxxxxx" class="form-control">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="member_position_<?php echo $i; ?>">ตำแหน่ง</label>
+                                    <input type="text" id="member_position_<?php echo $i; ?>" name="member_position_<?php echo $i; ?>" class="form-control">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <label for="member_id_card_<?php echo $i; ?>">รูปบัตรประชาชน <span class="required">*</span></label>
+                                    <div class="file-input-container">
+                                        <div class="file-input-preview" id="preview_id_card_<?php echo $i; ?>">
+                                            <i class="fas fa-id-card"></i>
+                                        </div>
+                                        <input type="file" id="member_id_card_<?php echo $i; ?>" name="member_id_card_<?php echo $i; ?>" class="form-control custom-file-input" accept="image/*" <?php echo $i <= 5 ? 'required' : ''; ?>>
+                                        <div class="id-preview">* กรุณาอัพโหลดภาพถ่ายบัตรประชาชนที่ชัดเจน</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endfor; ?>
+                    
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button type="submit" name="submit_team" class="btn btn-success btn-block">
+                            <i class="fas fa-check-circle"></i> ลงทะเบียนทีม
+                        </button>
+                    </div>
                 </div>
             </form>
         <?php endif; ?>
     </div>
-
+    
+    <footer>
+        <div class="container">
+            <p>&copy; <?php echo date('Y'); ?> ระบบลงทะเบียนการแข่งขัน</p>
+        </div>
+    </footer>
+    
     <script>
-
-        let memberCount = 1;
-
-        function addMember() {
-            if (memberCount < 8) {
-                memberCount++;
-                const membersDiv = document.getElementById('members');
-                const memberDiv = document.createElement('div');
-                memberDiv.className = 'member';
-                memberDiv.innerHTML = `
-                    <div class="member-header">
-                        <span class="member-number">สมาชิกคนที่ ${memberCount}</span>
-                        <span class="remove-member" onclick="removeMember(this)">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                            ลบ
-                        </span>
-                    </div>
-                    
-                    <label for="member_name_${memberCount}" class="required">ชื่อ-นามสกุล</label>
-                    <input type="text" name="member_name[]" id="member_name_${memberCount}" required placeholder="ชื่อ-นามสกุลของผู้เล่น">
-                    
-                    <label for="game_name_${memberCount}" class="required">ชื่อในเกม</label>
-                    <input type="text" name="game_name[]" id="game_name_${memberCount}" required placeholder="ชื่อที่ใช้ในเกม ROV">
-                    
-                    <label for="role_${memberCount}" class="required">ตำแหน่งที่เล่น</label>
-                    <input type="text" name="role[]" id="role_${memberCount}" required placeholder="เช่น Midlane, Jungle, Roaming, ADC, Support">
-                    
-                    <label for="age_${memberCount}" class="required">อายุ</label>
-                    <input type="number" name="age[]" id="age_${memberCount}" min="0" required placeholder="อายุผู้เล่น">
-                    
-                    <label for="phone_${memberCount}">เบอร์โทร</label>
-                    <input type="tel" name="phone[]" id="phone_${memberCount}" pattern="[0-9]{10}" placeholder="0812345678 (ถ้ามี)">
-                    
-                    <label for="id_card_image_${memberCount}" class="required">ภาพบัตรประชาชน (JPG, JPEG, PNG เท่านั้น, ขนาดไม่เกิน 5MB)</label>
-                    <input type="file" name="id_card_image[]" id="id_card_image_${memberCount}" accept="image/jpeg,image/jpg,image/png" required
-                           onchange="previewImage(this, 'preview_${memberCount}')">
-                    <img id="preview_${memberCount}" class="upload-preview" alt="ตัวอย่างภาพบัตรประชาชน">
-                `;
-                membersDiv.appendChild(memberDiv);
-            } else {
-                showNotification('เพิ่มสมาชิกได้สูงสุด 8 คนเท่านั้น', 'error');
-            }
-        }
-
-        function removeMember(element) {
-            if (memberCount > 5) {
-                const memberDiv = element.closest('.member');
-                memberDiv.remove();
-                memberCount--;
+        // สำหรับแสดงตัวอย่างรูปภาพก่อนอัพโหลด
+        document.addEventListener('DOMContentLoaded', function() {
+            for (let i = 1; i <= 8; i++) {
+                const fileInput = document.getElementById(`member_id_card_${i}`);
+                const preview = document.getElementById(`preview_id_card_${i}`);
                 
-                // Renumber the remaining members
-                const members = document.querySelectorAll('.member');
-                members.forEach((member, index) => {
-                    member.querySelector('.member-number').textContent = `สมาชิกคนที่ ${index + 1}`;
-                });
-            } else {
-                showNotification('ต้องมีสมาชิกอย่างน้อย 5 คน', 'error');
-            }
-        }
-
-        function previewImage(input, previewId) {
-            const preview = document.getElementById(previewId);
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                }
-                reader.readAsDataURL(input.files[0]);
-            } else {
-                preview.style.display = 'none';
-            }
-        }
-
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = type;
-            notification.textContent = message;
-            
-            // Add icon based on type
-            const icon = document.createElement('span');
-            icon.innerHTML = type === 'error' 
-                ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'
-                : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
-            
-            notification.prepend(icon);
-            
-            document.querySelector('.container').appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-
-        function validateForm() {
-            // ตรวจสอบจำนวนสมาชิก
-            const memberInputs = document.querySelectorAll('input[name="member_name[]"]');
-            let filledMembers = 0;
-            memberInputs.forEach(input => {
-                if (input.value.trim() !== '') filledMembers++;
-            });
-
-            if (filledMembers < 5) {
-                showNotification('ต้องมีสมาชิกทีมอย่างน้อย 5 คน', 'error');
-                return false;
-            }
-            
-            // ตรวจสอบการอัปโหลดไฟล์
-            let allFilesValid = true;
-            const fileInputs = document.querySelectorAll('input[type="file"]');
-            fileInputs.forEach((input, index) => {
-                const memberName = document.getElementsByName('member_name[]')[index].value;
-                if (memberName.trim() !== '') {
-                    if (!input.files[0]) {
-                        showNotification(`กรุณาอัปโหลดภาพบัตรประชาชนของสมาชิกคนที่ ${index + 1}`, 'error');
-                        allFilesValid = false;
-                    } else {
-                        const fileSize = input.files[0].size;
-                        const fileType = input.files[0].type;
-                        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-                        
-                        if (!validTypes.includes(fileType)) {
-                            showNotification(`ไฟล์บัตรประชาชนของสมาชิกคนที่ ${index + 1} ต้องเป็นไฟล์ภาพเท่านั้น (JPG, JPEG, PNG)`, 'error');
-                            allFilesValid = false;
-                        } else if (fileSize > 5242880) { // 5MB
-                            showNotification(`ไฟล์บัตรประชาชนของสมาชิกคนที่ ${index + 1} มีขนาดใหญ่เกินไป (สูงสุด 5MB)`, 'error');
-                            allFilesValid = false;
+                if (fileInput && preview) {
+                    fileInput.addEventListener('change', function() {
+                        if (this.files && this.files[0]) {
+                            const reader = new FileReader();
+                            
+                            reader.onload = function(e) {
+                                while (preview.firstChild) {
+                                    preview.removeChild(preview.firstChild);
+                                }
+                                
+                                const img = document.createElement('img');
+                                img.src = e.target.result;
+                                preview.appendChild(img);
+                            };
+                            
+                            reader.readAsDataURL(this.files[0]);
+                        } else {
+                            while (preview.firstChild) {
+                                preview.removeChild(preview.firstChild);
+                            }
+                            
+                            const icon = document.createElement('i');
+                            icon.className = 'fas fa-id-card';
+                            preview.appendChild(icon);
                         }
-                    }
+                    });
                 }
-            });
-            
-            if (!allFilesValid) {
-                return false;
             }
-
-            // ยืนยันการส่งข้อมูล
-            return confirm('ยืนยันการส่งข้อมูล?');
-        }
-        
-        // Initialize first member's image preview
-        const firstImageInput = document.getElementById('id_card_image_1');
-        if (firstImageInput) {
-            firstImageInput.addEventListener('change', function() {
-                previewImage(this, 'preview_1');
-            });
-        }
-        
-        // Add 4 more members by default (to have 5 total)
-        for (let i = 0; i < 4; i++) {
-            addMember();
-        }
-
-        // Smooth scrolling for form elements
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
         });
     </script>
 </body>
