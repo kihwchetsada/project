@@ -1,4 +1,5 @@
 <?php
+
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -25,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="img/logo.jpg">
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -55,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="input-with-icon">
                     <i class="input-icon fas fa-lock"></i>
                     <input type="password" id="password" name="password" placeholder="กรุณาใส่รหัสผ่าน" required>
-                    <i class="toggle-password fas fa-eye-slash " tabindex="0"></i>
+                    <i class="toggle-password fas fa-eye-slash" tabindex="0"></i>
                 </div>
             </div>
             
@@ -76,15 +78,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <script>
         document.querySelectorAll('.toggle-password').forEach(button => {
-    button.addEventListener('click', function() {
-        const passwordInput = this.previousElementSibling; // สมมติว่าไอคอนอยู่ถัดจาก input
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        this.classList.toggle('fa-eye');
-        this.classList.toggle('fa-eye-slash');
-    });
-});
-
+            button.addEventListener('click', function() {
+                const passwordInput = this.previousElementSibling; 
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.classList.toggle('fa-eye');
+                this.classList.toggle('fa-eye-slash');
+            });
+        });
     </script>
 </body>
 </html>

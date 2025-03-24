@@ -15,7 +15,7 @@
         </div>
         <nav>
             <a href="index.php">หน้าหลัก</a>
-            <a href="#">ข้อมูลการแข่งขัน</a>
+            <a href="event-info.php">ข้อมูลการแข่งขัน</a>
             <a href="register.php">สมัครทีม</a>
             <a href="#">ประกาศ</a>
             <a href="#">ติดต่อเรา</a>
@@ -36,6 +36,6 @@
     <footer class="footer">
         <p>© 2025 RMUTI Tournament System by Chetsadaphon wongwiwong</p>
     </footer>
-    
+
 </body>
 </html>

@@ -1,3 +1,4 @@
+/* สไตล์หลักสำหรับหน้าเข้าสู่ระบบ */
 * {
   margin: 0;
   padding: 0;
@@ -6,107 +7,132 @@
 }
 
 body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #6a11cb, #2575fc);
   padding: 20px;
 }
 
 .login-container {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 2.5rem;
-  border-radius: 20px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  background-color: white;
   width: 100%;
   max-width: 420px;
-  text-align: center;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
 }
 
 .login-logo {
-  background: linear-gradient(to right, #6a11cb, #2575fc);
   width: 80px;
   height: 80px;
-  border-radius: 50%;
+  background: linear-gradient(45deg, #4776E6, #8E54E9);
+  color: white;
+  font-size: 36px;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0 auto 20px auto;
-  box-shadow: 0 8px 15px rgba(42, 117, 252, 0.3);
-}
-
-.login-logo i {
-  font-size: 36px;
-  color: white;
+  border-radius: 50%;
+  margin: 0 auto 24px auto;
+  box-shadow: 0 6px 15px rgba(131, 93, 233, 0.3);
 }
 
 h2 {
-  color: #333;
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
-  font-weight: 600;
+  text-align: center;
+  color: #444;
+  margin-bottom: 24px;
+  font-weight: 500;
+  position: relative;
+  font-size: 24px;
 }
 
 .login-form {
-  text-align: left;
+  margin-top: 24px;
 }
 
 .form-group {
   margin-bottom: 20px;
 }
 
-label {
+.form-group label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
   color: #555;
-  font-size: 1rem;
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 400;
 }
 
 .input-with-icon {
   position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
 }
 
-.input-with-icon .input-icon {
+.input-icon {
   position: absolute;
   left: 15px;
   top: 50%;
   transform: translateY(-50%);
-  color: #6a11cb;
+  color: #8E54E9;
+  font-size: 18px;
 }
 
-.input-with-icon input[type="password"] {
+input[type="text"],
+input[type="password"] {
   width: 100%;
-  padding: 15px 45px 15px 45px; /* เว้นช่องขวาและซ้ายให้พอ */
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  background-color: #f8fafc;
-  font-size: 1rem;
-  transition: all 0.3s ease;
+  padding: 14px 14px 14px 45px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  transition: all 0.3s;
+  font-size: 16px;
+  background-color: #f9f9f9;
 }
 
-.input-with-icon .toggle-password {
+input[type="text"]:focus,
+input[type="password"]:focus {
+  border-color: #8E54E9;
+  box-shadow: 0 0 0 3px rgba(142, 84, 233, 0.2);
+  background-color: #fff;
+  outline: none;
+}
+
+input[type="text"]::placeholder,
+input[type="password"]::placeholder {
+  color: #bbb;
+}
+
+.toggle-password {
   position: absolute;
   right: 15px;
   top: 50%;
   transform: translateY(-50%);
+  color: #888;
   cursor: pointer;
-  color: #6a11cb;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.toggle-password:hover {
+  color: #8E54E9;
 }
 
 .form-options {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  font-size: 0.9rem;
+  margin-bottom: 24px;
+  font-size: 14px;
 }
 
 .remember-me {
@@ -114,106 +140,107 @@ label {
   align-items: center;
 }
 
-.remember-me input {
+.remember-me input[type="checkbox"] {
   margin-right: 8px;
+  accent-color: #8E54E9;
+  width: 16px;
+  height: 16px;
 }
 
 .forgot-password {
-  color: #6a11cb;
+  color: #8E54E9;
   text-decoration: none;
-  transition: color 0.3s;
+  transition: color 0.2s;
 }
 
 .forgot-password:hover {
-  color: #2575fc;
+  color: #6942b0;
   text-decoration: underline;
 }
 
 .login-button {
   width: 100%;
-  background: linear-gradient(to right, #6a11cb, #2575fc);
-  color: white;
+  padding: 14px;
+  background: linear-gradient(45deg, #4776E6, #8E54E9);
   border: none;
-  padding: 15px;
-  border-radius: 12px;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.3s;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+}
+
+.login-button i {
+  margin-left: 8px;
 }
 
 .login-button:hover {
-  background: linear-gradient(to right, #5c0fb3, #1e68e0);
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 15px rgba(131, 93, 233, 0.3);
+}
+
+.login-button:active {
+  transform: translateY(0);
 }
 
 .register-link {
-  margin-top: 25px;
-  color: #555;
-  font-size: 0.95rem;
+  text-align: center;
+  margin-top: 20px;
+  color: #666;
+  font-size: 14px;
 }
 
 .register-link a {
-  color: #6a11cb;
+  color: #8E54E9;
   text-decoration: none;
   font-weight: 500;
-  transition: color 0.3s;
+  transition: color 0.2s;
 }
 
 .register-link a:hover {
-  color: #2575fc;
+  color: #6942b0;
   text-decoration: underline;
 }
 
 .error-message {
-  background-color: rgba(244, 67, 54, 0.1);
-  border-left: 4px solid #f44336;
+  background-color: #fff0f0;
+  color: #e74c3c;
   padding: 12px;
+  border-radius: 8px;
   margin-bottom: 20px;
-  border-radius: 6px;
-  color: #d32f2f;
-  font-size: 0.95rem;
-  text-align: left;
+  font-size: 14px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  border-left: 4px solid #e74c3c;
 }
 
 .error-message i {
-  color: #f44336;
-  font-size: 1.1rem;
+  margin-right: 8px;
+  font-size: 16px;
 }
 
+/* รองรับหน้าจอขนาดเล็ก */
 @media (max-width: 480px) {
   .login-container {
-    padding: 1.8rem;
-  }
-  
-  h2 {
-    font-size: 1.8rem;
+      padding: 24px;
   }
   
   .login-logo {
-    width: 70px;
-    height: 70px;
+      width: 70px;
+      height: 70px;
+      font-size: 30px;
   }
   
-  .login-logo i {
-    font-size: 30px;
+  h2 {
+      font-size: 22px;
   }
   
   input[type="text"],
   input[type="password"] {
-    padding: 12px 12px 12px 40px;
+      padding: 12px 12px 12px 40px;
   }
-}
-
-::placeholder {
-  color: #aaa;
-  opacity: 1;
 }
