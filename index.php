@@ -18,7 +18,7 @@
             <a href="#">ข้อมูลการแข่งขัน</a>
             <a href="register.php">สมัครทีม</a>
             <a href="#">ประกาศ</a>
-            <a href="">ติดต่อเรา</a>
+            <a href="#">ติดต่อเรา</a>
             <a href="login.php">เข้าสู่ระบบ</a>
         </nav>
     </div> 

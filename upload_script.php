@@ -7,7 +7,6 @@ session_start();
 
 // กำหนดค่าไดเร็กทอรี่ก่อน
 $upload_dir = 'uploads';
-$keys_dir = 'keys';
 
 // สร้างไดเร็กทอรี่ตั้งแต่เริ่มต้น
 if (!is_dir($upload_dir)) {
@@ -17,27 +16,22 @@ if (!is_dir($upload_dir)) {
     }
 }
 
-if (!is_dir($keys_dir)) {
-    if (!@mkdir($keys_dir, 0755, true)) {
-        $create_dir_error = error_get_last();
-        error_log("ไม่สามารถสร้างไดเร็กทอรี่ keys: " . $create_dir_error['message']);
-    }
-}
-
 // ตรวจสอบสิทธิ์การเขียน
 if (!is_writable($upload_dir)) {
     error_log("ไม่มีสิทธิ์เขียนไฟล์ในไดเร็กทอรี่ $upload_dir");
 }
 
-if (!is_writable($keys_dir)) {
-    error_log("ไม่มีสิทธิ์เขียนไฟล์ในไดเร็กทอรี่ $keys_dir");
-}
+// ข้อมูลการเชื่อมต่อฐานข้อมูล
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "encryption_db";
 
+// สร้าง CSRF token พร้อมกำหนดอายุ
 if (!isset($_SESSION['csrf_token_time'])) {
     $_SESSION['csrf_token_time'] = 0;
 }
 
-// สร้าง CSRF token พร้อมกำหนดอายุ
 if (empty($_SESSION['csrf_token']) || !isset($_SESSION['csrf_token_time']) || time() - $_SESSION['csrf_token_time'] > 3600) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     $_SESSION['csrf_token_time'] = time();
@@ -55,6 +49,13 @@ $encryption_error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+        // เชื่อมต่อฐานข้อมูล
+        $conn = new mysqli($servername, $username, $password, $dbname);
+        
+        if ($conn->connect_error) {
+            throw new Exception('เชื่อมต่อฐานข้อมูลล้มเหลว: ' . $conn->connect_error);
+        }
+
         // ตรวจสอบ CSRF token
         if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
             throw new Exception('การร้องขอไม่ถูกต้อง');
@@ -115,7 +116,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // ตรวจสอบว่า OpenSSL รองรับ GCM mode
         if (!in_array('aes-256-gcm', openssl_get_cipher_methods())) {
-
             // หากไม่รองรับ GCM ให้ใช้ CBC แทน
             $cipher = 'aes-256-cbc';
         } else {
@@ -126,10 +126,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $encryption_key = random_bytes(32);
         $iv_length = openssl_cipher_iv_length($cipher);
         $iv = random_bytes($iv_length);
+        $tag = '';
 
         // เข้ารหัสภาพ
         if ($cipher === 'aes-256-gcm') {
-            $tag = '';
             $encrypted_image = openssl_encrypt(
                 $image_data, 
                 $cipher, 
@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $tag
             );
         } else {
-            // ใช้ CBC mode ซึ่งไม่มี tag
+            // ใช้ CBC mode หากไม่รองรับ GCM
             $encrypted_image = openssl_encrypt(
                 $image_data, 
                 $cipher, 
@@ -157,9 +157,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         date_default_timezone_set('Asia/Bangkok'); 
         $timestamp = time();  
         $encrypted_filename = $timestamp . '.enc';
-        $key_filename = $timestamp . '_key.txt';
-        $iv_filename = $timestamp . '_iv.txt';
-
         
         // บันทึกไฟล์เข้ารหัสและกำหนดสิทธิ์ไฟล์
         if (file_put_contents($upload_dir . '/' . $encrypted_filename, $encrypted_image) === false) {
@@ -167,29 +164,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         @chmod($upload_dir . '/' . $encrypted_filename, 0644);
 
-        if (file_put_contents($keys_dir . '/' . $key_filename, base64_encode($encryption_key)) === false) {
-            // ลบไฟล์เข้ารหัสหากไม่สามารถบันทึกคีย์ได้
+        // บันทึกข้อมูลลงฐานข้อมูล
+        $key_data = base64_encode($encryption_key);
+        $iv_data = base64_encode($iv);
+        $tag_data = !empty($tag) ? base64_encode($tag) : '';
+        $original_filename = $conn->real_escape_string($_FILES['image']['name']);
+        $cipher_method = $cipher;
+        $file_path = $upload_dir . '/' . $encrypted_filename;
+        $upload_date = date('Y-m-d H:i:s');
+        
+        // สร้าง SQL query
+        $sql = "INSERT INTO encryption_keys (file_id, original_filename, key_data, iv_data, tag_data, cipher_method, file_path, upload_date) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception('การเตรียมคำสั่ง SQL ล้มเหลว: ' . $conn->error);
+        }
+        
+        $stmt->bind_param("issssss", $timestamp, $original_filename, $key_data, $iv_data, $tag_data, $cipher_method, $file_path, $upload_date);
+        
+        if (!$stmt->execute()) {
+            // ลบไฟล์เข้ารหัสหากไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้
             @unlink($upload_dir . '/' . $encrypted_filename);
-            throw new Exception('ไม่สามารถบันทึกคีย์เข้ารหัสได้');
+            throw new Exception('การบันทึกข้อมูลลงฐานข้อมูลล้มเหลว: ' . $stmt->error);
         }
-        @chmod($keys_dir . '/' . $key_filename, 0644);
-
-        if (file_put_contents($keys_dir . '/' . $iv_filename, base64_encode($iv)) === false) {
-            // ลบไฟล์ที่เกี่ยวข้องหากไม่สามารถบันทึก IV ได้
-            @unlink($upload_dir . '/' . $encrypted_filename);
-            @unlink($keys_dir . '/' . $key_filename);
-            throw new Exception('ไม่สามารถบันทึก IV ได้');
-        }
-        @chmod($keys_dir . '/' . $iv_filename, 0644);
-
-        // บันทึก tag เมื่อใช้ GCM mode
-        if ($cipher === 'aes-256-gcm' && !empty($tag)) {
-            $tag_filename = $timestamp . '_tag.txt';
-            if (file_put_contents($keys_dir . '/' . $tag_filename, base64_encode($tag)) === false) {
-                throw new Exception('ไม่สามารถบันทึก authentication tag ได้');
-            }
-            @chmod($keys_dir . '/' . $tag_filename, 0644);
-        }
+        
+        $stmt->close();
+        $conn->close();
 
         $encryption_success = true;
     } catch (Exception $e) {
@@ -197,19 +199,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         error_log('ข้อผิดพลาดการเข้ารหัสภาพ: ' . $e->getMessage());
         
         $encryption_error = $e->getMessage();
+        
+        // ปิดการเชื่อมต่อฐานข้อมูลหากยังเปิดอยู่
+        if (isset($conn) && $conn instanceof mysqli) {
+            $conn->close();
+        }
     }
 }
 
 // ลบไฟล์เก่าเกิน 7 วัน เฉพาะเมื่อไดเร็กทอรี่มีอยู่จริง
 if (is_dir($upload_dir)) {
-    $files = glob($upload_dir . '/*.enc');
-    if ($files) {
-        $expire_time = 7 * 24 * 60 * 60; // 7 วัน
-        foreach ($files as $file) {
-            if (is_file($file) && filemtime($file) < time() - $expire_time) {
-                @unlink($file);
-            }
+    try {
+        // เชื่อมต่อฐานข้อมูลเพื่อเรียกข้อมูลไฟล์เก่า
+        $conn = new mysqli($servername, $username, $password, $dbname);
+        
+        if ($conn->connect_error) {
+            throw new Exception('เชื่อมต่อฐานข้อมูลล้มเหลว: ' . $conn->connect_error);
         }
+        
+        // คำนวณวันที่เก่ากว่า 7 วัน
+        $expire_date = date('Y-m-d H:i:s', time() - (7 * 24 * 60 * 60));
+        
+        // ค้นหาไฟล์เก่าในฐานข้อมูล
+        $sql = "SELECT file_id, file_path FROM encryption_keys WHERE upload_date < ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $expire_date);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        while ($row = $result->fetch_assoc()) {
+            // ลบไฟล์จากระบบไฟล์
+            if (file_exists($row['file_path'])) {
+                @unlink($row['file_path']);
+            }
+            
+            // ลบข้อมูลจากฐานข้อมูล
+            $delete_sql = "DELETE FROM encryption_keys WHERE file_id = ?";
+            $delete_stmt = $conn->prepare($delete_sql);
+            $delete_stmt->bind_param("i", $row['file_id']);
+            $delete_stmt->execute();
+            $delete_stmt->close();
+        }
+        
+        $stmt->close();
+        $conn->close();
+    } catch (Exception $e) {
+        error_log('ข้อผิดพลาดในการลบไฟล์เก่า: ' . $e->getMessage());
     }
 }
 ?>

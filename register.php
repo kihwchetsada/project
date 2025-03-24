@@ -1,6 +1,12 @@
 <?php
-// รวมโค้ด PHP จากไฟล์เดิม
+// เพิ่มการเชื่อมต่อฐานข้อมูล
 include 'upload_script.php';
+include 'db_connect.php'; // ไฟล์เชื่อมต่อฐานข้อมูล
+
+// ตรวจสอบการเชื่อมต่อฐานข้อมูล
+if (!$conn instanceof PDO) {
+    throw new Exception('Database connection is not a PDO instance');
+}
 
 // เพิ่มโค้ดสำหรับการจัดการข้อมูลทีม
 $team_success = false;
@@ -33,86 +39,88 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
             if ($member_count < 5) {
                 $team_error = 'กรุณากรอกข้อมูลสมาชิกอย่างน้อย 5 คน';
             } else {
-                // บันทึกข้อมูลทีม
-                $team_data = [
-                    'competition_type' => $competition_type,
-                    'team_name' => $team_name,
-                    'coach' => [
-                        'name' => $coach_name,
-                        'phone' => $coach_phone,
-                        'school' => $leader_school
-                    ],
-                    'members' => []
-                ];
+                // เริ่มทำงานกับฐานข้อมูล
+                try {
+                    // เริ่มต้น Transaction
+                    $conn->beginTransaction();
 
-                // รวบรวมข้อมูลสมาชิก
-                for ($i = 1; $i <= 8; $i++) {
-                    if (!empty($_POST["member_name_$i"])) {
-                        $id_card_image = '';
-                        $file_field = "member_id_card_$i";
+                    // เพิ่มข้อมูลทีม
+                    $stmt = $conn->prepare("INSERT INTO teams (competition_type, team_name, coach_name, coach_phone, leader_school, created_at) 
+                                           VALUES (?, ?, ?, ?, ?, NOW())");
+                    $stmt->execute([$competition_type, $team_name, $coach_name, $coach_phone, $leader_school]);
+                    $team_id = $conn->lastInsertId();
 
-                        if (!empty($_FILES[$file_field]['name'])) {
-                            $upload_dir = 'uploads/';
-                            $keys_dir = 'keys/';
-
-                            if (!is_dir($upload_dir)) {
-                                mkdir($upload_dir, 0755, true);
-                            }
-                            if (!is_dir($keys_dir)) {
-                                mkdir($keys_dir, 0755, true);
-                            }
-
-                            $image_data = file_get_contents($_FILES[$file_field]['tmp_name']);
-
-                            $cipher = 'aes-256-gcm';
-                            $encryption_key = random_bytes(32);
-                            $iv_length = openssl_cipher_iv_length($cipher);
-                            $iv = random_bytes($iv_length);
-
+                    // เพิ่มข้อมูลสมาชิก
+                    for ($i = 1; $i <= 8; $i++) {
+                        if (!empty($_POST["member_name_$i"])) {
+                            $member_name = $_POST["member_name_$i"];
+                            $member_game_name = $_POST["member_game_name_$i"] ?? '';
+                            $member_age = $_POST["member_age_$i"] ?? null;
+                            $member_phone = $_POST["member_phone_$i"] ?? '';
+                            $member_position = $_POST["member_position_$i"] ?? '';
+                            $id_card_image = '';
+                            $encryption_key = '';
+                            $iv = '';
                             $tag = '';
-                            $encrypted_image = openssl_encrypt(
-                                $image_data,
-                                $cipher,
-                                $encryption_key,
-                                OPENSSL_RAW_DATA,
-                                $iv,
-                                $tag
-                            );
 
-                            $timestamp = time();
-                            $encrypted_filename = $upload_dir . $team_name . '_id_card_' . $i . '.enc';
-                            $key_filename = $keys_dir . $team_name . '_key_' . $i . '.txt';
-                            $iv_filename = $keys_dir . $team_name . '_iv_' . $i . '.txt';
-                            $tag_filename = $keys_dir . $team_name . '_tag_' . $i . '.txt';
+                            // จัดการไฟล์รูปภาพ
+                            $file_field = "member_id_card_$i";
+                            if (!empty($_FILES[$file_field]['name'])) {
+                                $upload_dir = 'uploads/';
+                                $keys_dir = 'keys/';
 
-                            file_put_contents($encrypted_filename, $encrypted_image);
-                            file_put_contents($key_filename, base64_encode($encryption_key));
-                            file_put_contents($iv_filename, base64_encode($iv));
-                            file_put_contents($tag_filename, base64_encode($tag));
+                                if (!is_dir($upload_dir)) {
+                                    mkdir($upload_dir, 0755, true);
+                                }
+                                if (!is_dir($keys_dir)) {
+                                    mkdir($keys_dir, 0755, true);
+                                }
 
-                            $id_card_image = $encrypted_filename;
+                                $image_data = file_get_contents($_FILES[$file_field]['tmp_name']);
+
+                                $cipher = 'aes-256-gcm';
+                                $encryption_key_raw = random_bytes(32);
+                                $iv_length = openssl_cipher_iv_length($cipher);
+                                $iv_raw = random_bytes($iv_length);
+
+                                $tag_raw = '';
+                                $encrypted_image = openssl_encrypt(
+                                    $image_data,
+                                    $cipher,
+                                    $encryption_key_raw,
+                                    OPENSSL_RAW_DATA,
+                                    $iv_raw,
+                                    $tag_raw
+                                );
+
+                                $timestamp = time();
+                                $encrypted_filename = $upload_dir . $team_id . '_id_card_' . $i . '.enc';
+                                file_put_contents($encrypted_filename, $encrypted_image);
+                                
+                                // เก็บ path ของไฟล์
+                                $id_card_image = $encrypted_filename;
+                                
+                                // เก็บคีย์เข้ารหัสเป็น base64 เพื่อเก็บในฐานข้อมูล
+                                $encryption_key = base64_encode($encryption_key_raw);
+                                $iv = base64_encode($iv_raw);
+                                $tag = base64_encode($tag_raw);
+                            }
+
+                            // เพิ่มข้อมูลสมาชิกลงฐานข้อมูล
+                            $stmt = $conn->prepare("INSERT INTO team_members (team_id, member_name, game_name, age, phone, position, id_card_image, encryption_key, iv, tag) 
+                                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                            $stmt->execute([$team_id, $member_name, $member_game_name, $member_age, $member_phone, $member_position, $id_card_image, $encryption_key, $iv, $tag]);
                         }
-
-                        $team_data['members'][] = [
-                            'name' => $_POST["member_name_$i"],
-                            'game_name' => $_POST["member_game_name_$i"] ?? '',
-                            'age' => $_POST["member_age_$i"] ?? '',
-                            'phone' => $_POST["member_phone_$i"] ?? '',
-                            'position' => $_POST["member_position_$i"] ?? '',
-                            'id_card_image' => $id_card_image
-                        ];
                     }
-                }
 
-                $team_data_file = 'teams/' . $team_name . '_' . time() . '.json';
-                if (!is_dir('teams')) {
-                    mkdir('teams', 0755, true);
-                }
-
-                if (file_put_contents($team_data_file, json_encode($team_data, JSON_PRETTY_PRINT))) {
+                    // ยืนยัน Transaction
+                    $conn->commit();
                     $team_success = true;
-                } else {
-                    $team_error = 'ไม่สามารถบันทึกข้อมูลทีมได้ กรุณาลองใหม่อีกครั้ง';
+                    
+                } catch (PDOException $e) {
+                    // ถ้าเกิดข้อผิดพลาด ให้ยกเลิก Transaction
+                    $conn->rollBack();
+                    $team_error = 'เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' . $e->getMessage();
                 }
             }
         }
@@ -131,389 +139,7 @@ if (!isset($_SESSION['csrf_token'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ลงทะเบียนทีม</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #3498db;
-            --primary-dark: #2980b9;
-            --secondary-color: #2ecc71;
-            --secondary-dark: #27ae60;
-            --accent-color: #f1c40f;
-            --text-color: #333;
-            --light-color: #f9f9f9;
-            --grey-color: #ecf0f1;
-            --grey-dark: #bdc3c7;
-            --error-color: #e74c3c;
-            --success-color: #27ae60;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: 'Prompt', 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            background-color: var(--light-color);
-            padding: 0;
-        }
-        
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 15px;
-        }
-        
-        header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 1.5rem 0;
-            margin-bottom: 2rem;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        header h1 {
-            font-size: 2.2rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        header p {
-            font-size: 1rem;
-            opacity: 0.9;
-        }
-        
-        .form-container {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-        
-        .section-title {
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.5rem;
-            color: var(--primary-dark);
-            display: flex;
-            align-items: center;
-        }
-        
-        .section-title i {
-            margin-right: 0.5rem;
-            color: var(--primary-color);
-        }
-        
-        .form-row {
-            display: flex;
-            flex-wrap: wrap;
-            margin: 0 -10px;
-            margin-bottom: 1rem;
-        }
-        
-        .form-group {
-            flex: 1 0 200px;
-            padding: 0 10px;
-            margin-bottom: 1rem;
-        }
-        
-        .form-group.full-width {
-            flex: 1 0 100%;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-        
-        .form-group label .required {
-            color: var(--error-color);
-            margin-left: 4px;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 0.75rem;
-            font-size: 1rem;
-            border: 1px solid var(--grey-dark);
-            border-radius: 5px;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-        
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-            outline: none;
-        }
-        
-        .file-input-container {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .file-input-preview {
-            width: 100%;
-            height: 120px;
-            background-color: var(--grey-color);
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 0.5rem;
-            border: 2px dashed var(--grey-dark);
-            overflow: hidden;
-        }
-        
-        .file-input-preview i {
-            font-size: 2rem;
-            color: var(--grey-dark);
-        }
-        
-        .file-input-preview img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-        
-        .custom-file-input {
-            cursor: pointer;
-        }
-        
-        .member-card {
-            background-color: var(--grey-color);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            position: relative;
-            border-left: 4px solid var(--primary-color);
-        }
-        
-        .member-card.optional {
-            border-left-color: var(--accent-color);
-        }
-        
-        .member-number {
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            background-color: var(--primary-color);
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-        
-        .member-card.optional .member-number {
-            background-color: var(--accent-color);
-        }
-        
-        .required-tag {
-            background-color: var(--primary-dark);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            margin-left: 0.5rem;
-            vertical-align: middle;
-        }
-        
-        .optional-tag {
-            background-color: var(--accent-color);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            margin-left: 0.5rem;
-            vertical-align: middle;
-        }
-        
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .btn i {
-            margin-right: 0.5rem;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-2px);
-        }
-        
-        .btn-success {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background-color: var(--secondary-dark);
-            transform: translateY(-2px);
-        }
-        
-        .btn-block {
-            display: block;
-            width: 100%;
-        }
-        
-        .alert {
-            padding: 1rem;
-            border-radius: 5px;
-            margin-bottom: 1.5rem;
-        }
-        
-        .alert-error {
-            background-color: rgba(231, 76, 60, 0.1);
-            border-left: 4px solid var(--error-color);
-            color: var(--error-color);
-        }
-        
-        .alert-success {
-            background-color: rgba(46, 204, 113, 0.1);
-            border-left: 4px solid var(--success-color);
-            color: var(--success-color);
-        }
-        
-        .progress-container {
-            margin-bottom: 2rem;
-        }
-        
-        .progress-steps {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
-        }
-        
-        .step {
-            flex: 1;
-            text-align: center;
-            position: relative;
-        }
-        
-        .step:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            top: 15px;
-            right: -50%;
-            width: 100%;
-            height: 3px;
-            background-color: var(--grey-dark);
-            z-index: 0;
-        }
-        
-        .step.active:not(:last-child)::after {
-            background-color: var(--primary-color);
-        }
-        
-        .step-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: var(--grey-dark);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 0.5rem;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .step.active .step-icon {
-            background-color: var(--primary-color);
-        }
-        
-        .step.completed .step-icon {
-            background-color: var(--success-color);
-        }
-        
-        .step-text {
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--grey-dark);
-        }
-        
-        .step.active .step-text {
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-        
-        .step.completed .step-text {
-            color: var(--success-color);
-        }
-        
-        footer {
-            background-color: var(--primary-dark);
-            color: white;
-            text-align: center;
-            padding: 1.5rem 0;
-            margin-top: 3rem;
-        }
-        
-        @media (max-width: 768px) {
-            .form-row {
-                flex-direction: column;
-            }
-            
-            .form-group {
-                flex: 1 0 100%;
-            }
-            
-            .progress-steps {
-                flex-wrap: wrap;
-            }
-            
-            .step {
-                flex: 0 0 50%;
-                margin-bottom: 1rem;
-            }
-            
-            .step:not(:last-child)::after {
-                display: none;
-            }
-        }
-
-        /* เพิ่มสำหรับการแสดงผลทำเสร็จ */
-        .success-message {
-            text-align: center;
-            padding: 3rem 0;
-        }
-        
-        .success-icon {
-            font-size: 5rem;
-            color: var(--success-color);
-            margin-bottom: 1rem;
-        }
-        
-        .id-preview {
-            margin-top: 0.5rem;
-            font-size: 0.8rem;
-            color: var(--grey-dark);
-        }
-    </style>
+    <link rel="stylesheet" href="css/register.css">
 </head>
 <body>
     <header>
@@ -683,7 +309,7 @@ if (!isset($_SESSION['csrf_token'])) {
             <p>&copy; <?php echo date('Y'); ?> ระบบลงทะเบียนการแข่งขัน</p>
         </div>
     </footer>
-    
+
     <script>
         // สำหรับแสดงตัวอย่างรูปภาพก่อนอัพโหลด
         document.addEventListener('DOMContentLoaded', function() {
