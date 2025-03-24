@@ -8,7 +8,7 @@ session_start();
 include 'db_connect.php';
 
 $upload_dir = __DIR__ . '/uploads/';
-$keys_dir = __DIR__ . '/keys/';
+// $keys_dir = __DIR__ . '/keys/';
 
 // ฟังก์ชันถอดรหัสรูปภาพ
 function decryptImage($encrypted_file, $encryption_key, $iv, $tag) {

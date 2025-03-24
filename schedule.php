@@ -278,6 +278,7 @@ unset($_SESSION["error"]);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ตารางการแข่งขัน RoV Tournament</title>
+    <link rel="icon" type="image/png" href="img/logo.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/schedule.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

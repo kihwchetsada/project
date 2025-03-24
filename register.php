@@ -46,8 +46,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
 
                     // เพิ่มข้อมูลทีม
                     $stmt = $conn->prepare("INSERT INTO teams (competition_type, team_name, coach_name, coach_phone, leader_school, created_at) 
-                                           VALUES (?, ?, ?, ?, ?, NOW())");
-                    $stmt->execute([$competition_type, $team_name, $coach_name, $coach_phone, $leader_school]);
+                    VALUES (:competition_type, :team_name, :coach_name, :coach_phone, :leader_school, NOW())");
+
+                    $stmt->execute([
+                        ':competition_type' => $competition_type,
+                        ':team_name' => $team_name,
+                        ':coach_name' => $coach_name,
+                        ':coach_phone' => $coach_phone,
+                        ':leader_school' => $leader_school
+                    ]);
+
                     $team_id = $conn->lastInsertId();
 
                     // เพิ่มข้อมูลสมาชิก
@@ -138,6 +146,7 @@ if (!isset($_SESSION['csrf_token'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ลงทะเบียนทีม</title>
+    <link rel="icon" type="image/png" href="img/logo.jpg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/register.css">
 </head>
