@@ -17,8 +17,8 @@
             <a href="index.php">หน้าหลัก</a>
             <a href="event-info.php">ข้อมูลการแข่งขัน</a>
             <a href="register.php">สมัครทีม</a>
-            <a href="#">ประกาศ</a>
-            <a href="#">ติดต่อเรา</a>
+            <a href="annunciate.php">ประกาศ</a>
+            <a href="contact.php">ติดต่อเรา</a>
             <a href="login.php">เข้าสู่ระบบ</a>
         </nav>
     </div> 

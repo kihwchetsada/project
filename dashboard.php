@@ -6,183 +6,6 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header('Location: login.php');
     exit;
 }
-
-// สมมติข้อมูลสำหรับตารางการแข่งขัน
-$userData = [
-    'username' => $_SESSION['username'],
-    'lastLogin' => date('d/m/Y H:i', time()),
-    'role' => 'ผู้จัดการแข่งขัน'
-];
-
-// ข้อมูลตารางการแข่งขัน
-$tournaments = [
-    // รอบคัดเลือก (จบไปแล้ว)
-    [
-        'round' => 'รอบคัดเลือก',
-        'status' => 'completed',
-        'matches' => [
-            [
-                'match_id' => 'Q-001',
-                'team1' => 'Team Phoenix',
-                'team2' => 'Team Dragon',
-                'date' => '10/02/2025',
-                'time' => '13:00',
-                'venue' => 'ออนไลน์',
-                'result' => 'Team Phoenix ชนะ 2-1',
-                'stream' => 'https://example.com/watch/Q-001'
-            ],
-            [
-                'match_id' => 'Q-002',
-                'team1' => 'Team Eagle',
-                'team2' => 'Team Warrior',
-                'date' => '10/02/2025',
-                'time' => '15:00',
-                'venue' => 'ออนไลน์',
-                'result' => 'Team Warrior ชนะ 2-0',
-                'stream' => 'https://example.com/watch/Q-002'
-            ],
-            [
-                'match_id' => 'Q-003',
-                'team1' => 'Team Ninja',
-                'team2' => 'Team StarLight',
-                'date' => '11/02/2025',
-                'time' => '13:00',
-                'venue' => 'ออนไลน์',
-                'result' => 'Team StarLight ชนะ 2-1',
-                'stream' => 'https://example.com/watch/Q-003'
-            ],
-            [
-                'match_id' => 'Q-004',
-                'team1' => 'Team Galaxy',
-                'team2' => 'Team Hunter',
-                'date' => '11/02/2025',
-                'time' => '15:00',
-                'venue' => 'ออนไลน์',
-                'result' => 'Team Galaxy ชนะ 2-0',
-                'stream' => 'https://example.com/watch/Q-004'
-            ],
-        ]
-    ],
-    
-    // รอบ 16 ทีมสุดท้าย (กำลังจะเล่น)
-    [
-        'round' => 'รอบ 16 ทีมสุดท้าย',
-        'status' => 'upcoming',
-        'matches' => [
-            [
-                'match_id' => 'R16-001',
-                'team1' => 'Team Phoenix',
-                'team2' => 'Team Alpha',
-                'date' => '28/03/2025',
-                'time' => '13:00',
-                'venue' => 'ศูนย์กีฬาอีสปอร์ต กรุงเทพฯ',
-                'result' => 'รอการแข่งขัน',
-                'stream' => 'https://example.com/watch/R16-001'
-            ],
-            [
-                'match_id' => 'R16-002',
-                'team1' => 'Team Warrior',
-                'team2' => 'Team BlueStorm',
-                'date' => '28/03/2025',
-                'time' => '15:00',
-                'venue' => 'ศูนย์กีฬาอีสปอร์ต กรุงเทพฯ',
-                'result' => 'รอการแข่งขัน',
-                'stream' => 'https://example.com/watch/R16-002'
-            ],
-            [
-                'match_id' => 'R16-003',
-                'team1' => 'Team StarLight',
-                'team2' => 'Team Inferno',
-                'date' => '29/03/2025',
-                'time' => '13:00',
-                'venue' => 'ศูนย์กีฬาอีสปอร์ต กรุงเทพฯ',
-                'result' => 'รอการแข่งขัน',
-                'stream' => 'https://example.com/watch/R16-003'
-            ],
-            [
-                'match_id' => 'R16-004',
-                'team1' => 'Team Galaxy',
-                'team2' => 'Team Thunder',
-                'date' => '29/03/2025',
-                'time' => '15:00',
-                'venue' => 'ศูนย์กีฬาอีสปอร์ต กรุงเทพฯ',
-                'result' => 'รอการแข่งขัน',
-                'stream' => 'https://example.com/watch/R16-004'
-            ],
-        ]
-    ],
-    
-    // รอบ 8 ทีมสุดท้าย
-    [
-        'round' => 'รอบ 8 ทีมสุดท้าย',
-        'status' => 'pending',
-        'matches' => [
-            [
-                'match_id' => 'QF-001',
-                'team1' => 'TBD',
-                'team2' => 'TBD',
-                'date' => '05/04/2025',
-                'time' => '13:00',
-                'venue' => 'ศูนย์กีฬาอีสปอร์ต กรุงเทพฯ',
-                'result' => 'รอการแข่งขัน',
-                'stream' => 'https://example.com/watch/QF-001'
-            ],
-            [
-                'match_id' => 'QF-002',
-                'team1' => 'TBD',
-                'team2' => 'TBD',
-                'date' => '05/04/2025',
-                'time' => '15:00',
-                'venue' => 'ศูนย์กีฬาอีสปอร์ต กรุงเทพฯ',
-                'result' => 'รอการแข่งขัน',
-                'stream' => 'https://example.com/watch/QF-002'
-            ],
-        ]
-    ],
-    
-    // รอบรองชนะเลิศ
-    [
-        'round' => 'รอบรองชนะเลิศ',
-        'status' => 'pending',
-        'matches' => [
-            [
-                'match_id' => 'SF-001',
-                'team1' => 'TBD',
-                'team2' => 'TBD',
-                'date' => '12/04/2025',
-                'time' => '13:00',
-                'venue' => 'ศูนย์กีฬาอีสปอร์ต กรุงเทพฯ',
-                'result' => 'รอการแข่งขัน',
-                'stream' => 'https://example.com/watch/SF-001'
-            ],
-        ]
-    ],
-    
-    // รอบชิงชนะเลิศ
-    [
-        'round' => 'รอบชิงชนะเลิศ',
-        'status' => 'pending',
-        'matches' => [
-            [
-                'match_id' => 'F-001',
-                'team1' => 'TBD',
-                'team2' => 'TBD',
-                'date' => '19/04/2025',
-                'time' => '14:00',
-                'venue' => 'อิมแพ็ค อารีน่า เมืองทองธานี',
-                'result' => 'รอการแข่งขัน',
-                'stream' => 'https://example.com/watch/F-001'
-            ],
-        ]
-    ],
-];
-
-// ฟังก์ชันสำหรับล็อกเอาท์
-if (isset($_GET['logout'])) {
-    session_destroy();
-    header('Location: login.php');
-    exit;
-}
 ?>
 
 <!DOCTYPE html>
@@ -192,7 +15,7 @@ if (isset($_GET['logout'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <title>ตารางการแข่งขัน | ระบบจัดการการแข่งขัน ROV</title>
+    <title>ผู้จัดการแข่งขัน | ระบบจัดการการแข่งขัน ROV</title>
     <link rel="icon" type="image/png" href="img/logo.jpg">
     <link rel="stylesheet" href="css/dashboard.css">
 </head>
@@ -215,9 +38,9 @@ if (isset($_GET['logout'])) {
                     <a href="dashboard.php"><i class="fas fa-home"></i><span>หน้าหลัก</span></a>
                 </li>
                 <li>
-                    <a href="teams.php"><i class="fas fa-users"></i><span>จัดการทีม</span></a>
+                    <a href="view_img.php"><i class="fas fa-users"></i><span>จัดการทีม</span></a>
                 </li>
-                <li class="active">
+                <li>
                     <a href="https://challonge.com/th/rmuti_5/participants"><i class="fas fa-calendar-days"></i><span>ตารางการแข่งขัน</span></a>
                 </li>
                 <li>
@@ -262,7 +85,7 @@ if (isset($_GET['logout'])) {
         <!-- Dashboard Content -->
         <div class="dashboard-container">
             <div class="welcome-header">
-                <h2>ตารางการแข่งขัน ROV Tournament</h2>
+                <h2> ROV Tournament</h2>
                 <p>จัดการกำหนดการแข่งขันทั้งหมดของทัวร์นาเมนต์</p>
             </div>
 
