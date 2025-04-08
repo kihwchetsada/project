@@ -16,7 +16,6 @@ include 'db_connect.php';
 // กำหนดที่อัปโหลดไฟล์
 $upload_dir = __DIR__ . '/uploads/';
 
-// ฟังก์ชันถอดรหัสรูปภาพ - เพิ่มการตรวจสอบและบันทึก error
 function decryptImage($encrypted_file, $encryption_key, $iv, $tag) {
     // เพิ่มการตรวจสอบพื้นฐาน
     if (!file_exists($encrypted_file)) {
@@ -24,20 +23,20 @@ function decryptImage($encrypted_file, $encryption_key, $iv, $tag) {
         return false;
     }
 
-    // ตรวจสอบว่าพารามิเตอร์ว่างหรือไม่
-    if (empty($encryption_key) || empty($iv) || empty($tag)) {
+    // ตรวจสอบว่าคีย์เข้ารหัสไม่ว่าง
+    if (empty($encryption_key) || empty($iv)) {
         error_log("คีย์การเข้ารหัสไม่ครบถ้วน");
         return false;
     }
 
     try {
-        // แปลง key, iv, tag กลับจาก base64
+        // แปลง key, iv กลับจาก base64
         $decoded_key = base64_decode($encryption_key);
         $decoded_iv = base64_decode($iv);
-        $decoded_tag = base64_decode($tag);
+        $decoded_tag = !empty($tag) ? base64_decode($tag) : null;
 
         // ตรวจสอบการแปลง base64
-        if ($decoded_key === false || $decoded_iv === false || $decoded_tag === false) {
+        if ($decoded_key === false || $decoded_iv === false) {
             error_log("การแปลง base64 ล้มเหลว");
             return false;
         }
@@ -50,15 +49,29 @@ function decryptImage($encrypted_file, $encryption_key, $iv, $tag) {
             return false;
         }
 
+        // กำหนดไซเฟอร์ตามการมีอยู่ของ tag
+        $cipher = !empty($decoded_tag) ? 'aes-256-gcm' : 'aes-256-cbc';
+        error_log("ใช้ไซเฟอร์: " . $cipher);
+
         // ถอดรหัสข้อมูล
-        $decrypted_data = openssl_decrypt(
-            $encrypted_data,
-            'aes-256-gcm',
-            $decoded_key,
-            OPENSSL_RAW_DATA,
-            $decoded_iv,
-            $decoded_tag
-        );
+        if ($cipher == 'aes-256-gcm') {
+            $decrypted_data = openssl_decrypt(
+                $encrypted_data,
+                $cipher,
+                $decoded_key,
+                OPENSSL_RAW_DATA,
+                $decoded_iv,
+                $decoded_tag
+            );
+        } else {
+            $decrypted_data = openssl_decrypt(
+                $encrypted_data,
+                $cipher,
+                $decoded_key,
+                OPENSSL_RAW_DATA,
+                $decoded_iv
+            );
+        }
 
         // ตรวจสอบการถอดรหัส
         if ($decrypted_data === false) {
