@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($username === $valid_username && $password === $valid_password) {
         $_SESSION['loggedin'] = true;
         $_SESSION['username'] = $username;
-        header('Location: dashboard.php');
+        header('Location: backend/dashboard.php');
         exit;
     } else {
         $error = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';

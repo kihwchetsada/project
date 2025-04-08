@@ -11,7 +11,7 @@ error_reporting(E_ALL);
 session_start(); 
 
 // เชื่อมต่อฐานข้อมูล
-include 'db_connect.php';
+include '../db_connect.php';
 
 // กำหนดที่อัปโหลดไฟล์
 $upload_dir = __DIR__ . '/uploads/';
@@ -154,9 +154,9 @@ if (!empty($selected_team)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo !empty($team_data) ? htmlspecialchars($team_data['team_name']) . ' - ' : ''; ?>ข้อมูลทีมและรูปภาพ</title>
-    <link rel="icon" type="image/png" href="img/logo.jpg">
+    <link rel="icon" type="image/png" href="../img/logo.jpg">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/view_img.css">
+    <link rel="stylesheet" href="../css/view_img.css">
 </head>
 <body>
     <div class="container">
@@ -314,7 +314,7 @@ if (!empty($selected_team)) {
     <footer class="footer">
         <p>
             <i class="fas fa-shield-alt"></i> 
-            ระบบจัดการข้อมูลทีม - เวอร์ชัน 1.7 
+            ระบบจัดการข้อมูลทีม - เวอร์ชัน 1.9.0<br> 
             <br>
             <small>© <?php echo date('Y'); ?> สงวนลิขสิทธิ์</small>
         </p>

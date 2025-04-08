@@ -1,12 +1,24 @@
 <?php
 session_start();
 
+// 🔒 ตรวจสอบการ logout
+if (isset($_GET['logout'])) {
+    session_destroy(); // เคลียร์ session ทั้งหมด
+    header('Location: ../login.php'); // กลับไปหน้า login
+    exit;
+}
+
 // ตรวจสอบว่ามีการล็อกอินหรือไม่
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header('Location: login.php');
     exit;
 }
+
+// ดึงข้อมูล user และ tournament (ตามคำแนะนำก่อนหน้า)
+$userData = $_SESSION['userData'] ?? ['username' => 'ไม่ทราบชื่อผู้ใช้'];
+$tournaments = [/* ตัวอย่างข้อมูลหรือ query จาก DB */];
 ?>
+
 
 <!DOCTYPE html>
 <html lang="th">
@@ -16,8 +28,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>ผู้จัดการแข่งขัน | ระบบจัดการการแข่งขัน ROV</title>
-    <link rel="icon" type="image/png" href="img/logo.jpg">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="icon" type="image/png" href="../img/logo.jpg">
+    <link rel="stylesheet" href="../css/dashboard.css">
 </head>
 <body>
     <!-- Sidebar -->
@@ -38,10 +50,10 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                     <a href="dashboard.php"><i class="fas fa-home"></i><span>หน้าหลัก</span></a>
                 </li>
                 <li>
-                    <a href="view_img.php"><i class="fas fa-users"></i><span>จัดการทีม</span></a>
+                    <a href="view_the_teams.php"><i class="fas fa-users"></i><span>จัดการทีม</span></a>
                 </li>
                 <li>
-                    <a href="https://challonge.com/th/rmuti_5/participants"><i class="fas fa-calendar-days"></i><span>ตารางการแข่งขัน</span></a>
+                    <a href="https://challonge.com/th/rmuti_5"><i class="fas fa-calendar-days"></i><span>ตารางการแข่งขัน</span></a>
                 </li>
                 <li>
                     <a href="results.php"><i class="fas fa-ranking-star"></i><span>ผลการแข่งขัน</span></a>
