@@ -25,7 +25,7 @@ if (!is_writable($upload_dir)) {
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "encryption_db";
+$dbname = "tournament_registration"; // แก้เป็นฐานข้อมูลที่ถูกต้อง
 
 // สร้าง CSRF token พร้อมกำหนดอายุ
 if (!isset($_SESSION['csrf_token_time'])) {
@@ -164,25 +164,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         @chmod($upload_dir . '/' . $encrypted_filename, 0644);
 
-        // บันทึกข้อมูลลงฐานข้อมูล
+        // ข้อมูลสำหรับบันทึกลงฐานข้อมูล
         $key_data = base64_encode($encryption_key);
         $iv_data = base64_encode($iv);
         $tag_data = !empty($tag) ? base64_encode($tag) : '';
-        $original_filename = $conn->real_escape_string($_FILES['image']['name']);
-        $cipher_method = $cipher;
         $file_path = $upload_dir . '/' . $encrypted_filename;
-        $upload_date = date('Y-m-d H:i:s');
         
-        // สร้าง SQL query
-        $sql = "INSERT INTO encryption_keys (file_id, original_filename, key_data, iv_data, tag_data, cipher_method, file_path, upload_date) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) {
-            throw new Exception('การเตรียมคำสั่ง SQL ล้มเหลว: ' . $conn->error);
+        // สมมติว่าเราต้องการอัปเดตข้อมูลสมาชิกทีม
+        // ในสถานการณ์จริงควรรับค่า team_id และ member_id จากฟอร์มหรือ session
+        if (isset($_POST['team_id']) && isset($_POST['member_id'])) {
+            $team_id = (int)$_POST['team_id'];
+            $member_id = (int)$_POST['member_id'];
+            
+            // อัปเดตข้อมูลการเข้ารหัสในตาราง team_members
+            $sql = "UPDATE team_members SET 
+                    id_card_image = ?, 
+                    encryption_key = ?, 
+                    iv = ?, 
+                    tag = ?,
+                    updated_at = NOW()
+                    WHERE member_id = ? AND team_id = ?";
+                    
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                throw new Exception('การเตรียมคำสั่ง SQL ล้มเหลว: ' . $conn->error);
+            }
+            
+            $stmt->bind_param("ssssii", $file_path, $key_data, $iv_data, $tag_data, $member_id, $team_id);
+        } else {
+            // กรณีเพิ่มสมาชิกใหม่
+            // ในสถานการณ์จริงควรรับค่าเหล่านี้จากฟอร์ม
+            if (isset($_POST['team_id'])) {
+                $team_id = (int)$_POST['team_id'];
+                $member_name = $conn->real_escape_string($_POST['member_name'] ?? '');
+                $game_name = $conn->real_escape_string($_POST['game_name'] ?? '');
+                $age = (int)($_POST['age'] ?? 0);
+                $phone = $conn->real_escape_string($_POST['phone'] ?? '');
+                $position = $conn->real_escape_string($_POST['position'] ?? '');
+                
+                // เพิ่มข้อมูลสมาชิกใหม่
+                $sql = "INSERT INTO team_members 
+                        (team_id, member_name, game_name, age, phone, position, id_card_image, encryption_key, iv, tag) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        
+                $stmt = $conn->prepare($sql);
+                if (!$stmt) {
+                    throw new Exception('การเตรียมคำสั่ง SQL ล้มเหลว: ' . $conn->error);
+                }
+                
+                $stmt->bind_param("issiisssss", $team_id, $member_name, $game_name, $age, $phone, $position, $file_path, $key_data, $iv_data, $tag_data);
+            } else {
+                throw new Exception('ไม่พบข้อมูล team_id ที่จำเป็น');
+            }
         }
-        
-        $stmt->bind_param("issssss", $timestamp, $original_filename, $key_data, $iv_data, $tag_data, $cipher_method, $file_path, $upload_date);
         
         if (!$stmt->execute()) {
             // ลบไฟล์เข้ารหัสหากไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้
@@ -197,6 +231,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (Exception $e) {
         // บันทึก error log
         error_log('ข้อผิดพลาดการเข้ารหัสภาพ: ' . $e->getMessage());
+        error_log('Stack trace: ' . $e->getTraceAsString());
+        error_log('OpenSSL errors: ' . openssl_error_string());
         
         $encryption_error = $e->getMessage();
         
@@ -221,7 +257,7 @@ if (is_dir($upload_dir)) {
         $expire_date = date('Y-m-d H:i:s', time() - (7 * 24 * 60 * 60));
         
         // ค้นหาไฟล์เก่าในฐานข้อมูล
-        $sql = "SELECT file_id, file_path FROM encryption_keys WHERE upload_date < ?";
+        $sql = "SELECT member_id, id_card_image FROM team_members WHERE created_at < ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $expire_date);
         $stmt->execute();
@@ -229,16 +265,16 @@ if (is_dir($upload_dir)) {
         
         while ($row = $result->fetch_assoc()) {
             // ลบไฟล์จากระบบไฟล์
-            if (file_exists($row['file_path'])) {
-                @unlink($row['file_path']);
+            if (!empty($row['id_card_image']) && file_exists($row['id_card_image'])) {
+                @unlink($row['id_card_image']);
             }
             
-            // ลบข้อมูลจากฐานข้อมูล
-            $delete_sql = "DELETE FROM encryption_keys WHERE file_id = ?";
-            $delete_stmt = $conn->prepare($delete_sql);
-            $delete_stmt->bind_param("i", $row['file_id']);
-            $delete_stmt->execute();
-            $delete_stmt->close();
+            // อัพเดทข้อมูลในฐานข้อมูล
+            $update_sql = "UPDATE team_members SET id_card_image = NULL, encryption_key = NULL, iv = NULL, tag = NULL WHERE member_id = ?";
+            $update_stmt = $conn->prepare($update_sql);
+            $update_stmt->bind_param("i", $row['member_id']);
+            $update_stmt->execute();
+            $update_stmt->close();
         }
         
         $stmt->close();

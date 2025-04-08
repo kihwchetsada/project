@@ -7,11 +7,13 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// เริ่ม session ก่อนมีการส่งข้อมูลใดๆ
 session_start(); 
 
 // เชื่อมต่อฐานข้อมูล
 include 'db_connect.php';
 
+// กำหนดที่อัปโหลดไฟล์
 $upload_dir = __DIR__ . '/uploads/';
 
 // ฟังก์ชันถอดรหัสรูปภาพ - เพิ่มการตรวจสอบและบันทึก error
@@ -42,6 +44,11 @@ function decryptImage($encrypted_file, $encryption_key, $iv, $tag) {
 
         // โหลดข้อมูลไฟล์ที่เข้ารหัส
         $encrypted_data = file_get_contents($encrypted_file);
+        
+        if ($encrypted_data === false) {
+            error_log("ไม่สามารถอ่านไฟล์ที่เข้ารหัส: " . $encrypted_file);
+            return false;
+        }
 
         // ถอดรหัสข้อมูล
         $decrypted_data = openssl_decrypt(
@@ -69,8 +76,8 @@ function decryptImage($encrypted_file, $encryption_key, $iv, $tag) {
 
 // สร้างตัวแปรเก็บข้อความ Log
 $log_message = "";
-$selected_team = isset($_GET['team']) ? intval($_GET['team']) : '';
-$search_query = isset($_GET['search']) ? $_GET['search'] : '';
+$selected_team = isset($_GET['team']) ? intval($_GET['team']) : null;
+$search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 try {
     // ดึงข้อมูลทีมทั้งหมด
@@ -96,6 +103,36 @@ try {
     $log_message = "⚠️ ข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล: " . $e->getMessage();
     error_log("Database Error: " . $e->getMessage());
 }
+
+// ตัวแปรสำหรับเก็บข้อมูลทีมที่เลือกและสมาชิก
+$team_data = null;
+$members = [];
+
+// ดึงข้อมูลทีมที่เลือกถ้ามี team_id
+if (!empty($selected_team)) {
+    try {
+        // ดึงข้อมูลทีมที่เลือกตาม team_id
+        $stmt = $conn->prepare("SELECT * FROM teams WHERE team_id = :team_id");
+        $stmt->bindParam(':team_id', $selected_team, PDO::PARAM_INT);
+        $stmt->execute();
+        $team_data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($team_data) {
+            // ดึงข้อมูลสมาชิกของทีม
+            $stmt = $conn->prepare("SELECT * FROM team_members WHERE team_id = :team_id ORDER BY member_id ASC");
+            $stmt->bindParam(':team_id', $selected_team, PDO::PARAM_INT);
+            $stmt->execute();
+            $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $log_message .= "🧑‍🤝‍🧑 โหลดข้อมูลสมาชิกทีม " . htmlspecialchars($team_data['team_name']) . " จำนวน " . count($members) . " คน<br>";
+        } else {
+            $log_message .= "⚠️ ไม่พบข้อมูลทีมที่เลือก (ID: " . $selected_team . ")<br>";
+        }
+    } catch (PDOException $e) {
+        $log_message .= "⚠️ ข้อผิดพลาดในการดึงข้อมูลทีม: " . $e->getMessage() . "<br>";
+        error_log("Team Fetch Error: " . $e->getMessage());
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -103,7 +140,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ข้อมูลทีมและรูปภาพ</title>
+    <title><?php echo !empty($team_data) ? htmlspecialchars($team_data['team_name']) . ' - ' : ''; ?>ข้อมูลทีมและรูปภาพ</title>
     <link rel="icon" type="image/png" href="img/logo.jpg">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/view_img.css">
@@ -138,29 +175,7 @@ try {
             <?php endif; ?>
         </div>
 
-        <?php if (!empty($selected_team)): ?>
-            <?php
-            try {
-                // ดึงข้อมูลทีมที่เลือกตาม team_id
-                $stmt = $conn->prepare("SELECT * FROM teams WHERE team_id = :team_id");
-                $stmt->bindParam(':team_id', $selected_team, PDO::PARAM_INT);
-                $stmt->execute();
-                $team_data = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                if ($team_data) {
-                    // ดึงข้อมูลสมาชิกของทีม
-                    $stmt = $conn->prepare("SELECT * FROM team_members WHERE team_id = :team_id ORDER BY member_id ASC");
-                    $stmt->bindParam(':team_id', $selected_team, PDO::PARAM_INT);
-                    $stmt->execute();
-                    $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                }
-            } catch (PDOException $e) {
-                $log_message .= "⚠️ ข้อผิดพลาดในการดึงข้อมูลทีม: " . $e->getMessage() . "<br>";
-                error_log("Team Fetch Error: " . $e->getMessage());
-            }
-            ?>
-
-            <?php if ($team_data): ?>
+        <?php if (!empty($selected_team) && $team_data): ?>
             <div class="card">
                 <a href="?" class="back-to-teams"><i class="fas fa-arrow-left"></i> กลับไปหน้ารายชื่อทีมทั้งหมด</a>
                 
@@ -168,83 +183,97 @@ try {
                 
                 <h3><i class="fas fa-user-friends"></i> สมาชิกทีม (<?php echo count($members); ?> คน)</h3>
                 
-                <?php foreach ($members as $index => $member): ?>
-                    <div class="member-card">
-                        <h4 class="member-name">
-                            <i class="fas fa-user-circle"></i> 
-                            <?php echo htmlspecialchars($member['member_name']); ?> 
-                            <?php if (!empty($member['game_name'])): ?>
-                                <span class="game-name">(<?php echo htmlspecialchars($member['game_name']); ?>)</span>
-                            <?php endif; ?>
-                            <small>(สมาชิกคนที่ <?php echo $index + 1; ?>)</small>
-                        </h4>
-                        
-                        <div class="member-info">
-                            <?php if (!empty($member['position'])): ?>
-                                <p><i class="fas fa-briefcase"></i> ตำแหน่ง: <?php echo htmlspecialchars($member['position']); ?></p>
-                            <?php endif; ?>
+                <?php if (count($members) > 0): ?>
+                    <?php foreach ($members as $index => $member): ?>
+                        <div class="member-card">
+                            <h4 class="member-name">
+                                <i class="fas fa-user-circle"></i> 
+                                <?php echo htmlspecialchars($member['member_name']); ?> 
+                                <?php if (!empty($member['game_name'])): ?>
+                                    <span class="game-name">(<?php echo htmlspecialchars($member['game_name']); ?>)</span>
+                                <?php endif; ?>
+                                <small>(สมาชิกคนที่ <?php echo $index + 1; ?>)</small>
+                            </h4>
                             
-                            <?php if (!empty($member['age'])): ?>
-                                <p><i class="fas fa-birthday-cake"></i> อายุ: <?php echo htmlspecialchars($member['age']); ?> ปี</p>
-                            <?php endif; ?>
+                            <div class="member-info">
+                                <?php if (!empty($member['position'])): ?>
+                                    <p><i class="fas fa-briefcase"></i> ตำแหน่ง: <?php echo htmlspecialchars($member['position']); ?></p>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($member['age'])): ?>
+                                    <p><i class="fas fa-birthday-cake"></i> อายุ: <?php echo htmlspecialchars($member['age']); ?> ปี</p>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($member['phone'])): ?>
+                                    <p><i class="fas fa-phone"></i> เบอร์โทร: <?php echo htmlspecialchars($member['phone']); ?></p>
+                                <?php endif; ?>
+                            </div>
                             
-                            <?php if (!empty($member['phone'])): ?>
-                                <p><i class="fas fa-phone"></i> เบอร์โทร: <?php echo htmlspecialchars($member['phone']); ?></p>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <?php if (!empty($member['id_card_image'])): ?>
-                            <?php
-                            // เพิ่มการ log เพื่อตรวจสอบ
-                            error_log("กำลังประมวลผลรูปภาพสำหรับสมาชิก: " . $member['member_name']);
-                            error_log("ชื่อไฟล์: " . $member['id_card_image']);
-
-                            $file_path = $upload_dir . $member['id_card_image'];
-                            
-                            // เพิ่มการตรวจสอบและ log ข้อมูลการเข้ารหัส
-                            error_log("เส้นทางไฟล์: " . $file_path);
-                            error_log("คีย์การเข้ารหัส: " . (!empty($member['encryption_key']) ? 'มี' : 'ว่าง'));
-                            error_log("IV: " . (!empty($member['iv']) ? 'มี' : 'ว่าง'));
-                            error_log("Tag: " . (!empty($member['tag']) ? 'มี' : 'ว่าง'));
-                            
-                            // ใช้ข้อมูลการเข้ารหัสจากฐานข้อมูลโดยตรง
-                            $decrypted_image = decryptImage(
-                                $file_path, 
-                                $member['encryption_key'], 
-                                $member['iv'], 
-                                $member['tag']
-                            );
-
-                            // เพิ่ม log สำหรับผลลัพธ์การถอดรหัส
-                            if ($decrypted_image) {
-                                error_log("ถอดรหัสรูปภาพสำเร็จสำหรับ: " . $member['member_name']);
-                            } else {
-                                error_log("ถอดรหัสรูปภาพล้มเหลวสำหรับ: " . $member['member_name']);
-                            }
-                            ?>
-                            
-                            <?php if ($decrypted_image): ?>
-                                <div class="image-container">
-                                    <h5><i class="fas fa-id-card"></i> เอกสารประจำตัว</h5>
-                                    <div class="decrypted-image">
-                                        <!-- เพิ่มการแสดงรูปภาพที่ถอดรหัสแล้ว -->
-                                        <img src="data:image/jpeg;base64,<?php echo base64_encode($decrypted_image); ?>" 
-                                             alt="เอกสารประจำตัว <?php echo htmlspecialchars($member['member_name']); ?>" 
-                                             class="id-card-image">
+                            <?php if (!empty($member['id_card_image'])): ?>
+                                <?php
+                                $file_path = $upload_dir . $member['id_card_image'];
+                                
+                                // ตรวจสอบว่าไฟล์มีอยู่จริง
+                                if (file_exists($file_path)) {
+                                    // ใช้ข้อมูลการเข้ารหัสจากฐานข้อมูลโดยตรง
+                                    $decrypted_image = decryptImage(
+                                        $file_path, 
+                                        $member['encryption_key'], 
+                                        $member['iv'], 
+                                        $member['tag']
+                                    );
+                                } else {
+                                    $decrypted_image = false;
+                                    error_log("ไม่พบไฟล์: " . $file_path);
+                                }
+                                ?>
+                                
+                                <?php if ($decrypted_image): ?>
+                                    <div class="image-container">
+                                        <h5><i class="fas fa-id-card"></i> เอกสารประจำตัว</h5>
+                                        <div class="decrypted-image">
+                                            <img src="data:image/jpeg;base64,<?php echo base64_encode($decrypted_image); ?>" 
+                                                alt="เอกสารประจำตัว <?php echo htmlspecialchars($member['member_name']); ?>" 
+                                                class="id-card-image">
+                                        </div>
                                     </div>
+                                <?php else: ?>
+                                    <div class="error-container">
+                                        <p class="error-message">
+                                            <i class="fas fa-exclamation-triangle"></i> 
+                                            ไม่สามารถแสดงเอกสารประจำตัวได้ <?php echo (!file_exists($file_path)) ? "ไม่พบไฟล์" : "โปรดตรวจสอบการเข้ารหัสข้อมูล"; ?>
+                                        </p>
+                                    </div>
+                                <?php endif; ?>
                             <?php else: ?>
-                                <div class="error-container">
-                                    <p class="error-message">
-                                        <i class="fas fa-exclamation-triangle"></i> 
-                                        ไม่สามารถแสดงเอกสารประจำตัวได้ โปรดตรวจสอบการเข้ารหัสข้อมูล
+                                <div class="notice-container">
+                                    <p class="notice-message">
+                                        <i class="fas fa-info-circle"></i> 
+                                        ไม่มีข้อมูลเอกสารประจำตัว
                                     </p>
                                 </div>
                             <?php endif; ?>
-                        <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="notice-container">
+                        <p class="notice-message">
+                            <i class="fas fa-exclamation-circle"></i> 
+                            ไม่พบข้อมูลสมาชิกในทีมนี้
+                        </p>
                     </div>
-                <?php endforeach; ?>
+                <?php endif; ?>
             </div>
-            <?php endif; ?>
+        <?php elseif (!empty($selected_team) && !$team_data): ?>
+            <div class="card">
+                <a href="?" class="back-to-teams"><i class="fas fa-arrow-left"></i> กลับไปหน้ารายชื่อทีมทั้งหมด</a>
+                <div class="error-container">
+                    <p class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        ไม่พบข้อมูลทีมที่ระบุ กรุณาเลือกทีมจากรายการ
+                    </p>
+                </div>
+            </div>
         <?php endif; ?>
 
         <div class="team-list">
@@ -253,7 +282,7 @@ try {
                 <div class="team-grid">
                     <?php foreach ($teams_data as $team): ?>
                         <div class="team-item">
-                            <a href="?team=<?php echo $team['team_id']; ?>" class="team-link">
+                            <a href="?team=<?php echo $team['team_id']; ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?>" class="team-link <?php echo ($selected_team == $team['team_id']) ? 'active' : ''; ?>">
                                 <i class="fas fa-users"></i> 
                                 <?php echo htmlspecialchars($team['team_name']); ?>
                             </a>
@@ -272,13 +301,23 @@ try {
     <footer class="footer">
         <p>
             <i class="fas fa-shield-alt"></i> 
-            ระบบจัดการข้อมูลทีม - เวอร์ชัน 1.0 
+            ระบบจัดการข้อมูลทีม - เวอร์ชัน 1.7 
             <br>
             <small>© <?php echo date('Y'); ?> สงวนลิขสิทธิ์</small>
         </p>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // เพิ่มการซูมรูปภาพเมื่อคลิก
+        const idCardImages = document.querySelectorAll('.id-card-image');
+        idCardImages.forEach(function(img) {
+            img.addEventListener('click', function() {
+                this.classList.toggle('zoomed');
+            });
+        });
+    });
+    </script>
 </body>
 </html>
 
