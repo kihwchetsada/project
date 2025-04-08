@@ -34,7 +34,7 @@
     </section>
     
     <footer class="footer">
-        <p>© 2025 RMUTI Tournament System by Chetsadaphon wongwiwong</p>
+        <p>© <?php echo date('Y'); ?> RMUTI Tournament System by Chetsadaphon wongwiwong</p>
     </footer>
 
 </body>

@@ -107,85 +107,9 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
                 <button class="filter-button" data-filter="completed">เสร็จสิ้นแล้ว</button>
                 <button class="filter-button" data-filter="upcoming">กำลังจะมาถึง</button>
                 <button class="filter-button" data-filter="pending">รอดำเนินการ</button>
-                
-                <button class="btn-add-round">
-                    <i class="fas fa-plus"></i> เพิ่มรอบการแข่งขันใหม่
-                </button>
+                <button class="filter-button" onclick="window.location.href='competition.php'">กำหนดวันแข่งขัน</button>
             </div>
 
-            <!-- ตารางการแข่งขันตามรอบ -->
-            <div class="schedule-container">
-                <?php foreach ($tournaments as $tournament): ?>
-                <div class="schedule-round" data-status="<?php echo $tournament['status']; ?>">
-                    <div class="round-header">
-                        <div class="round-title"><?php echo htmlspecialchars($tournament['round']); ?></div>
-                        <div>
-                            <span class="round-badge badge-<?php echo $tournament['status']; ?>">
-                                <?php 
-                                if ($tournament['status'] == 'completed') echo 'เสร็จสิ้น';
-                                elseif ($tournament['status'] == 'upcoming') echo 'กำลังจะมาถึง';
-                                else echo 'รอดำเนินการ';
-                                ?>
-                            </span>
-                            <button class="btn-add-match">
-                                <i class="fas fa-plus"></i> เพิ่มการแข่งขัน
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <?php if (empty($tournament['matches'])): ?>
-                    <div class="empty-round">
-                        <p>ยังไม่มีการแข่งขันในรอบนี้</p>
-                    </div>
-                    <?php else: ?>
-                    <table class="match-table">
-                        <thead>
-                            <tr>
-                                <th>รหัสแมตช์</th>
-                                <th>ทีม</th>
-                                <th>วันที่ & เวลา</th>
-                                <th>สถานที่</th>
-                                <th>ผลการแข่งขัน</th>
-                                <th>จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($tournament['matches'] as $match): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($match['match_id']); ?></td>
-                                <td>
-                                    <div class="match-teams">
-                                        <span><?php echo htmlspecialchars($match['team1']); ?></span>
-                                        <span class="team-vs">VS</span>
-                                        <span><?php echo htmlspecialchars($match['team2']); ?></span>
-                                    </div>
-                                </td>
-                                <td><?php echo htmlspecialchars($match['date']); ?> | <?php echo htmlspecialchars($match['time']); ?></td>
-                                <td><?php echo htmlspecialchars($match['venue']); ?></td>
-                                <td><?php echo htmlspecialchars($match['result']); ?></td>
-                                <td>
-                                    <div class="match-actions">
-                                        <a href="#" class="btn-action btn-edit">
-                                            <i class="fas fa-edit"></i> แก้ไข
-                                        </a>
-                                        <?php if ($tournament['status'] == 'completed'): ?>
-                                        <a href="<?php echo htmlspecialchars($match['stream']); ?>" target="_blank" class="btn-action btn-watch">
-                                            <i class="fas fa-play"></i> ดูย้อนหลัง
-                                        </a>
-                                        <?php endif; ?>
-                                        <a href="#" class="btn-action btn-delete">
-                                            <i class="fas fa-trash"></i> ลบ
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                    <?php endif; ?>
-                </div>
-                <?php endforeach; ?>
-            </div>
 
             <!-- Footer -->
             <div class="dashboard-footer">

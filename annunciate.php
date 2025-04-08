@@ -116,7 +116,7 @@ $result = $conn->query($sql);
 
     <footer class="bg-gray-800 text-white py-6">
         <div class="container mx-auto px-4 text-center">
-            <p>&copy; 2024 ระบบประกาศ. สงวนลิขสิทธิ์</p>
+            <p>&copy;<?php echo date('Y'); ?> ระบบประกาศ. สงวนลิขสิทธิ์</p>
         </div>
     </footer>
 
