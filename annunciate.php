@@ -120,9 +120,7 @@ $result = $conn->query($sql);
         </div>
     </footer>
 
-    <?php
-    // Close the database connection
-    $conn->close();
-    ?>
+    <?php $conn->close(); ?>
+    
 </body>
 </html>
