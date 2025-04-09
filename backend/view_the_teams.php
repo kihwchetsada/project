@@ -14,9 +14,15 @@ session_start();
 include '../db_connect.php';
 
 // กำหนดที่อัปโหลดไฟล์
-$upload_dir = __DIR__ . '/uploads/';
+$upload_dir = 'uploads/';
 
 function decryptImage($encrypted_file, $encryption_key, $iv, $tag) {
+    // เพิ่มการบันทึก log เพื่อดีบัก
+    error_log("Attempting to decrypt: " . $encrypted_file);
+    error_log("Key exists: " . (!empty($encryption_key) ? "Yes" : "No"));
+    error_log("IV exists: " . (!empty($iv) ? "Yes" : "No"));
+    error_log("Tag exists: " . (!empty($tag) ? "Yes" : "No"));
+
     // เพิ่มการตรวจสอบพื้นฐาน
     if (!file_exists($encrypted_file)) {
         error_log("ไฟล์ " . $encrypted_file . " ไม่มีอยู่");
@@ -79,6 +85,14 @@ function decryptImage($encrypted_file, $encryption_key, $iv, $tag) {
             return false;
         }
 
+        if ($decrypted_data !== false) {
+            error_log("Decryption successful");
+            return $decrypted_data;
+        } else {
+            error_log("Decryption failed: " . openssl_error_string());
+            return false;
+        }
+        
         return $decrypted_data;
 
     } catch (Exception $e) {

@@ -103,10 +103,10 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
 
             <!-- ส่วนการกรอง -->
             <div class="schedule-filters">
-                <button class="filter-button active" data-filter="all">ทั้งหมด</button>
-                <button class="filter-button" data-filter="completed">เสร็จสิ้นแล้ว</button>
+                <button class="filter-button active" data-filter="all">รายชื่อทีมทั้งหมด</button>
+                <button class="filter-button" data-filter="completed">รายชื่อทีมที่อนุมัติ</button>
                 <button class="filter-button" data-filter="upcoming">กำลังจะมาถึง</button>
-                <button class="filter-button" data-filter="pending">รอดำเนินการ</button>
+                <button class="filter-button" data-filter="pending">รายชื่อทีมที่รออนุมัติ</button>
                 <button class="filter-button" onclick="window.location.href='competition.php'">กำหนดวันแข่งขัน</button>
             </div>
 
