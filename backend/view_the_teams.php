@@ -330,19 +330,6 @@ if (!empty($selected_team)) {
         </div>
     </div> 
 
-  
-
-    <footer class="footer">
-        <p>
-            <i class="fas fa-shield-alt"></i> 
-            ระบบจัดการข้อมูลทีม - เวอร์ชัน 1.9.0<br> 
-            <br>
-            <small>© <?php echo date('Y'); ?> สงวนลิขสิทธิ์</small>
-        </p>
-    </footer>
-
-   
-
       <!-- หน้าต่างยืนยันการลบทีม -->
       <div id="deleteConfirmDialog" class="confirm-dialog">
         <div class="confirm-content">
@@ -355,6 +342,16 @@ if (!empty($selected_team)) {
             </div>
         </div>
     </div>
+
+    <footer class="footer">
+        <p>
+            <i class="fas fa-shield-alt"></i> 
+            ระบบจัดการข้อมูลทีม - เวอร์ชัน 1.9.0<br> 
+            <br>
+            <small>© <?php echo date('Y'); ?> สงวนลิขสิทธิ์</small>
+        </p>
+    </footer>
+
 </body>
 
 <script>

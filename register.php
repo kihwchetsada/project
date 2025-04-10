@@ -211,7 +211,7 @@ if (!isset($_SESSION['csrf_token'])) {
                         <div class="form-group">
                             <label for="competition_type">ประเภทการแข่งขัน <span class="required">*</span></label>
                             <select id="competition_type" name="competition_type" class="form-control" required>
-                                <option value="">-- เลือกประเภท --</option>
+                                <option value=""> -- เลือกประเภท -- </option>
                                 <option value="รุ่นเยาวชน">รุ่นเยาวชน</option>
                                 <option value="รุ่นประชาชน">รุ่นประชาชน</option>
                             </select>
