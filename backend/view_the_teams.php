@@ -309,10 +309,15 @@ if (!empty($selected_team)) {
                 <div class="team-grid">
                     <?php foreach ($teams_data as $team): ?>
                         <div class="team-item">
-                            <a href="?team=<?php echo $team['team_id']; ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?>" class="team-link <?php echo ($selected_team == $team['team_id']) ? 'active' : ''; ?>">
-                                <i class="fas fa-users"></i> 
-                                <?php echo htmlspecialchars($team['team_name']); ?>
-                            </a>
+                            <div class="team-actions">
+                                <a href="?team=<?php echo $team['team_id']; ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?>" class="team-link <?php echo ($selected_team == $team['team_id']) ? 'active' : ''; ?>">
+                                    <i class="fas fa-users"></i> 
+                                    <?php echo htmlspecialchars($team['team_name']); ?>
+                                </a>
+                                <button class="delete-team-btn" data-team-id="<?php echo $team['team_id']; ?>" data-team-name="<?php echo htmlspecialchars($team['team_name']); ?>">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -323,7 +328,9 @@ if (!empty($selected_team)) {
                 </p>
             <?php endif; ?>
         </div>
-    </div>
+    </div> 
+
+  
 
     <footer class="footer">
         <p>
@@ -334,18 +341,72 @@ if (!empty($selected_team)) {
         </p>
     </footer>
 
-    <script>
+   
+
+      <!-- หน้าต่างยืนยันการลบทีม -->
+      <div id="deleteConfirmDialog" class="confirm-dialog">
+        <div class="confirm-content">
+            <h3><i class="fas fa-exclamation-triangle"></i> ยืนยันการลบทีม</h3>
+            <p>คุณต้องการลบทีม <span id="teamNameToDelete"></span> ใช่หรือไม่?</p>
+            <p><strong>คำเตือน:</strong> การดำเนินการนี้ไม่สามารถยกเลิกได้ และจะลบข้อมูลสมาชิกทีมทั้งหมด</p>
+            <div class="confirm-actions">
+                <button id="cancelDelete" class="confirm-cancel"><i class="fas fa-times"></i> ยกเลิก</button>
+                <button id="confirmDelete" class="confirm-delete"><i class="fas fa-trash"></i> ยืนยันการลบ</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
     document.addEventListener('DOMContentLoaded', function() {
-        // เพิ่มการซูมรูปภาพเมื่อคลิก
-        const idCardImages = document.querySelectorAll('.id-card-image');
-        idCardImages.forEach(function(img) {
-            img.addEventListener('click', function() {
-                this.classList.toggle('zoomed');
-            });
+    // เพิ่มการซูมรูปภาพเมื่อคลิก
+    const idCardImages = document.querySelectorAll('.id-card-image');
+    idCardImages.forEach(function(img) {
+        img.addEventListener('click', function() {
+            this.classList.toggle('zoomed');
         });
     });
+    
+            // จัดการปุ่มลบทีม
+            const deleteButtons = document.querySelectorAll('.delete-team-btn');
+            const deleteDialog = document.getElementById('deleteConfirmDialog');
+            const teamNameSpan = document.getElementById('teamNameToDelete');
+            const cancelButton = document.getElementById('cancelDelete');
+            const confirmButton = document.getElementById('confirmDelete');
+            
+            let teamIdToDelete = null;
+            
+            // เมื่อคลิกปุ่มลบ
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    teamIdToDelete = this.getAttribute('data-team-id');
+                    const teamName = this.getAttribute('data-team-name');
+                    teamNameSpan.textContent = '"' + teamName + '"';  // เพิ่มเครื่องหมายคำพูดรอบชื่อทีม
+                    deleteDialog.style.display = 'block';
+                });
+            });
+            
+            // ปุ่มยกเลิกการลบ
+            cancelButton.addEventListener('click', function() {
+                deleteDialog.style.display = 'none';
+            });
+            
+            // ปุ่มยืนยันการลบ
+            confirmButton.addEventListener('click', function() {
+                if (teamIdToDelete) {
+                    window.location.href = 'delete_team.php?team_id=' + teamIdToDelete;
+                }
+            });
+            
+            // ปิดหน้าต่างยืนยันเมื่อคลิกนอกหน้าต่าง
+            window.addEventListener('click', function(e) {
+                if (e.target == deleteDialog) {
+                    deleteDialog.style.display = 'none';
+                }
+            });
+        });
     </script>
-</body>
 </html>
 
 <?php

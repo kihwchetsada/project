@@ -475,3 +475,112 @@
   
   /* โหลด Font จาก Google Fonts */
   @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&family=Sarabun:wght@300;400;500;600&display=swap');
+
+  .team-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.team-actions .team-link {
+    flex-grow: 1;
+}
+
+.delete-team-btn {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin-left: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.delete-team-btn:hover {
+    background-color: #ff0000;
+}
+
+/* สำหรับหน้าต่างยืนยัน */
+.confirm-dialog {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.confirm-content {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  width: 90%;
+  max-width: 450px;
+  text-align: center;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.confirm-content h3 {
+  color: #d9534f;
+  margin-top: 0;
+}
+
+.confirm-content #teamNameToDelete {
+  font-weight: bold;
+  color: #d9534f;
+}
+
+.warning-text {
+  color: #d9534f;
+  font-size: 0.9em;
+  background-color: #f8d7da;
+  border-radius: 4px;
+  padding: 8px;
+  margin: 15px 0;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.confirm-cancel, .confirm-delete {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.confirm-cancel {
+  background-color: #6c757d;
+  color: white;
+}
+
+.confirm-delete {
+  background-color: #d9534f;
+  color: white;
+}
+
+.confirm-cancel:hover {
+  background-color: #5a6268;
+}
+
+.confirm-delete:hover {
+  background-color: #c82333;
+}
