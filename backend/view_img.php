@@ -147,7 +147,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
     <title>ระบบดูรูปภาพที่อัปโหลด</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" type="image/png" href="../img/logo.jpg">
-    <link rel="stylesheet" href="../css/view_img.css">
+    <link rel="stylesheet" href="../css/view_the_teams.css">
 </head>
 <body>
     <div class="container">
