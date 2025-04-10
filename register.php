@@ -2,6 +2,7 @@
 // เพิ่มการเชื่อมต่อฐานข้อมูล
 include 'upload_script.php';
 include 'db_connect.php'; // ไฟล์เชื่อมต่อฐานข้อมูล
+require_once 'key_storage.php';
 
 // ตรวจสอบการเชื่อมต่อฐานข้อมูล
 if (!$conn instanceof PDO) {

@@ -5,6 +5,8 @@ error_reporting(E_ALL);
 
 session_start();
 
+require_once('key_storage.php');
+
 // กำหนดค่าไดเร็กทอรี่ก่อน
 $upload_dir = 'uploads';
 
