@@ -10,6 +10,19 @@ error_reporting(E_ALL);
 // เริ่ม session ก่อนมีการส่งข้อมูลใดๆ
 session_start(); 
 
+// 🔒 ตรวจสอบการ logout
+if (isset($_GET['logout'])) {
+    session_destroy(); // เคลียร์ session ทั้งหมด
+    header('Location: ../login.php'); // กลับไปหน้า login
+    exit;
+}
+
+// ตรวจสอบว่ามีการล็อกอินหรือไม่
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    header('Location: login.php');
+    exit;
+}
+
 // เชื่อมต่อฐานข้อมูล
 include '../db_connect.php';
 

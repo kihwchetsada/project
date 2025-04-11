@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $encryption_key = random_bytes(32);
         $iv_length = openssl_cipher_iv_length($cipher);
         $iv = random_bytes($iv_length);
-        $tag = '';
+        $tag = null;
 
         // เข้ารหัสภาพ
         if ($cipher === 'aes-256-gcm') {

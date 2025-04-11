@@ -1,4 +1,5 @@
 <?php
+
 // เพิ่มการเชื่อมต่อฐานข้อมูล
 include 'upload_script.php';
 include 'db_connect.php'; // ไฟล์เชื่อมต่อฐานข้อมูล
@@ -92,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
                                 $iv_length = openssl_cipher_iv_length($cipher);
                                 $iv_raw = random_bytes($iv_length);
 
-                                $tag_raw = '';
+                                $tag_raw = null;
                                 $encrypted_image = openssl_encrypt(
                                     $image_data,
                                     $cipher,
@@ -179,15 +180,15 @@ if (!isset($_SESSION['csrf_token'])) {
                 <div class="progress-steps">
                     <div class="step active">
                         <div class="step-icon">1</div>
-                        <div class="step-text">ข้อมูลทีม</div>
+                        <div class="step-text">กรอกข้อมูลทีม</div>
                     </div>
                     <div class="step">
                         <div class="step-icon">2</div>
-                        <div class="step-text">ข้อมูลสมาชิก</div>
+                        <div class="step-text">ดูข้อมูลสมาชิก</div>
                     </div>
                     <div class="step">
                         <div class="step-icon">3</div>
-                        <div class="step-text">ตรวจสอบ</div>
+                        <div class="step-text">รอตรวจสอบ การอนุมัติทีม</div>
                     </div>
                     <div class="step">
                         <div class="step-icon">4</div>
