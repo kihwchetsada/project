@@ -118,171 +118,116 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // ตรวจสอบว่า OpenSSL รองรับ GCM mode
         if (!in_array('aes-256-gcm', openssl_get_cipher_methods())) {
-            // หากไม่รองรับ GCM ให้ใช้ CBC แทน
-            $cipher = 'aes-256-cbc';
-        } else {
-            $cipher = 'aes-256-gcm';
+            throw new Exception('เซิร์ฟเวอร์ไม่รองรับการเข้ารหัสแบบ AES-256-GCM');
         }
 
-        // สร้างคีย์และ IV แบบปลอดภัย
-        $encryption_key = random_bytes(32);
-        $iv_length = openssl_cipher_iv_length($cipher);
-        $iv = random_bytes($iv_length);
-        $tag = null;
-
-        // เข้ารหัสภาพ
-        if ($cipher === 'aes-256-gcm') {
-            $encrypted_image = openssl_encrypt(
-                $image_data, 
-                $cipher, 
-                $encryption_key, 
-                OPENSSL_RAW_DATA, 
-                $iv, 
-                $tag
-            );
-        } else {
-            // ใช้ CBC mode หากไม่รองรับ GCM
-            $encrypted_image = openssl_encrypt(
-                $image_data, 
-                $cipher, 
-                $encryption_key, 
-                OPENSSL_RAW_DATA, 
-                $iv
-            );
+        // สร้าง IV (Initialization Vector) สำหรับการเข้ารหัส
+        $iv = openssl_random_pseudo_bytes(12); // GCM mode ต้องการ IV ขนาด 12 bytes
+        if ($iv === false) {
+            throw new Exception('ไม่สามารถสร้าง IV สำหรับการเข้ารหัส');
         }
 
-        if ($encrypted_image === false) {
+        // ดึงคีย์การเข้ารหัสจากไฟล์ key_storage.php
+        $encryption_key = getEncryptionKey();
+        if (empty($encryption_key)) {
+            throw new Exception('ไม่พบคีย์การเข้ารหัส');
+        }
+
+        // เข้ารหัสข้อมูลภาพ
+        $tag = '';
+        $encrypted_data = openssl_encrypt(
+            $image_data,
+            'aes-256-gcm',
+            $encryption_key,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag,
+            '',
+            16 // Authentication tag length
+        );
+
+        if ($encrypted_data === false) {
             throw new Exception('การเข้ารหัสล้มเหลว: ' . openssl_error_string());
         }
 
-        // ใช้เวลาในการสร้างชื่อไฟล์
-        date_default_timezone_set('Asia/Bangkok'); 
-        $timestamp = time();  
-        $encrypted_filename = $timestamp . '.enc';
-        
-        // บันทึกไฟล์เข้ารหัสและกำหนดสิทธิ์ไฟล์
-        if (file_put_contents($upload_dir . '/' . $encrypted_filename, $encrypted_image) === false) {
-            throw new Exception('ไม่สามารถบันทึกไฟล์เข้ารหัสได้');
-        }
-        @chmod($upload_dir . '/' . $encrypted_filename, 0644);
+        // สร้างชื่อไฟล์ที่ไม่ซ้ำกัน
+        $unique_id = bin2hex(random_bytes(16));
+        $encrypted_filename = $unique_id . '.enc';
 
-        // ข้อมูลสำหรับบันทึกลงฐานข้อมูล
-        $key_data = base64_encode($encryption_key);
-        $iv_data = base64_encode($iv);
-        $tag_data = !empty($tag) ? base64_encode($tag) : '';
-        $file_path = $upload_dir . '/' . $encrypted_filename;
+        // บันทึกข้อมูลที่เข้ารหัสแล้ว
+        $encrypted_path = $upload_dir . '/' . $encrypted_filename;
         
-        // สมมติว่าเราต้องการอัปเดตข้อมูลสมาชิกทีม
-        // ในสถานการณ์จริงควรรับค่า team_id และ member_id จากฟอร์มหรือ session
-        if (isset($_POST['team_id']) && isset($_POST['member_id'])) {
-            $team_id = (int)$_POST['team_id'];
-            $member_id = (int)$_POST['member_id'];
-            
-            // อัปเดตข้อมูลการเข้ารหัสในตาราง team_members
-            $sql = "UPDATE team_members SET 
-                    id_card_image = ?, 
-                    encryption_key = ?, 
-                    iv = ?, 
-                    tag = ?,
-                    updated_at = NOW()
-                    WHERE member_id = ? AND team_id = ?";
-                    
-            $stmt = $conn->prepare($sql);
-            if (!$stmt) {
-                throw new Exception('การเตรียมคำสั่ง SQL ล้มเหลว: ' . $conn->error);
-            }
-            
-            $stmt->bind_param("ssssii", $file_path, $key_data, $iv_data, $tag_data, $member_id, $team_id);
-        } else {
-            // กรณีเพิ่มสมาชิกใหม่
-            // ในสถานการณ์จริงควรรับค่าเหล่านี้จากฟอร์ม
-            if (isset($_POST['team_id'])) {
-                $team_id = (int)$_POST['team_id'];
-                $member_name = $conn->real_escape_string($_POST['member_name'] ?? '');
-                $game_name = $conn->real_escape_string($_POST['game_name'] ?? '');
-                $age = (int)($_POST['age'] ?? 0);
-                $phone = $conn->real_escape_string($_POST['phone'] ?? '');
-                $position = $conn->real_escape_string($_POST['position'] ?? '');
-                
-                // เพิ่มข้อมูลสมาชิกใหม่
-                $sql = "INSERT INTO team_members 
-                        (team_id, member_name, game_name, age, phone, position, id_card_image, encryption_key, iv, tag) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                        
-                $stmt = $conn->prepare($sql);
-                if (!$stmt) {
-                    throw new Exception('การเตรียมคำสั่ง SQL ล้มเหลว: ' . $conn->error);
-                }
-                
-                $stmt->bind_param("issiisssss", $team_id, $member_name, $game_name, $age, $phone, $position, $file_path, $key_data, $iv_data, $tag_data);
-            } else {
-                throw new Exception('ไม่พบข้อมูล team_id ที่จำเป็น');
-            }
+        // เขียนไฟล์ด้วยรูปแบบที่ประกอบด้วย IV + Tag + ข้อมูลที่เข้ารหัสแล้ว
+        $file_content = $iv . $tag . $encrypted_data;
+        if (file_put_contents($encrypted_path, $file_content) === false) {
+            throw new Exception('ไม่สามารถบันทึกไฟล์ที่เข้ารหัส');
         }
+
+        // ดึงข้อมูลจากฟอร์ม
+        $participant_name = $conn->real_escape_string($_POST['participant_name'] ?? '');
+        $email = $conn->real_escape_string($_POST['email'] ?? '');
+        $phone = $conn->real_escape_string($_POST['phone'] ?? '');
+        $tournament_id = intval($_POST['tournament_id'] ?? 0);
+        
+        // ตรวจสอบความถูกต้องของข้อมูลเพิ่มเติม
+        if (empty($participant_name)) {
+            throw new Exception('กรุณาระบุชื่อผู้เข้าร่วม');
+        }
+        
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception('อีเมลไม่ถูกต้อง');
+        }
+        
+        if (empty($phone)) {
+            throw new Exception('กรุณาระบุเบอร์โทรศัพท์');
+        }
+        
+        if ($tournament_id <= 0) {
+            throw new Exception('กรุณาเลือกการแข่งขัน');
+        }
+        
+        // เพิ่มข้อมูลลงในฐานข้อมูล
+        $sql = "INSERT INTO registrations (participant_name, email, phone, tournament_id, image_path, registration_date) 
+                VALUES (?, ?, ?, ?, ?, NOW())";
+        
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception('การเตรียม SQL statement ล้มเหลว: ' . $conn->error);
+        }
+        
+        $stmt->bind_param("sssss", $participant_name, $email, $phone, $tournament_id, $encrypted_filename);
         
         if (!$stmt->execute()) {
-            // ลบไฟล์เข้ารหัสหากไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้
-            @unlink($upload_dir . '/' . $encrypted_filename);
             throw new Exception('การบันทึกข้อมูลลงฐานข้อมูลล้มเหลว: ' . $stmt->error);
         }
         
+        $registration_id = $conn->insert_id;
         $stmt->close();
-        $conn->close();
-
-        $encryption_success = true;
-    } catch (Exception $e) {
-        // บันทึก error log
-        error_log('ข้อผิดพลาดการเข้ารหัสภาพ: ' . $e->getMessage());
-        error_log('Stack trace: ' . $e->getTraceAsString());
-        error_log('OpenSSL errors: ' . openssl_error_string());
         
-        $encryption_error = $e->getMessage();
+        // บันทึกข้อมูลการเข้ารหัสเพิ่มเติม (อาจเก็บในตารางแยก)
+        $sql = "INSERT INTO encryption_metadata (registration_id, original_filename, mime_type, encryption_method) 
+                VALUES (?, ?, ?, 'AES-256-GCM')";
         
-        // ปิดการเชื่อมต่อฐานข้อมูลหากยังเปิดอยู่
-        if (isset($conn) && $conn instanceof mysqli) {
-            $conn->close();
-        }
-    }
-}
-
-// ลบไฟล์เก่าเกิน 7 วัน เฉพาะเมื่อไดเร็กทอรี่มีอยู่จริง
-if (is_dir($upload_dir)) {
-    try {
-        // เชื่อมต่อฐานข้อมูลเพื่อเรียกข้อมูลไฟล์เก่า
-        $conn = new mysqli($servername, $username, $password, $dbname);
-        
-        if ($conn->connect_error) {
-            throw new Exception('เชื่อมต่อฐานข้อมูลล้มเหลว: ' . $conn->connect_error);
-        }
-        
-        // คำนวณวันที่เก่ากว่า 7 วัน
-        $expire_date = date('Y-m-d H:i:s', time() - (7 * 24 * 60 * 60));
-        
-        // ค้นหาไฟล์เก่าในฐานข้อมูล
-        $sql = "SELECT member_id, id_card_image FROM team_members WHERE created_at < ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $expire_date);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        if (!$stmt) {
+            throw new Exception('การเตรียม SQL statement สำหรับ metadata ล้มเหลว: ' . $conn->error);
+        }
         
-        while ($row = $result->fetch_assoc()) {
-            // ลบไฟล์จากระบบไฟล์
-            if (!empty($row['id_card_image']) && file_exists($row['id_card_image'])) {
-                @unlink($row['id_card_image']);
-            }
-            
-            // อัพเดทข้อมูลในฐานข้อมูล
-            $update_sql = "UPDATE team_members SET id_card_image = NULL, encryption_key = NULL, iv = NULL, tag = NULL WHERE member_id = ?";
-            $update_stmt = $conn->prepare($update_sql);
-            $update_stmt->bind_param("i", $row['member_id']);
-            $update_stmt->execute();
-            $update_stmt->close();
+        $original_filename = $conn->real_escape_string($_FILES['image']['name']);
+        $stmt->bind_param("iss", $registration_id, $original_filename, $mime_type);
+        
+        if (!$stmt->execute()) {
+            throw new Exception('การบันทึกข้อมูล metadata ล้มเหลว: ' . $stmt->error);
         }
         
         $stmt->close();
         $conn->close();
+        
+        $encryption_success = true;
+        
     } catch (Exception $e) {
-        error_log('ข้อผิดพลาดในการลบไฟล์เก่า: ' . $e->getMessage());
+        $encryption_error = $e->getMessage();
+        error_log('ข้อผิดพลาด: ' . $encryption_error);
     }
 }
 ?>

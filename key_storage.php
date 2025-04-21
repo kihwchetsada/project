@@ -84,7 +84,7 @@ function save_encryption_keys($identifier, $key, $iv, $tag = '') {
  * @param string $key_id รหัสอ้างอิงของคีย์ที่เก็บในฐานข้อมูล
  * @return array ข้อมูลคีย์เข้ารหัส, IV และ tag ในรูปแบบ binary
  */
-function get_encryption_keys($key_id) {
+function get_Encryption_keys($key_id) {
     if (empty($key_id)) {
         throw new Exception('ไม่พบรหัสอ้างอิงของคีย์');
     }

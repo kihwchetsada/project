@@ -88,24 +88,76 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
 
                                 $image_data = file_get_contents($_FILES[$file_field]['tmp_name']);
 
-                                $cipher = 'aes-256-gcm';
-                                $encryption_key_raw = random_bytes(32);
-                                $iv_length = openssl_cipher_iv_length($cipher);
-                                $iv_raw = random_bytes($iv_length);
+                                // ตรวจสอบว่า OpenSSL รองรับ GCM mode
+                                if (!in_array('aes-256-gcm', openssl_get_cipher_methods())) {
+                                    // หากไม่รองรับ GCM ให้ใช้ CBC แทน
+                                    $cipher = 'aes-256-cbc';
+                                    $encryption_key_raw = random_bytes(32);
+                                    $iv_length = openssl_cipher_iv_length($cipher);
+                                    $iv_raw = random_bytes($iv_length);
+                                    
+                                    $encrypted_image = openssl_encrypt(
+                                        $image_data,
+                                        $cipher,
+                                        $encryption_key_raw,
+                                        OPENSSL_RAW_DATA,
+                                        $iv_raw
+                                    );
+                                    $tag_raw = null; // ไม่มี tag ใน CBC mode
+                                } else {
+                                    // ใช้ GCM mode
+                                    $cipher = 'aes-256-gcm';
+                                    $encryption_key_raw = random_bytes(32);
+                                    $iv_length = openssl_cipher_iv_length($cipher);
+                                    $iv_raw = random_bytes($iv_length);
+                                    $tag_raw = ''; // ต้องประกาศตัวแปรก่อน
 
-                                $tag_raw = null;
-                                $encrypted_image = openssl_encrypt(
-                                    $image_data,
-                                    $cipher,
-                                    $encryption_key_raw,
-                                    OPENSSL_RAW_DATA,
-                                    $iv_raw,
-                                    $tag_raw
-                                );
+                                    $encrypted_image = openssl_encrypt(
+                                        $image_data,
+                                        $cipher,
+                                        $encryption_key_raw,
+                                        OPENSSL_RAW_DATA,
+                                        $iv_raw,
+                                        $tag_raw
+                                    );
+                                }
+
+                                // ตรวจสอบการเข้ารหัส
+                                if ($encrypted_image === false) {
+                                    throw new Exception('การเข้ารหัสล้มเหลว: ' . openssl_error_string());
+                                }
+
+                                // ตรวจสอบด้วยการถอดรหัสเพื่อยืนยันว่าถูกต้อง (เฉพาะการตรวจสอบ)
+                                if ($cipher === 'aes-256-gcm') {
+                                    $decrypted_test = openssl_decrypt(
+                                        $encrypted_image,
+                                        $cipher,
+                                        $encryption_key_raw,
+                                        OPENSSL_RAW_DATA,
+                                        $iv_raw,
+                                        $tag_raw
+                                    );
+                                } else {
+                                    $decrypted_test = openssl_decrypt(
+                                        $encrypted_image,
+                                        $cipher,
+                                        $encryption_key_raw,
+                                        OPENSSL_RAW_DATA,
+                                        $iv_raw
+                                    );
+                                }
+
+                                if ($decrypted_test === false) {
+                                    throw new Exception('การทดสอบถอดรหัสล้มเหลว กรุณาตรวจสอบการตั้งค่า OpenSSL');
+                                }
 
                                 $timestamp = time();
                                 $encrypted_filename = $upload_dir . $team_id . '_id_card_' . $i . '.enc';
-                                file_put_contents($encrypted_filename, $encrypted_image);
+                                
+                                // บันทึกไฟล์เข้ารหัส
+                                if (file_put_contents($encrypted_filename, $encrypted_image) === false) {
+                                    throw new Exception('ไม่สามารถบันทึกไฟล์เข้ารหัสได้');
+                                }
                                 
                                 // เก็บ path ของไฟล์
                                 $id_card_image = $encrypted_filename;
@@ -113,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
                                 // เก็บคีย์เข้ารหัสเป็น base64 เพื่อเก็บในฐานข้อมูล
                                 $encryption_key = base64_encode($encryption_key_raw);
                                 $iv = base64_encode($iv_raw);
-                                $tag = base64_encode($tag_raw);
+                                $tag = ($tag_raw !== null) ? base64_encode($tag_raw) : '';
                             }
 
                             // เพิ่มข้อมูลสมาชิกลงฐานข้อมูล
