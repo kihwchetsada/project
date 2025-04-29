@@ -1,4 +1,5 @@
 <?php
+
 // ตั้งค่า timezone เป็นประเทศไทย
 date_default_timezone_set('Asia/Bangkok');
 
@@ -28,6 +29,7 @@ include '../db_connect.php';
 
 // กำหนดที่อัปโหลดไฟล์
 $upload_dir = 'uploads/';
+
 
 function decryptImage($encrypted_file, $encryption_key, $iv, $tag) {
     // เพิ่มการบันทึก log เพื่อดีบัก
@@ -186,6 +188,7 @@ if (!empty($selected_team)) {
     <link rel="stylesheet" href="../css/view_the_teams.css">
 </head>
 <body>
+    
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-users"></i> ระบบข้อมูลทีม</h1>
@@ -368,6 +371,7 @@ if (!empty($selected_team)) {
 </body>
 
 <script>
+   
     document.addEventListener('DOMContentLoaded', function() {
     // เพิ่มการซูมรูปภาพเมื่อคลิก
     const idCardImages = document.querySelectorAll('.id-card-image');

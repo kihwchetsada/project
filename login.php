@@ -1,22 +1,46 @@
 <?php
 
 session_start();
+require 'db.php'; // เชื่อมต่อฐานข้อมูล
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // Dummy credentials for demonstration purposes
-    $valid_username = 'admin';
-    $valid_password = 'password';
+    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-    if ($username === $valid_username && $password === $valid_password) {
-        $_SESSION['loggedin'] = true;
-        $_SESSION['username'] = $username;
-        header('Location: backend/dashboard.php');
-        exit;
+    if ($result->num_rows === 1) {
+        $user = $result->fetch_assoc();
+
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['loggedin'] = true;
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['role'] = $user['role'];
+
+            // เปลี่ยนเส้นทางตามสิทธิ์
+            switch ($user['role']) {
+                case 'admin':
+                    header('Location: backend/admin_dashboard.php');
+                    break;
+                case 'organizer':
+                    header('Location: backend/organizer_dashboard.php');
+                    break;
+                case 'participant':
+                    header('Location: backend/participant_dashboard.php');
+                    break;
+                default:
+                    $error = "ไม่พบสิทธิ์ผู้ใช้ที่เกี่ยวข้อง";
+                    break;
+            }
+            exit;
+        } else {
+            $error = 'รหัสผ่านไม่ถูกต้อง';
+        }
     } else {
-        $error = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+        $error = 'ไม่พบบัญชีผู้ใช้';
     }
 }
 ?>
@@ -73,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <button type="submit" class="login-button">เข้าสู่ระบบ <i class="fas fa-sign-in-alt"></i></button>
         </form>
         <div class="register-link">
-            ยังไม่มีบัญชี? <a href="#">สมัครสมาชิก</a>
+            ยังไม่มีบัญชี? <a href="register_user.php">สมัครสมาชิก</a>
         </div>
     </div>
 
