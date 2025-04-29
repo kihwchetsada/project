@@ -15,7 +15,7 @@
         </div>
         <nav>
             <a href="index.php">หน้าหลัก</a>
-            <a href="event-info.php">ข้อมูลการแข่งขัน</a>
+            <a href="schedule.php">ตารางการแข่งขัน</a>
             <a href="register.php">สมัครทีม</a>
             <a href="annunciate.php">ประกาศ</a>
             <a href="contact.php">ติดต่อเรา</a>
@@ -27,7 +27,7 @@
         <section class="hero">
             <div class="hero-content">
                 <h1>RMUTI Tournament System</h1>
-                <p>ราชมงคลอีสปอร์ต ROV ประจำปี 2025</p>
+                <p>ราชมงคลอีสปอร์ต ROV ประจำปี <?php echo date('Y'); ?></p>
                 <a href="register.php" class="btn">สมัครทีม</a>
             </div>
         </section>
