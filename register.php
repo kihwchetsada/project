@@ -1,26 +1,20 @@
 <?php
-
+session_start();
 // เพิ่มการเชื่อมต่อฐานข้อมูล
-include 'upload_script.php';
+//include 'upload_script.php';
 include 'db_connect.php'; // ไฟล์เชื่อมต่อฐานข้อมูล
-require_once 'key_storage.php';
 
-// ตรวจสอบการเชื่อมต่อฐานข้อมูล
 if (!$conn instanceof PDO) {
     throw new Exception('Database connection is not a PDO instance');
 }
 
-// เพิ่มโค้ดสำหรับการจัดการข้อมูลทีม
 $team_success = false;
 $team_error = '';
 
-// ตรวจสอบการส่งฟอร์มข้อมูลทีม
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
-    // ตรวจสอบ CSRF token
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $team_error = 'CSRF token ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง';
     } else {
-        // ตรวจสอบข้อมูลทีม
         $competition_type = $_POST['competition_type'] ?? '';
         $team_name = trim($_POST['team_name'] ?? '');
         $coach_name = trim($_POST['coach_name'] ?? '');
@@ -30,7 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
         if (empty($competition_type) || empty($team_name) || empty($coach_name) || empty($coach_phone) || empty($leader_school)) {
             $team_error = 'กรุณากรอกข้อมูลทีมให้ครบถ้วน';
         } else {
-            // นับจำนวนสมาชิกที่มีข้อมูล
             $member_count = 0;
             for ($i = 1; $i <= 8; $i++) {
                 if (!empty($_POST["member_name_$i"])) {
@@ -41,12 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
             if ($member_count < 5) {
                 $team_error = 'กรุณากรอกข้อมูลสมาชิกอย่างน้อย 5 คน';
             } else {
-                // เริ่มทำงานกับฐานข้อมูล
                 try {
-                    // เริ่มต้น Transaction
                     $conn->beginTransaction();
 
-                    // เพิ่มข้อมูลทีม
                     $stmt = $conn->prepare("INSERT INTO teams (competition_type, team_name, coach_name, coach_phone, leader_school, created_at) 
                     VALUES (:competition_type, :team_name, :coach_name, :coach_phone, :leader_school, NOW())");
 
@@ -60,127 +50,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
 
                     $team_id = $conn->lastInsertId();
 
-                    // เพิ่มข้อมูลสมาชิก
                     for ($i = 1; $i <= 8; $i++) {
                         if (!empty($_POST["member_name_$i"])) {
                             $member_name = $_POST["member_name_$i"];
                             $member_game_name = $_POST["member_game_name_$i"] ?? '';
                             $member_age = $_POST["member_age_$i"] ?? null;
                             $member_phone = $_POST["member_phone_$i"] ?? '';
+                            $member_birthdate = $_POST["member_birthdate_$i"] ?? null;
                             $member_position = $_POST["member_position_$i"] ?? '';
-                            $id_card_image = '';
-                            $encryption_key = '';
-                            $iv = '';
-                            $tag = '';
 
-                            // จัดการไฟล์รูปภาพ
-                            $file_field = "member_id_card_$i";
-                            if (!empty($_FILES[$file_field]['name'])) {
-                                $upload_dir = 'uploads/';
-                                $keys_dir = 'keys/';
+                            // เข้ารหัสเบอร์โทรศัพท์
+                            $phone_key_raw = random_bytes(32);
+                            $phone_iv_raw = random_bytes(openssl_cipher_iv_length('aes-256-cbc'));
+                            $encrypted_phone = openssl_encrypt($member_phone, 'aes-256-cbc', $phone_key_raw, 0, $phone_iv_raw);
 
-                                if (!is_dir($upload_dir)) {
-                                    mkdir($upload_dir, 0755, true);
-                                }
-                                if (!is_dir($keys_dir)) {
-                                    mkdir($keys_dir, 0755, true);
-                                }
+                            $phone_key = base64_encode($phone_key_raw);
+                            $phone_iv = base64_encode($phone_iv_raw);
 
-                                $image_data = file_get_contents($_FILES[$file_field]['tmp_name']);
+                            $stmt = $conn->prepare("INSERT INTO team_members 
+                                (team_id, member_name, game_name, age, phone, position, birthdate, phone_key, phone_iv) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-                                // ตรวจสอบว่า OpenSSL รองรับ GCM mode
-                                if (!in_array('aes-256-gcm', openssl_get_cipher_methods())) {
-                                    // หากไม่รองรับ GCM ให้ใช้ CBC แทน
-                                    $cipher = 'aes-256-cbc';
-                                    $encryption_key_raw = random_bytes(32);
-                                    $iv_length = openssl_cipher_iv_length($cipher);
-                                    $iv_raw = random_bytes($iv_length);
-                                    
-                                    $encrypted_image = openssl_encrypt(
-                                        $image_data,
-                                        $cipher,
-                                        $encryption_key_raw,
-                                        OPENSSL_RAW_DATA,
-                                        $iv_raw
-                                    );
-                                    $tag_raw = null; // ไม่มี tag ใน CBC mode
-                                } else {
-                                    // ใช้ GCM mode
-                                    $cipher = 'aes-256-gcm';
-                                    $encryption_key_raw = random_bytes(32);
-                                    $iv_length = openssl_cipher_iv_length($cipher);
-                                    $iv_raw = random_bytes($iv_length);
-                                    $tag_raw = ''; // ต้องประกาศตัวแปรก่อน
-
-                                    $encrypted_image = openssl_encrypt(
-                                        $image_data,
-                                        $cipher,
-                                        $encryption_key_raw,
-                                        OPENSSL_RAW_DATA,
-                                        $iv_raw,
-                                        $tag_raw
-                                    );
-                                }
-
-                                // ตรวจสอบการเข้ารหัส
-                                if ($encrypted_image === false) {
-                                    throw new Exception('การเข้ารหัสล้มเหลว: ' . openssl_error_string());
-                                }
-
-                                // ตรวจสอบด้วยการถอดรหัสเพื่อยืนยันว่าถูกต้อง (เฉพาะการตรวจสอบ)
-                                if ($cipher === 'aes-256-gcm') {
-                                    $decrypted_test = openssl_decrypt(
-                                        $encrypted_image,
-                                        $cipher,
-                                        $encryption_key_raw,
-                                        OPENSSL_RAW_DATA,
-                                        $iv_raw,
-                                        $tag_raw
-                                    );
-                                } else {
-                                    $decrypted_test = openssl_decrypt(
-                                        $encrypted_image,
-                                        $cipher,
-                                        $encryption_key_raw,
-                                        OPENSSL_RAW_DATA,
-                                        $iv_raw
-                                    );
-                                }
-
-                                if ($decrypted_test === false) {
-                                    throw new Exception('การทดสอบถอดรหัสล้มเหลว กรุณาตรวจสอบการตั้งค่า OpenSSL');
-                                }
-
-                                $timestamp = time();
-                                $encrypted_filename = $upload_dir . $team_id . '_id_card_' . $i . '.enc';
-                                
-                                // บันทึกไฟล์เข้ารหัส
-                                if (file_put_contents($encrypted_filename, $encrypted_image) === false) {
-                                    throw new Exception('ไม่สามารถบันทึกไฟล์เข้ารหัสได้');
-                                }
-                                
-                                // เก็บ path ของไฟล์
-                                $id_card_image = $encrypted_filename;
-                                
-                                // เก็บคีย์เข้ารหัสเป็น base64 เพื่อเก็บในฐานข้อมูล
-                                $encryption_key = base64_encode($encryption_key_raw);
-                                $iv = base64_encode($iv_raw);
-                                $tag = ($tag_raw !== null) ? base64_encode($tag_raw) : '';
-                            }
-
-                            // เพิ่มข้อมูลสมาชิกลงฐานข้อมูล
-                            $stmt = $conn->prepare("INSERT INTO team_members (team_id, member_name, game_name, age, phone, position, id_card_image, encryption_key, iv, tag) 
-                                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                            $stmt->execute([$team_id, $member_name, $member_game_name, $member_age, $member_phone, $member_position, $id_card_image, $encryption_key, $iv, $tag]);
+                            $stmt->execute([
+                                $team_id,
+                                $member_name,
+                                $member_game_name,
+                                $member_age,
+                                $encrypted_phone,
+                                $member_position,
+                                $member_birthdate,
+                                $phone_key,
+                                $phone_iv
+                            ]);
                         }
                     }
 
-                    // ยืนยัน Transaction
                     $conn->commit();
                     $team_success = true;
-                    
                 } catch (PDOException $e) {
-                    // ถ้าเกิดข้อผิดพลาด ให้ยกเลิก Transaction
                     $conn->rollBack();
                     $team_error = 'เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' . $e->getMessage();
                 }
@@ -202,164 +109,216 @@ if (!isset($_SESSION['csrf_token'])) {
     <title>ลงทะเบียนทีม</title>
     <link rel="icon" type="image/png" href="img/logo.jpg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/register.css">
+    <!-- เปลี่ยนจาก CSS เดิมเป็น Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#e0f2fe',
+                            100: '#bae6fd',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1'
+                        },
+                        success: {
+                            50: '#ecfdf5',
+                            500: '#10b981',
+                            600: '#059669'
+                        },
+                        danger: {
+                            50: '#fef2f2',
+                            500: '#ef4444',
+                            600: '#dc2626'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <header>
-        <div class="container">
-            <h1>ลงทะเบียนการแข่งขัน</h1>
-            <p>กรอกข้อมูลทีมของคุณเพื่อเข้าร่วมการแข่งขัน</p>
+<body class="bg-gray-50 font-sans text-gray-800">
+    <header class="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-8 shadow-md text-center">
+        <div class="container mx-auto px-4 max-w-5xl">
+            <h1 class="text-3xl font-bold mb-2">ลงทะเบียนการแข่งขัน</h1>
+            <p class="text-primary-50">กรอกข้อมูลทีมของคุณเพื่อเข้าร่วมการแข่งขัน</p>
         </div>
     </header>
     
-    <div class="container">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
         <?php if ($team_success): ?>
-            <div class="form-container success-message">
-                <div class="success-icon">
+            <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+                <div class="text-success-500 text-6xl mb-4">
                     <i class="fas fa-check-circle"></i>
                 </div>
-                <h2>ลงทะเบียนสำเร็จ!</h2>
-                <p>ขอบคุณสำหรับการลงทะเบียน เราได้รับข้อมูลของทีม <?php echo htmlspecialchars($team_name); ?> เรียบร้อยแล้ว</p>
-                <p>ทางทีมงานจะติดต่อกลับไปที่หมายเลข <?php echo htmlspecialchars($coach_phone); ?> เพื่อยืนยันการลงทะเบียน</p>
-                <div style="margin-top: 2rem;">
-                    <a href="index.php" class="btn btn-primary">
-                        <i class="fas fa-home"></i> กลับสู่หน้าหลัก
+                <h2 class="text-2xl font-bold text-success-600 mb-">ลงทะเบียนสำเร็จ!</h2>
+                <p class="mb-2 text-lg">ขอบคุณสำหรับการลงทะเบียน เราได้รับข้อมูลของทีม <?php echo htmlspecialchars($team_name); ?> เรียบร้อยแล้ว</p>
+                <p class="mb-8 text-gray-600">ทางทีมงานจะติดต่อกลับไปที่หมายเลข <?php echo htmlspecialchars($coach_phone); ?> เพื่อยืนยันการลงทะเบียน</p>
+                <div class="mt-8">
+                    <a href="index.php" class="inline-flex items-center px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors duration-200">
+                        <i class="fas fa-home mr-2"></i> กลับสู่หน้าหลัก
                     </a>
                 </div>
             </div>
         <?php else: ?>
-            <div class="progress-container">
-                <div class="progress-steps">
-                    <div class="step active">
-                        <div class="step-icon">1</div>
-                        <div class="step-text">กรอกข้อมูลทีม</div>
-                    </div>
-                    <div class="step">
-                        <div class="step-icon">2</div>
-                        <div class="step-text">ดูข้อมูลสมาชิก</div>
-                    </div>
-                    <div class="step">
-                        <div class="step-icon">3</div>
-                        <div class="step-text">รอตรวจสอบ การอนุมัติทีม</div>
-                    </div>
-                    <div class="step">
-                        <div class="step-icon">4</div>
-                        <div class="step-text">เสร็จสิ้น</div>
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-2 relative">
+                    <div class="w-full bg-gray-200 h-1 absolute"></div>
+                    <div class="flex justify-between w-full relative z-10">
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                            <div class="text-sm mt-2 text-primary-600 font-medium">กรอกข้อมูลทีม</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">2</div>
+                            <div class="text-sm mt-2 text-gray-500">ดูข้อมูลสมาชิก</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">3</div>
+                            <div class="text-sm mt-2 text-gray-500">รอตรวจสอบ การอนุมัติทีม</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">4</div>
+                            <div class="text-sm mt-2 text-gray-500">เสร็จสิ้น</div>
+                        </div>
                     </div>
                 </div>
             </div>
             
             <?php if (!empty($team_error)): ?>
-                <div class="alert alert-error">
-                    <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($team_error); ?>
+                <div class="bg-danger-50 border-l-4 border-danger-500 p-4 mb-6 rounded-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-circle text-danger-500 mr-3 text-lg"></i>
+                        <p class="text-danger-600"><?php echo htmlspecialchars($team_error); ?></p>
+                    </div>
                 </div>
             <?php endif; ?>
             
             <form action="" method="post" enctype="multipart/form-data" id="registrationForm">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                 
-                <div class="form-container">
-                    <h3 class="section-title"><i class="fas fa-users-cog"></i> ข้อมูลทีม</h3>
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                    <h3 class="text-xl font-bold text-gray-800 pb-4 mb-6 border-b border-gray-200">
+                        <i class="fas fa-users-cog mr-2 text-primary-600"></i> ข้อมูลทีม
+                    </h3>
                     
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="competition_type">ประเภทการแข่งขัน <span class="required">*</span></label>
-                            <select id="competition_type" name="competition_type" class="form-control" required>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="competition_type" class="block mb-2 font-medium text-gray-700">
+                                ประเภทการแข่งขัน <span class="text-danger-500">*</span>
+                            </label>
+                            <select id="competition_type" name="competition_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200" required>
                                 <option value=""> -- เลือกประเภท -- </option>
                                 <option value="รุ่นเยาวชน">รุ่นเยาวชน</option>
                                 <option value="รุ่นประชาชน">รุ่นประชาชน</option>
                             </select>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="team_name">ชื่อทีม <span class="required">*</span></label>
-                            <input type="text" id="team_name" name="team_name" class="form-control" required>
+                        <div>
+                            <label for="team_name" class="block mb-2 font-medium text-gray-700">
+                                ชื่อทีม <span class="text-danger-500">*</span>
+                            </label>
+                            <input type="text" id="team_name" name="team_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200" required>
                         </div>
                     </div>
                     
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="coach_name">ชื่อผู้ควบคุมทีม <span class="required">*</span></label>
-                            <input type="text" id="coach_name" name="coach_name" class="form-control" required>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="coach_name" class="block mb-2 font-medium text-gray-700">
+                                ชื่อผู้ควบคุมทีม <span class="text-danger-500">*</span>
+                            </label>
+                            <input type="text" id="coach_name" name="coach_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200" required>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="coach_phone">เบอร์โทรผู้ควบคุมทีม <span class="required">*</span></label>
-                            <input type="tel" id="coach_phone" name="coach_phone" class="form-control" pattern="[0-9]{9,10}" placeholder="0xxxxxxxxx" required>
+                        <div>
+                            <label for="coach_phone" class="block mb-2 font-medium text-gray-700">
+                                เบอร์โทรผู้ควบคุมทีม <span class="text-danger-500">*</span>
+                            </label>
+                            <input type="tel" id="coach_phone" name="coach_phone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200" pattern="[0-9]{9,10}" placeholder="0xxxxxxxxx" required>
                         </div>
                     </div>
                     
-                    <div class="form-row">
-                        <div class="form-group full-width">
-                            <label for="leader_school">สังกัด/โรงเรียน <span class="required">*</span></label>
-                            <input type="text" id="leader_school" name="leader_school" class="form-control" required>
-                        </div>
+                    <div class="mb-6">
+                        <label for="leader_school" class="block mb-2 font-medium text-gray-700">
+                            สังกัด/โรงเรียน <span class="text-danger-500">*</span>
+                        </label>
+                        <input type="text" id="leader_school" name="leader_school" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200" required>
                     </div>
                 </div>
                 
-                <div class="form-container">
-                    <h3 class="section-title"><i class="fas fa-users"></i> ข้อมูลสมาชิก</h3>
-                    <p style="margin-bottom: 1.5rem;">กรุณากรอกข้อมูลสมาชิกในทีมของคุณ (จำเป็นต้องมีอย่างน้อย 5 คน, สูงสุด 8 คน)</p>
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                    <h3 class="text-xl font-bold text-gray-800 pb-4 mb-6 border-b border-gray-200">
+                        <i class="fas fa-users mr-2 text-primary-600"></i> ข้อมูลสมาชิก
+                    </h3>
+                    <p class="mb-6 text-gray-600">กรุณากรอกข้อมูลสมาชิกในทีมของคุณ (จำเป็นต้องมีอย่างน้อย 5 คน, สูงสุด 8 คน)</p>
                     
                     <?php for ($i = 1; $i <= 8; $i++): ?>
-                        <div class="member-card <?php echo $i > 5 ? 'optional' : ''; ?>">
-                            <div class="member-number"><?php echo $i; ?></div>
-                            <h4>
-                                สมาชิกคนที่ <?php echo $i; ?> 
-                                <?php if ($i <= 5): ?>
-                                    <span class="required-tag">จำเป็น</span>
-                                <?php else: ?>
-                                    <span class="optional-tag">ไม่จำเป็น</span>
-                                <?php endif; ?>
-                            </h4>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="member_name_<?php echo $i; ?>">ชื่อ-นามสกุล <span class="required">*</span></label>
-                                    <input type="text" id="member_name_<?php echo $i; ?>" name="member_name_<?php echo $i; ?>" class="form-control" <?php echo $i <= 5 ? 'required' : ''; ?>>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="member_game_name_<?php echo $i; ?>">ชื่อในเกม</label>
-                                    <input type="text" id="member_game_name_<?php echo $i; ?>" name="member_game_name_<?php echo $i; ?>" class="form-control">
-                                </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-6 mb-6 relative <?php echo $i > 5 ? 'border-dashed' : ''; ?>">
+                        <div class="absolute top-4 right-4 w-8 h-8 bg-<?php echo $i <= 5 ? 'primary' : 'gray'; ?>-600 text-white rounded-full flex items-center justify-center font-bold">
+                            <?php echo $i; ?>
+                        </div>
+                        <h4 class="text-lg font-medium mb-4 text-gray-800">
+                            สมาชิกคนที่ <?php echo $i; ?> 
+                            <?php if ($i <= 5): ?>
+                                <span class="inline-block bg-primary-100 text-primary-700 text-xs font-medium px-2 py-1 rounded ml-2">จำเป็น</span>
+                            <?php else: ?>
+                                <span class="inline-block bg-gray-100 text-gray-600 text-xs font-medium px-2 py-1 rounded ml-2">ไม่จำเป็น</span>
+                            <?php endif; ?>
+                        </h4>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                            <div>
+                                <label for="member_name_<?php echo $i; ?>" class="block mb-2 font-medium text-gray-700">
+                                    ชื่อ-นามสกุล <span class="text-danger-500">*</span>
+                                </label>
+                                <input type="text" id="member_name_<?php echo $i; ?>" name="member_name_<?php echo $i; ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200" <?php echo $i <= 5 ? 'required' : ''; ?>>
                             </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="member_age_<?php echo $i; ?>">อายุ</label>
-                                    <input type="number" id="member_age_<?php echo $i; ?>" name="member_age_<?php echo $i; ?>" min="7" max="99" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="member_phone_<?php echo $i; ?>">เบอร์โทรศัพท์</label>
-                                    <input type="tel" id="member_phone_<?php echo $i; ?>" name="member_phone_<?php echo $i; ?>" pattern="[0-9]{9,10}" placeholder="0xxxxxxxxx" class="form-control">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="member_position_<?php echo $i; ?>">ตำแหน่ง</label>
-                                    <input type="text" id="member_position_<?php echo $i; ?>" name="member_position_<?php echo $i; ?>" class="form-control">
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group full-width">
-                                    <label for="member_id_card_<?php echo $i; ?>">รูปบัตรประชาชน <span class="required">*</span></label>
-                                    <div class="file-input-container">
-                                        <div class="file-input-preview" id="preview_id_card_<?php echo $i; ?>">
-                                            <i class="fas fa-id-card"></i>
-                                        </div>
-                                        <input type="file" id="member_id_card_<?php echo $i; ?>" name="member_id_card_<?php echo $i; ?>" class="form-control custom-file-input" accept="image/*" <?php echo $i <= 5 ? 'required' : ''; ?>>
-                                        <div class="id-preview">* กรุณาอัพโหลดภาพถ่ายบัตรประชาชนที่ชัดเจน</div>
-                                    </div>
-                                </div>
+
+                            <div>
+                                <label for="member_game_name_<?php echo $i; ?>" class="block mb-2 font-medium text-gray-700">
+                                    ชื่อในเกม
+                                </label>
+                                <input type="text" id="member_game_name_<?php echo $i; ?>" name="member_game_name_<?php echo $i; ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200">
                             </div>
                         </div>
-                    <?php endfor; ?>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                            <div>
+                                <label for="member_age_<?php echo $i; ?>" class="block mb-2 font-medium text-gray-700">
+                                    อายุ
+                                </label>
+                                <input type="number" id="member_age_<?php echo $i; ?>" name="member_age_<?php echo $i; ?>" min="7" max="99" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200">
+                            </div>
+
+                            <div>
+                                <label for="member_phone_<?php echo $i; ?>" class="block mb-2 font-medium text-gray-700">
+                                    เบอร์โทรศัพท์
+                                </label>
+                                <input type="tel" id="member_phone_<?php echo $i; ?>" name="member_phone_<?php echo $i; ?>" pattern="[0-9]{9,10}" placeholder="0xxxxxxxxx" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200">
+                            </div>
+
+                            <div>
+                                <label for="member_position_<?php echo $i; ?>" class="block mb-2 font-medium text-gray-700">
+                                    ตำแหน่ง
+                                </label>
+                                <input type="text" id="member_position_<?php echo $i; ?>" name="member_position_<?php echo $i; ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="member_birthdate_<?php echo $i; ?>" class="block mb-2 font-medium text-gray-700">
+                                วันเดือนปีเกิด <span class="text-danger-500">*</span>
+                            </label>
+                            <input type="date" id="member_birthdate_<?php echo $i; ?>" name="member_birthdate_<?php echo $i; ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200" <?php echo $i <= 5 ? 'required' : ''; ?>>
+                        </div>
+                    </div>
+                <?php endfor; ?>
                     
-                    <div style="text-align: center; margin-top: 2rem;">
-                        <button type="submit" name="submit_team" class="btn btn-success btn-block">
-                            <i class="fas fa-check-circle"></i> ลงทะเบียนทีม
+                    <div class="mt-8 text-center">
+                        <button type="submit" name="submit_team" class="px-8 py-3 bg-success-500 hover:bg-success-600 text-white font-medium rounded-lg transition-colors duration-200 inline-flex items-center">
+                            <i class="fas fa-check-circle mr-2"></i> ลงทะเบียนทีม
                         </button>
                     </div>
                 </div>
@@ -367,8 +326,8 @@ if (!isset($_SESSION['csrf_token'])) {
         <?php endif; ?>
     </div>
     
-    <footer>
-        <div class="container">
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center text-sm">
             <p>&copy; <?php echo date('Y'); ?> ระบบลงทะเบียนการแข่งขัน</p>
         </div>
     </footer>

@@ -1,118 +1,164 @@
 <?php
+// เริ่ม session
+session_start();
 // ตั้งค่า timezone เป็นประเทศไทย
 date_default_timezone_set('Asia/Bangkok');
-
 // เปิดใช้งาน error reporting สำหรับการดีบัก
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-
-// เริ่ม session ก่อนมีการส่งข้อมูลใดๆ
-session_start(); 
-
+// ตรวจสอบว่ามีการล็อกอินหรือไม่
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    header('Location: login.php');
+    exit;
+}
 // เชื่อมต่อฐานข้อมูล
 include '../db_connect.php';
-
-// กำหนดที่อัปโหลดไฟล์
-$upload_dir = 'uploads/';
-$message = "";
-$status = "";
-
-// ตรวจสอบว่ามีการส่ง team_id มาหรือไม่
-if (isset($_GET['team_id']) && !empty($_GET['team_id'])) {
+// สร้างตัวแปรสำหรับเก็บข้อความแจ้งเตือน
+$message = '';
+$message_type = '';
+// ตรวจสอบ team_id
+if (!isset($_GET['team_id']) || empty($_GET['team_id'])) {
+    $message = 'ไม่พบข้อมูล team_id กรุณาระบุทีมที่ต้องการลบ';
+    $message_type = 'error';
+} else {
     $team_id = intval($_GET['team_id']);
     
     try {
-        // เริ่ม transaction
+        // เริ่มทำ Transaction
         $conn->beginTransaction();
         
-        // ดึงข้อมูลทีมเพื่อเก็บชื่อสำหรับแสดงข้อความ
+        // ดึงข้อมูลทีมก่อนลบ (เพื่อเก็บชื่อทีม)
         $stmt = $conn->prepare("SELECT team_name FROM teams WHERE team_id = :team_id");
         $stmt->bindParam(':team_id', $team_id, PDO::PARAM_INT);
         $stmt->execute();
         $team = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($team) {
-            $team_name = $team['team_name'];
-            
-            // ดึงรายการสมาชิกเพื่อลบไฟล์รูปที่เกี่ยวข้อง
-            $stmt = $conn->prepare("SELECT id_card_image FROM team_members WHERE team_id = :team_id");
-            $stmt->bindParam(':team_id', $team_id, PDO::PARAM_INT);
-            $stmt->execute();
-            $members_with_images = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // ลบไฟล์รูปของสมาชิกทีม (ถ้ามี)
-            foreach ($members_with_images as $member) {
-                if (!empty($member['id_card_image'])) {
-                    $image_path = $upload_dir . $member['id_card_image'];
-                    if (file_exists($image_path)) {
-                        unlink($image_path);
-                    }
-                }
-            }
-            
-            // ลบข้อมูลสมาชิกทีมจากฐานข้อมูล
-            $stmt = $conn->prepare("DELETE FROM team_members WHERE team_id = :team_id");
-            $stmt->bindParam(':team_id', $team_id, PDO::PARAM_INT);
-            $stmt->execute();
-            
-            // ลบข้อมูลทีม
-            $stmt = $conn->prepare("DELETE FROM teams WHERE team_id = :team_id");
-            $stmt->bindParam(':team_id', $team_id, PDO::PARAM_INT);
-            $stmt->execute();
-            
-            // บันทึก transaction
-            $conn->commit();
-            
-            $message = "ลบทีม \"" . htmlspecialchars($team_name) . "\" และสมาชิกทั้งหมดเรียบร้อยแล้ว";
-            $status = "success";
-        } else {
-            $message = "ไม่พบข้อมูลทีมที่ต้องการลบ";
-            $status = "error";
+        // ถ้าไม่พบทีม
+        if (!$team) {
+            throw new Exception('ไม่พบข้อมูลทีมที่ต้องการลบ');
         }
-    } catch (PDOException $e) {
-        // ยกเลิก transaction ในกรณีที่เกิดข้อผิดพลาด
+        
+        // ลบข้อมูลสมาชิกในทีม
+        $stmt = $conn->prepare("DELETE FROM team_members WHERE team_id = :team_id");
+        $stmt->bindParam(':team_id', $team_id, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        // ลบข้อมูลทีม
+        $stmt = $conn->prepare("DELETE FROM teams WHERE team_id = :team_id");
+        $stmt->bindParam(':team_id', $team_id, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        // ยืนยัน Transaction
+        $conn->commit();
+        
+        $message = 'ลบทีม ' . $team['team_name'] . ' และข้อมูลที่เกี่ยวข้องสำเร็จ';
+        $message_type = 'success';
+        
+    } catch (Exception $e) {
+        // ยกเลิก Transaction เมื่อเกิดข้อผิดพลาด
         $conn->rollBack();
-        $message = "เกิดข้อผิดพลาดในการลบทีม: " . $e->getMessage();
-        $status = "error";
-        error_log("Delete Team Error: " . $e->getMessage());
+        
+        $message = 'เกิดข้อผิดพลาด: ' . $e->getMessage();
+        $message_type = 'error';
+        
+        // บันทึก error log
+        error_log('Team deletion error: ' . $e->getMessage());
     }
-} else {
-    $message = "ไม่ระบุรหัสทีมที่ต้องการลบ";
-    $status = "error";
 }
 
-// ปิดการเชื่อมต่อฐานข้อมูล
+// ปิดการเชื่อมต่อ
 $conn = null;
-?>
 
+// ส่วนของ HTML และการแสดงผล
+?>
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ลบทีม - ระบบข้อมูลทีม</title>
-    <link rel="icon" type="image/png" href="../img/logo.jpg">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/view_the_teams.css">
+    <title>ลบข้อมูลทีม</title>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .action-buttons {
+            margin-top: 20px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #0069d9;
+        }
+    </style>
 </head>
 <body>
-    <div class="result-container">
-        <h1><i class="fas fa-trash"></i> ผลการลบทีม</h1>
+    <!-- Header ถูกนำออกเนื่องจากไม่พบไฟล์ -->
+    
+    <div class="container">
+        <h1>ลบข้อมูลทีม</h1>
         
-        <?php if ($status == "success"): ?>
-            <div class="success-message">
-                <i class="fas fa-check-circle"></i> <?php echo $message; ?>
-            </div>
-        <?php else: ?>
-            <div class="error-message">
-                <i class="fas fa-exclamation-circle"></i> <?php echo $message; ?>
+        <?php if (!empty($message)): ?>
+            <div class="alert alert-<?php echo $message_type; ?>">
+                <?php echo $message; ?>
             </div>
         <?php endif; ?>
         
-        <a href="view_the_teams.php" class="back-button">
-            <i class="fas fa-arrow-left"></i> กลับไปหน้ารายชื่อทีม
-        </a>
+        <div class="action-buttons">
+            <a href="view_the_teams.php" class="btn btn-primary">กลับไปหน้าจัดการทีม</a>
+        </div>
     </div>
+    
+    <!-- Footer ถูกนำออกเนื่องจากไม่พบไฟล์ -->
+    
+    <script>
+        // แสดงการแจ้งเตือนแล้วเปลี่ยนหน้าอัตโนมัติหลังจาก 3 วินาที ถ้าการลบสำเร็จ
+        <?php if ($message_type == 'success'): ?>
+        setTimeout(function() {
+            window.location.href = 'view_the_teams.php';
+        }, 3000);
+        <?php endif; ?>
+    </script>
 </body>
 </html>

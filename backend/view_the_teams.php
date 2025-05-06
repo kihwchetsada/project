@@ -30,7 +30,7 @@ include '../db_connect.php';
 // กำหนดที่อัปโหลดไฟล์
 $upload_dir = 'uploads/';
 
-
+// ฟังก์ชันถอดรหัสรูปภาพ
 function decryptImage($encrypted_file, $encryption_key, $iv, $tag) {
     // เพิ่มการบันทึก log เพื่อดีบัก
     error_log("Attempting to decrypt: " . $encrypted_file);
@@ -100,19 +100,42 @@ function decryptImage($encrypted_file, $encryption_key, $iv, $tag) {
             return false;
         }
 
-        if ($decrypted_data !== false) {
-            error_log("Decryption successful");
-            return $decrypted_data;
-        } else {
-            error_log("Decryption failed: " . openssl_error_string());
-            return false;
-        }
-        
+        error_log("Decryption successful");
         return $decrypted_data;
 
     } catch (Exception $e) {
         error_log("เกิดข้อผิดพลาดในการถอดรหัสภาพ: " . $e->getMessage());
         return false;
+    }
+}
+
+// ฟังก์ชันถอดรหัสเบอร์โทรศัพท์
+function decryptPhone($encrypted_phone, $phone_key, $phone_iv) {
+    if (empty($encrypted_phone) || empty($phone_key) || empty($phone_iv)) {
+        return "N/A";
+    }
+    
+    try {
+        $key = base64_decode($phone_key);
+        $iv = base64_decode($phone_iv);
+        
+        $decrypted_phone = openssl_decrypt(
+            $encrypted_phone,
+            'aes-256-cbc',
+            $key,
+            0,
+            $iv
+        );
+        
+        if ($decrypted_phone === false) {
+            error_log("การถอดรหัสเบอร์โทรล้มเหลว: " . openssl_error_string());
+            return "เบอร์โทรไม่สามารถแสดงได้";
+        }
+        
+        return $decrypted_phone;
+    } catch (Exception $e) {
+        error_log("เกิดข้อผิดพลาดในการถอดรหัสเบอร์โทร: " . $e->getMessage());
+        return "เบอร์โทรไม่สามารถแสดงได้";
     }
 }
 
@@ -224,6 +247,16 @@ if (!empty($selected_team)) {
                 
                 <h2 class="card-title">ข้อมูลทีม: <?php echo htmlspecialchars($team_data['team_name']); ?></h2>
                 
+                <div class="team-details">
+                    <p><i class="fas fa-trophy"></i> ประเภทการแข่งขัน: <?php echo htmlspecialchars($team_data['competition_type']); ?></p>
+                    <p><i class="fas fa-user-tie"></i> ผู้ควบคุมทีม: <?php echo htmlspecialchars($team_data['coach_name']); ?></p>
+                    <p><i class="fas fa-phone"></i> เบอร์โทรผู้ควบคุม: <?php echo htmlspecialchars($team_data['coach_phone']); ?></p>
+                    <p><i class="fas fa-school"></i> สังกัด/โรงเรียน: <?php echo htmlspecialchars($team_data['leader_school']); ?></p>
+                    <?php if (!empty($team_data['created_at'])): ?>
+                        <p><i class="fas fa-calendar-alt"></i> วันที่ลงทะเบียน: <?php echo date('d/m/Y H:i:s', strtotime($team_data['created_at'])); ?></p>
+                    <?php endif; ?>
+                </div>
+                
                 <h3><i class="fas fa-user-friends"></i> สมาชิกทีม (<?php echo count($members); ?> คน)</h3>
                 
                 <?php if (count($members) > 0): ?>
@@ -247,8 +280,19 @@ if (!empty($selected_team)) {
                                     <p><i class="fas fa-birthday-cake"></i> อายุ: <?php echo htmlspecialchars($member['age']); ?> ปี</p>
                                 <?php endif; ?>
                                 
+                                <?php if (!empty($member['birthdate'])): ?>
+                                    <p><i class="fas fa-calendar"></i> วันเกิด: <?php echo date('d/m/Y', strtotime($member['birthdate'])); ?></p>
+                                <?php endif; ?>
+                                
                                 <?php if (!empty($member['phone'])): ?>
-                                    <p><i class="fas fa-phone"></i> เบอร์โทร: <?php echo htmlspecialchars($member['phone']); ?></p>
+                                    <?php 
+                                    $phone_display = decryptPhone(
+                                        $member['phone'], 
+                                        $member['phone_key'] ?? '', 
+                                        $member['phone_iv'] ?? ''
+                                    ); 
+                                    ?>
+                                    <p><i class="fas fa-phone"></i> เบอร์โทร: <?php echo htmlspecialchars($phone_display); ?></p>
                                 <?php endif; ?>
                             </div>
                             
@@ -271,7 +315,7 @@ if (!empty($selected_team)) {
                                 }
                                 ?>
                                 
-                                <?php if ($decrypted_image): ?>
+                                <?php if ($decrypted_image !== false): ?>
                                     <div class="image-container">
                                         <h5><i class="fas fa-id-card"></i> เอกสารประจำตัว</h5>
                                         <div class="decrypted-image">
@@ -362,7 +406,7 @@ if (!empty($selected_team)) {
     <footer class="footer">
         <p>
             <i class="fas fa-shield-alt"></i> 
-            ระบบจัดการข้อมูลทีม - เวอร์ชัน 1.9.0<br> 
+            ระบบจัดการข้อมูลทีม - เวอร์ชัน 1.9.2<br> 
             <br>
             <small>© <?php echo date('Y'); ?> สงวนลิขสิทธิ์</small>
         </p>
