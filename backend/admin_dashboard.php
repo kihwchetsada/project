@@ -1,24 +1,32 @@
 <?php
 session_start();
 
+
 // 🔒 ตรวจสอบการ logout
 if (isset($_GET['logout'])) {
-    session_destroy(); // เคลียร์ session ทั้งหมด
-    header('Location: ../login.php'); // กลับไปหน้า login
+    if (isset($_SESSION['userData']['id'])) {
+        require_once '../db.php'; // ให้แน่ใจว่ามีการเชื่อม DB ก่อน
+
+        $userId = $_SESSION['userData']['id'];
+        $stmt = $conn->prepare("UPDATE users SET last_activity = NULL WHERE id = ?");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+    }
+
+    session_destroy();
+    header('Location: ../login.php');
     exit;
 }
 
 // ตรวจสอบว่ามีการล็อกอินหรือไม่
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    header('Location: login.php');
+if (!isset($_SESSION['userData']) || $_SESSION['userData']['role'] !== 'admin') {
+    header('Location: ../login.php');
     exit;
 }
 
-// ดึงข้อมูล user และ tournament (ตามคำแนะนำก่อนหน้า)
-$userData = $_SESSION['userData'] ?? ['username' => 'ผู้ใช้', 'role' => 'admin'];
+$userData = $_SESSION['userData'];
 $tournaments = [/* ตัวอย่างข้อมูลหรือ query จาก DB */];
 ?>
-
 
 <!DOCTYPE html>
 <html lang="th">
@@ -47,7 +55,10 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
         <div class="sidebar-menu">
             <ul>
                 <li>
-                    <a href="dashboard.php"><i class="fas fa-home"></i><span>หน้าหลัก</span></a>
+                    <a href="admin_dashboard.php"><i class="fas fa-home"></i><span>หน้าหลัก</span></a>
+                </li>
+                <li>
+                    <a href="manage_user.php"><i class="fas fa-chart-pie"></i><span>จัดการสิทธิ์ผู้ใช้งาน</span></a>
                 </li>
                 <li>
                     <a href="view_the_teams.php"><i class="fas fa-users"></i><span>จัดการทีม</span></a>
@@ -86,6 +97,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
                     <span class="badge">5</span>
                 </div>
                 <div class="user-info">
+                    <?php include 'header.php'; ?>
                     <span><?php echo htmlspecialchars($userData['username']); ?></span>
                     <div class="user-avatar">
                         <i class="fas fa-user"></i>

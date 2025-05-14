@@ -335,7 +335,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team']) && empt
                                     // พยายามใช้ save_encryption_keys ถ้ามี
                                     if (function_exists('save_encryption_keys')) {
                                         $identifier = 'team_' . $team_id . '_member_' . $i;
-                                        $key_id = save_encryption_keys($identifier, $encryption_key, '', '');
+                                        // Define a fallback mechanism to save encryption keys
+                                        $key_file = UPLOAD_DIR . '/' . $identifier . '_key.txt';
+                                        if (file_put_contents($key_file, $encryption_key) === false) {
+                                            throw new Exception('Failed to save encryption key to file: ' . $key_file);
+                                        }
+                                        chmod($key_file, 0600); // Restrict file permissions
+                                        $key_id = basename($key_file);
                                     } else {
                                         // ถ้าไม่มีฟังก์ชัน ให้บันทึกคีย์ลงในไฟล์
                                         $key_file = UPLOAD_DIR . '/' . $team_id . '_key_' . $i . '.txt';

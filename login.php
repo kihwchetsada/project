@@ -17,8 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if (password_verify($password, $user['password'])) {
             $_SESSION['loggedin'] = true;
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['role'] = $user['role'];
+            $_SESSION['userData'] = [
+                'username' => $user['username'],
+                'role' => $user['role'],
+                'id' => $user['id']
+            ];
 
             // เปลี่ยนเส้นทางตามสิทธิ์
             switch ($user['role']) {
@@ -35,7 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $error = "ไม่พบสิทธิ์ผู้ใช้ที่เกี่ยวข้อง";
                     break;
             }
+            
             exit;
+
         } else {
             $error = 'รหัสผ่านไม่ถูกต้อง';
         }

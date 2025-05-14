@@ -8,7 +8,9 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = trim($_POST['username']);
     $password = $_POST['password'];
-    $role = $_POST['role'];
+    
+    // กำหนดให้สิทธิ์เริ่มต้นเป็น "ผู้เข้าร่วมการแข่งขัน" เสมอ
+    $role = "participant";
 
     // ตรวจสอบว่า username ซ้ำหรือไม่
     $checkStmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
@@ -25,8 +27,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bind_param("sss", $username, $hashedPassword, $role);
 
         if ($stmt->execute()) {
-            $success = "สมัครสมาชิกสำเร็จ! <a href='login.php'>เข้าสู่ระบบ</a>";
-        } else {
+            $user_id = $stmt->insert_id;
+
+            $_SESSION['loggedin'] = true;
+            $_SESSION['userData'] = [
+                'id' => $user_id,
+                'username' => $username,
+                'role' => $role
+            ];
+
+            header("Location: backend/participant_dashboard.php");
+            exit;
+                } else {
             $error = "เกิดข้อผิดพลาดขณะสมัครสมาชิก";
         }
     }
@@ -73,25 +85,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="role">ประเภทผู้ใช้</label>
-                <div class="input-with-icon">
-                    <i class="input-icon fas fa-user-tag"></i>
-                    <select id="role" name="role" required>
-                        <option value="">-- เลือกประเภทผู้ใช้ --</option>
-                        <option value="admin">ผู้ดูแลระบบ</option>
-                        <option value="organizer">ผู้จัดการแข่งขัน</option>
-                        <option value="participant">ผู้เข้าร่วมการแข่งขัน</option>
-                    </select>
-                </div>
-            </div>
-
             <button type="submit" class="login-button">สมัครสมาชิก <i class="fas fa-user-check"></i></button>
+
         </form>
 
         <div class="register-link">
             มีบัญชีแล้ว? <a href="login.php">เข้าสู่ระบบ</a>
         </div>
+
     </div>
 </body>
 </html>
