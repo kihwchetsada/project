@@ -109,7 +109,6 @@ if (!isset($_SESSION['csrf_token'])) {
     <title>ลงทะเบียนทีม</title>
     <link rel="icon" type="image/png" href="img/logo.jpg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- เปลี่ยนจาก CSS เดิมเป็น Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -315,8 +314,43 @@ if (!isset($_SESSION['csrf_token'])) {
                         </div>
                     </div>
                 <?php endfor; ?>
-                    
+                    <!-- PDPA Modal -->
+                    <div id="pdpaModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+                        <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
+                            <h2 class="text-2xl font-bold mb-4 text-primary-700">นโยบายความเป็นส่วนตัว (PDPA)</h2>
+                            <div class="max-h-[60vh] overflow-y-auto text-sm text-gray-700 space-y-4 pr-2">
+                                <p>เว็บไซต์นี้ให้ความสำคัญกับความเป็นส่วนตัวของผู้ใช้งาน และปฏิบัติตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA) อย่างเคร่งครัด</p>
+                                <p><strong>1. ข้อมูลที่เราเก็บ:</strong> ชื่อ, เบอร์โทร, วันเกิด, ข้อมูลการแข่งขัน</p>
+                                <p><strong>2. วัตถุประสงค์:</strong> ใช้สำหรับลงทะเบียน ติดต่อ ยืนยัน และการบริหารจัดการแข่งขัน</p>
+                                <p><strong>3. การจัดเก็บข้อมูล:</strong> จะเก็บข้อมูลไว้ภายในระยะเวลาที่จำเป็นและมีมาตรการรักษาความปลอดภัย</p>
+                                <p><strong>4. สิทธิของท่าน:</strong> ท่านสามารถขอเข้าถึง ลบ แก้ไข หรือถอนความยินยอมได้ทุกเมื่อ</p>
+                                <p><strong>5. การเปิดเผยข้อมูล:</strong> จะไม่เปิดเผยแก่บุคคลภายนอก เว้นแต่มีข้อกำหนดทางกฎหมาย</p>
+                            </div>
+                            <div class="text-right mt-6">
+                                <button onclick="closePdpaModal()" class="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 transition">
+                                    ปิด
+                                </button>
+                            </div>
+                            <button onclick="closePdpaModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="mt-8 text-center">
+
+                        <div class="mb-6">
+                            <div class="flex items-start space-x-2">
+                                <input type="checkbox" id="pdpa_consent" name="pdpa_consent" value="1" required class="mt-1">
+                                <label for="pdpa_consent" class="text-sm text-gray-700">
+                                    ข้าพเจ้ายินยอมให้จัดเก็บและใช้ข้อมูลส่วนบุคคลตาม
+                                    <button type="button" onclick="openPdpaModal()" class="text-primary-600 underline hover:text-primary-800">
+                                        นโยบายความเป็นส่วนตัว
+                                    </button>
+                                </label>
+                            </div>
+                        </div>
+
                         <button type="submit" name="submit_team" class="px-8 py-3 bg-success-500 hover:bg-success-600 text-white font-medium rounded-lg transition-colors duration-200 inline-flex items-center">
                             <i class="fas fa-check-circle mr-2"></i> ลงทะเบียนทีม
                         </button>
@@ -368,6 +402,13 @@ if (!isset($_SESSION['csrf_token'])) {
                 }
             }
         });
+
+        function openPdpaModal() {
+    document.getElementById('pdpaModal').classList.remove('hidden');
+        }
+        function closePdpaModal() {
+            document.getElementById('pdpaModal').classList.add('hidden');
+        }
     </script>
 </body>
 </html>
