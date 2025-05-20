@@ -259,6 +259,10 @@ if (!empty($selected_team)) {
         <?php endif; ?>
 
         <div class="card">
+            <a href="admin_dashboard.php" class="card-title"><i class="fas fa-sign-out-alt"></i> กลับไปหน้าหลัก</a>
+        </div>
+
+        <div class="card">
             <h2 class="card-title"><i class="fas fa-search"></i> ค้นหาทีม</h2>
             <form action="" method="GET" class="search-container">
                 <input type="text" name="search" class="search-input" placeholder="พิมพ์ชื่อทีมที่ต้องการค้นหา..." value="<?php echo htmlspecialchars($search_query); ?>">
