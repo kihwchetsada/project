@@ -314,10 +314,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
                             </div>
 
                             <div>
-                                <label for="member_position_<?php echo $i; ?>" class="block mb-2 font-medium text-gray-700">
-                                    ตำแหน่ง
-                                </label>
-                                <input type="text" id="member_position_<?php echo $i; ?>" name="member_position_<?php echo $i; ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200">
+                                <select name="member_position_<?php echo $i; ?>" id="member_position_<?php echo $i; ?>" class="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200">
+                                    <option value="">เลือกตำแหน่งที่เล่น</option>
+                                    <option value="เลน Dark Slayer">เลน Dark Slayer</option>
+                                    <option value="เลนกลาง">เลนกลาง</option>
+                                    <option value="เลน Abyssal Dragon">เลน Abyssal Dragon</option>
+                                    <option value="ซัพพอร์ต">ซัพพอร์ต</option>
+                                    <option value="ฟาร์มป่า">ฟาร์มป่า</option>
+                                </select>
                             </div>
                         </div>
 
