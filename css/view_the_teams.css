@@ -280,6 +280,53 @@
     color: #ccc;
   }
   
+        .category-filter {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .category-btn {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .category-btn:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .category-btn.active {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        
+        .category-heading {
+            margin-top: 25px;
+            margin-bottom: 10px;
+            padding: 8px 15px;
+            background-color: #f5f5f5;
+            border-left: 4px solid #4CAF50;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .team-category-section {
+            margin-bottom: 30px;
+        }
+        
+        .team-count {
+            font-size: 14px;
+            color: #666;
+            margin-left: 10px;
+        }
+
   /* ข้อมูลสมาชิก */
   .back-to-teams {
     display: inline-flex;
@@ -428,7 +475,6 @@
     margin-top: 40px;
     color: #888;
     background: white;
-    position: fixed;
     bottom: 0;
     left: 0;
     right: 0;

@@ -143,24 +143,58 @@ function decryptPhone($encrypted_phone, $phone_key, $phone_iv) {
 $log_message = "";
 $selected_team = isset($_GET['team']) ? intval($_GET['team']) : null;
 $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
+$selected_category = isset($_GET['category']) ? trim($_GET['category']) : '';
 
 try {
     // ดึงข้อมูลทีมทั้งหมด
     $teams_data = [];
     $filtered_teams = [];
+    $competition_types = [];
     
+    // ดึงประเภทการแข่งขันทั้งหมดที่มีในระบบ
+    $stmt = $conn->prepare("SELECT DISTINCT competition_type FROM teams ORDER BY competition_type ASC");
+    $stmt->execute();
+    $competition_types = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    // สร้าง SQL query ตามเงื่อนไขการค้นหา
     if (!empty($search_query)) {
         // ค้นหาตามชื่อทีม
-        $stmt = $conn->prepare("SELECT * FROM teams WHERE team_name LIKE :search_query ORDER BY team_name ASC");
-        $stmt->bindValue(':search_query', '%' . $search_query . '%', PDO::PARAM_STR);
+        $sql = "SELECT * FROM teams WHERE team_name LIKE :search_query";
+        $params = [':search_query' => '%' . $search_query . '%'];
+        
+        // เพิ่มเงื่อนไขหมวดหมู่ถ้ามีการเลือก
+        if (!empty($selected_category)) {
+            $sql .= " AND competition_type = :category";
+            $params[':category'] = $selected_category;
+        }
+        
+        $sql .= " ORDER BY competition_type ASC, team_name ASC";
+        
+        $stmt = $conn->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, PDO::PARAM_STR);
+        }
+    } elseif (!empty($selected_category)) {
+        // กรองตามประเภทการแข่งขัน
+        $stmt = $conn->prepare("SELECT * FROM teams WHERE competition_type = :category ORDER BY team_name ASC");
+        $stmt->bindValue(':category', $selected_category, PDO::PARAM_STR);
     } else {
         // ดึงทีมทั้งหมด
-        $stmt = $conn->prepare("SELECT * FROM teams ORDER BY team_name ASC");
+        $stmt = $conn->prepare("SELECT * FROM teams ORDER BY competition_type ASC, team_name ASC");
     }
     
     $stmt->execute();
     $teams_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $filtered_teams = $teams_data;
+    
+    // จัดกลุ่มทีมตามประเภทการแข่งขัน
+    $teams_by_category = [];
+    foreach ($teams_data as $team) {
+        $category = $team['competition_type'];
+        if (!isset($teams_by_category[$category])) {
+            $teams_by_category[$category] = [];
+        }
+        $teams_by_category[$category][] = $team;
+    }
     
     $log_message .= "📂 โหลดข้อมูลทีมทั้งหมด " . count($teams_data) . " ทีม<br>";
     
@@ -228,22 +262,48 @@ if (!empty($selected_team)) {
             <h2 class="card-title"><i class="fas fa-search"></i> ค้นหาทีม</h2>
             <form action="" method="GET" class="search-container">
                 <input type="text" name="search" class="search-input" placeholder="พิมพ์ชื่อทีมที่ต้องการค้นหา..." value="<?php echo htmlspecialchars($search_query); ?>">
+                <?php if (!empty($selected_category)): ?>
+                <input type="hidden" name="category" value="<?php echo htmlspecialchars($selected_category); ?>">
+                <?php endif; ?>
+                
                 <button type="submit" class="search-button"><i class="fas fa-search"></i> ค้นหา</button>
-                <?php if (!empty($search_query)): ?>
+                <?php if (!empty($search_query) || !empty($selected_category)): ?>
                 <a href="?" class="reset-button"><i class="fas fa-times"></i> ล้าง</a>
                 <?php endif; ?>
             </form>
 
             <?php if (!empty($search_query)): ?>
             <div class="search-results">
-                <i class="fas fa-info-circle"></i> ผลการค้นหา "<?php echo htmlspecialchars($search_query); ?>": พบ <?php echo count($filtered_teams); ?> ทีม
+                <i class="fas fa-info-circle"></i> ผลการค้นหา "<?php echo htmlspecialchars($search_query); ?>": พบ <?php echo count($teams_data); ?> ทีม
+                <?php if (!empty($selected_category)): ?>
+                (ในประเภท: <?php echo htmlspecialchars($selected_category); ?>)
+                <?php endif; ?>
             </div>
             <?php endif; ?>
+        </div>
+        
+        <!-- ตัวกรองประเภทการแข่งขัน -->
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-filter"></i> กรองตามประเภทการแข่งขัน</h2>
+            <div class="category-filter">
+                <a href="?" class="category-btn <?php echo empty($selected_category) ? 'active' : ''; ?>">
+                    <i class="fas fa-globe"></i> ทั้งหมด
+                </a>
+                
+                <?php foreach ($competition_types as $type): ?>
+                <a href="?category=<?php echo urlencode($type); ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?>" 
+                   class="category-btn <?php echo ($selected_category === $type) ? 'active' : ''; ?>">
+                    <i class="fas fa-trophy"></i> <?php echo htmlspecialchars($type); ?>
+                </a>
+                <?php endforeach; ?>
+            </div>
         </div>
 
         <?php if (!empty($selected_team) && $team_data): ?>
             <div class="card">
-                <a href="?" class="back-to-teams"><i class="fas fa-arrow-left"></i> กลับไปหน้ารายชื่อทีมทั้งหมด</a>
+                <a href="?<?php echo !empty($selected_category) ? 'category=' . urlencode($selected_category) : ''; ?><?php echo !empty($search_query) ? (!empty($selected_category) ? '&' : '') . 'search=' . urlencode($search_query) : ''; ?>" class="back-to-teams">
+                    <i class="fas fa-arrow-left"></i> กลับไปหน้ารายชื่อทีม
+                </a>
                 
                 <h2 class="card-title">ข้อมูลทีม: <?php echo htmlspecialchars($team_data['team_name']); ?></h2>
                 
@@ -353,7 +413,9 @@ if (!empty($selected_team)) {
             </div>
         <?php elseif (!empty($selected_team) && !$team_data): ?>
             <div class="card">
-                <a href="?" class="back-to-teams"><i class="fas fa-arrow-left"></i> กลับไปหน้ารายชื่อทีมทั้งหมด</a>
+                <a href="?<?php echo !empty($selected_category) ? 'category=' . urlencode($selected_category) : ''; ?><?php echo !empty($search_query) ? (!empty($selected_category) ? '&' : '') . 'search=' . urlencode($search_query) : ''; ?>" class="back-to-teams">
+                    <i class="fas fa-arrow-left"></i> กลับไปหน้ารายชื่อทีม
+                </a>
                 <div class="error-container">
                     <p class="error-message">
                         <i class="fas fa-exclamation-triangle"></i> 
@@ -363,31 +425,64 @@ if (!empty($selected_team)) {
             </div>
         <?php endif; ?>
 
-        <div class="team-list">
-            <h2 class="card-title"><i class="fas fa-list"></i> รายชื่อทีมทั้งหมด</h2>
-            <?php if (!empty($teams_data)): ?>
-                <div class="team-grid">
-                    <?php foreach ($teams_data as $team): ?>
-                        <div class="team-item">
-                            <div class="team-actions">
-                                <a href="?team=<?php echo $team['team_id']; ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?>" class="team-link <?php echo ($selected_team == $team['team_id']) ? 'active' : ''; ?>">
-                                    <i class="fas fa-users"></i> 
-                                    <?php echo htmlspecialchars($team['team_name']); ?>
-                                </a>
-                                <button class="delete-team-btn" data-team-id="<?php echo $team['team_id']; ?>" data-team-name="<?php echo htmlspecialchars($team['team_name']); ?>">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+        <?php if (empty($selected_team)): ?>
+            <div class="team-list">
+                <h2 class="card-title"><i class="fas fa-list"></i> รายชื่อทีม<?php echo !empty($selected_category) ? ' - ประเภท: ' . htmlspecialchars($selected_category) : 'ทั้งหมด'; ?></h2>
+                
+                <?php if (!empty($teams_data)): ?>
+                    <?php if (empty($search_query) && empty($selected_category)): ?>
+                        <!-- แสดงทีมแยกตามประเภทการแข่งขัน -->
+                        <?php foreach ($teams_by_category as $category => $category_teams): ?>
+                            <div class="team-category-section">
+                                <h3 class="category-heading">
+                                    <i class="fas fa-trophy"></i> <?php echo htmlspecialchars($category); ?>
+                                    <span class="team-count">(<?php echo count($category_teams); ?> ทีม)</span>
+                                </h3>
+                                
+                                <div class="team-grid">
+                                    <?php foreach ($category_teams as $team): ?>
+                                        <div class="team-item">
+                                            <div class="team-actions">
+                                                <a href="?team=<?php echo $team['team_id']; ?>" class="team-link <?php echo ($selected_team == $team['team_id']) ? 'active' : ''; ?>">
+                                                    <i class="fas fa-users"></i> 
+                                                    <?php echo htmlspecialchars($team['team_name']); ?>
+                                                </a>
+                                                <button class="delete-team-btn" data-team-id="<?php echo $team['team_id']; ?>" data-team-name="<?php echo htmlspecialchars($team['team_name']); ?>">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
                             </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <!-- แสดงผลลัพธ์การค้นหาหรือการกรองในรูปแบบปกติ -->
+                        <div class="team-grid">
+                            <?php foreach ($teams_data as $team): ?>
+                                <div class="team-item">
+                                    <div class="team-actions">
+                                        <a href="?team=<?php echo $team['team_id']; ?><?php echo !empty($selected_category) ? '&category=' . urlencode($selected_category) : ''; ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?>" class="team-link <?php echo ($selected_team == $team['team_id']) ? 'active' : ''; ?>">
+                                            <i class="fas fa-users"></i> 
+                                            <?php echo htmlspecialchars($team['team_name']); ?>
+                                            <small>(<?php echo htmlspecialchars($team['competition_type']); ?>)</small>
+                                        </a>
+                                        <button class="delete-team-btn" data-team-id="<?php echo $team['team_id']; ?>" data-team-name="<?php echo htmlspecialchars($team['team_name']); ?>">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php else: ?>
-                <p class="no-teams">
-                    <i class="fas fa-info-circle"></i> 
-                    ไม่พบข้อมูลทีม
-                </p>
-            <?php endif; ?>
-        </div>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <p class="no-teams">
+                        <i class="fas fa-info-circle"></i> 
+                        ไม่พบข้อมูลทีม
+                    </p>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
     </div> 
 
       <!-- หน้าต่างยืนยันการลบทีม -->
@@ -403,7 +498,10 @@ if (!empty($selected_team)) {
         </div>
     </div>
 
-    <footer class="footer">
+  
+
+</body>
+  <footer class="footer">
         <p>
             <i class="fas fa-shield-alt"></i> 
             ระบบจัดการข้อมูลทีม - เวอร์ชัน 1.9.2<br> 
@@ -411,9 +509,6 @@ if (!empty($selected_team)) {
             <small>© <?php echo date('Y'); ?> สงวนลิขสิทธิ์</small>
         </p>
     </footer>
-
-</body>
-
 <script>
    
     document.addEventListener('DOMContentLoaded', function() {
