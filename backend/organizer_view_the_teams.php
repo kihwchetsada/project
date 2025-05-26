@@ -24,6 +24,29 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_team_id'])) {
+    $teamId = intval($_POST['approve_team_id']);
+    $organizerName = $_SESSION['userData']['username'] ?? 'unknown';
+
+    try {
+        $stmt = $conn->prepare("UPDATE teams SET status = :status WHERE team_id = :team_id");
+        $statusText = "approved_by:" . $organizerName;
+        $stmt->bindParam(':status', $statusText, PDO::PARAM_STR);
+        $stmt->bindParam(':team_id', $teamId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        // Optional: Log
+        $log_message .= "✅ ทีม ID $teamId ได้รับการอนุมัติโดย $organizerName<br>";
+
+        // Redirect เพื่อป้องกันการกด refresh แล้วส่ง POST ซ้ำ
+        header("Location: " . $_SERVER['REQUEST_URI']);
+        exit;
+    } catch (PDOException $e) {
+        $log_message .= "❌ ไม่สามารถอนุมัติทีมได้: " . $e->getMessage() . "<br>";
+        error_log("Approval Error: " . $e->getMessage());
+    }
+}
+
 // เชื่อมต่อฐานข้อมูล
 include '../db_connect.php';
 
@@ -448,6 +471,17 @@ if (!empty($selected_team)) {
                                         <div class="team-item">
                                             <div class="team-actions">
                                                 <a href="?team=<?php echo $team['team_id']; ?>" class="team-link <?php echo ($selected_team == $team['team_id']) ? 'active' : ''; ?>">
+                                                    <?php if (strpos($team['status'], 'approved_by:') === false): ?>
+                                                    <form method="post" action="" style="display:inline;">
+                                                        <input type="hidden" name="approve_team_id" value="<?php echo $team['team_id']; ?>">
+                                                        <button type="submit" class="approve-btn"><i class="fas fa-check"></i> อนุมัติ</button>
+                                                    </form>
+                                                <?php else: ?>
+                                                    <span class="approved-by">
+                                                        ✅ อนุมัติโดย <?php echo htmlspecialchars(str_replace('approved_by:', '', $team['status'])); ?>
+                                                    </span>
+                                                <?php endif; ?>
+
                                                     <i class="fas fa-users"></i> 
                                                     <?php echo htmlspecialchars($team['team_name']); ?>
                                                 </a>
