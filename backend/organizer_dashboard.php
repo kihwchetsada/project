@@ -87,10 +87,6 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
     <div class="main-content">
         <!-- Top Navigation -->
         <div class="top-navbar">
-            <div class="search-container">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="ค้นหาการแข่งขัน...">
-            </div>
             
             <div class="user-menu">
                 <div class="notifications">
