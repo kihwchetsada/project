@@ -188,7 +188,7 @@
                 </div>
             </a>
 
-            <a href="Certificate/manage-template.php" style="text-decoration: none; color: inherit;">
+            <a href="Certificate/upload-template.php" style="text-decoration: none; color: inherit;">
                 <div class="option-card option-2">
                     <span class="option-icon">🎨</span>
                     <h3 class="option-title">จัดการแม่แบบ</h3>
