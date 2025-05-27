@@ -62,7 +62,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
                     <a href="organizer_view_the_teams.php"><i class="fas fa-users"></i><span>จัดการทีม</span></a>
                 </li>
                 <li>
-                    <a href="Certificate\backend-index.php"><i class="fa-regular fa-page"></i><span>จัดการเกียรติบัตร</span></a>
+                    <a href="Manage_certificates.php"><i class="bi bi-collection-fill"></i><span>จัดการเกียรติบัตร</span></a>
                 </li>
                 <li>
                     <a href="https://challonge.com/th/rmuti_5"><i class="fas fa-calendar-days"></i><span>ตารางการแข่งขัน</span></a>
@@ -87,12 +87,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
     <div class="main-content">
         <!-- Top Navigation -->
         <div class="top-navbar">
-            
             <div class="user-menu">
-                <div class="notifications">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge">5</span>
-                </div>
                 <div class="user-info">
                     <?php include 'header.php'; ?>
                     <span><?php echo htmlspecialchars($userData['username']); ?></span>
