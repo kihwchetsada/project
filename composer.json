@@ -1,0 +1,17 @@
+{
+    "name": "myproject/certificate",
+    "autoload": {
+        "psr-4": {
+            "Myproject\\Certificate\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "chetsadaphon",
+            "email": "114697178+kihwchetsada@users.noreply.github.com"
+        }
+    ],
+    "require": {
+        "setasign/fpdi-fpdf": "^2.3"
+    }
+}
