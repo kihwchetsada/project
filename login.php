@@ -8,13 +8,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $password = $_POST['password'];
 
     $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt->execute([$username]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
-
+    if ($user) {
         if (password_verify($password, $user['password'])) {
             $_SESSION['loggedin'] = true;
             $_SESSION['userData'] = [
@@ -38,9 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $error = "ไม่พบสิทธิ์ผู้ใช้ที่เกี่ยวข้อง";
                     break;
             }
-            
-            exit;
 
+            exit;
         } else {
             $error = 'รหัสผ่านไม่ถูกต้อง';
         }
@@ -48,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = 'ไม่พบบัญชีผู้ใช้';
     }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -99,7 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <a href="#" class="forgot-password">ลืมรหัสผ่าน?</a>
             </div>
             
-            <button type="submit" class="login-button">เข้าสู่ระบบ <i class="fas fa-sign-in-alt"></i></button>
+            <button type="submit" class="login-button">เข้าสู่ระบบ <i class="fas fa-sign-in-alt"></i></button><br>
+            
+            <button type="button" onclick="window.location.href='index.php'" class="login-button">กลับไปที่หน้าหลัก<i class="fas fa-sign-out-alt"></i></button>
         </form>
         <div class="register-link">
             ยังไม่มีบัญชี? <a href="register_user.php">สมัครสมาชิก</a>

@@ -1,13 +1,14 @@
 <?php
-$host = "localhost";         // โฮสต์ของ MySQL (ส่วนใหญ่ใช้ localhost)
-$dbname = "test_login";  // ชื่อฐานข้อมูล
-$username = "root";          // ชื่อผู้ใช้ฐานข้อมูล
-$password = "";              // รหัสผ่าน (ถ้าใช้ XAMPP มักจะเว้นว่าง)
+$host = "localhost";         
+$dbname = "test_login";  
+$username = "root";          
+$password = "";              
 
-$conn = new mysqli($host, $username, $password, $dbname);
-
-// ตรวจสอบการเชื่อมต่อ
-if ($conn->connect_error) {
-    die("การเชื่อมต่อล้มเหลว: " . $conn->connect_error);
+try {
+    $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
+    // ตั้งค่าให้ PDO แจ้ง error แบบ exception
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("การเชื่อมต่อล้มเหลว: " . $e->getMessage());
 }
 ?>

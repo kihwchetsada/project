@@ -4,18 +4,18 @@ session_start();
 // 🔒 ตรวจสอบการ logout
 if (isset($_GET['logout'])) {
     if (isset($_SESSION['userData']['id'])) {
-        require_once '../db.php'; // ให้แน่ใจว่ามีการเชื่อม DB ก่อน
+        require_once '../db.php'; // เชื่อม DB
 
         $userId = $_SESSION['userData']['id'];
         $stmt = $conn->prepare("UPDATE users SET last_activity = NULL WHERE id = ?");
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
+        $stmt->execute([$userId]);
     }
 
     session_destroy();
     header('Location: ../login.php');
     exit;
 }
+
 
 // ตรวจสอบว่ามีการล็อกอินหรือไม่
 if (!isset($_SESSION['userData']) || $_SESSION['userData']['role'] !== 'organizer') {
@@ -36,6 +36,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <title>ผู้จัดการแข่งขัน | ระบบจัดการการแข่งขัน ROV</title>
     <link rel="icon" type="image/png" href="../img/logo.jpg">
     <link rel="stylesheet" href="../css/dashboard.css">

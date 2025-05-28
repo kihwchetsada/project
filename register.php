@@ -1,7 +1,5 @@
 <?php
 session_start();
-// เพิ่มการเชื่อมต่อฐานข้อมูล
-//include 'upload_script.php';
 include 'db_connect.php'; // ไฟล์เชื่อมต่อฐานข้อมูล
 
 if (!$conn instanceof PDO) {

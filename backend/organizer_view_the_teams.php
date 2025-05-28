@@ -23,114 +23,30 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header('Location: login.php');
     exit;
 }
+include '../db.php';  // ไฟล์ที่แก้ไขเป็น PDO แล้ว
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_team_id'])) {
-    $teamId = intval($_POST['approve_team_id']);
-    $organizerName = $_SESSION['userData']['username'] ?? 'unknown';
+// สมมติข้อมูลที่ใช้
+$teamId = intval($_POST['approve_team_id'] ?? 0);
+$organizerName = $_SESSION['userData']['username'] ?? 'unknown';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $teamId > 0) {
     try {
-        $stmt = $conn->prepare("UPDATE teams SET status = :status WHERE team_id = :team_id");
         $statusText = "approved_by:" . $organizerName;
+        $stmt = $conn->prepare("UPDATE teams SET status = :status WHERE team_id = :team_id");
         $stmt->bindParam(':status', $statusText, PDO::PARAM_STR);
         $stmt->bindParam(':team_id', $teamId, PDO::PARAM_INT);
         $stmt->execute();
 
-        // Optional: Log
-        $log_message .= "✅ ทีม ID $teamId ได้รับการอนุมัติโดย $organizerName<br>";
-
-        // Redirect เพื่อป้องกันการกด refresh แล้วส่ง POST ซ้ำ
+        // หลังอนุมัติ redirect ป้องกัน resubmission
         header("Location: " . $_SERVER['REQUEST_URI']);
         exit;
     } catch (PDOException $e) {
-        $log_message .= "❌ ไม่สามารถอนุมัติทีมได้: " . $e->getMessage() . "<br>";
-        error_log("Approval Error: " . $e->getMessage());
+        // แสดงข้อผิดพลาดหรือบันทึก log ได้ตามต้องการ
+        echo "Error updating team status: " . $e->getMessage();
     }
 }
-
 // เชื่อมต่อฐานข้อมูล
 include '../db_connect.php';
-
-// กำหนดที่อัปโหลดไฟล์
-$upload_dir = 'uploads/';
-
-// ฟังก์ชันถอดรหัสรูปภาพ
-function decryptImage($encrypted_file, $encryption_key, $iv, $tag) {
-    // เพิ่มการบันทึก log เพื่อดีบัก
-    error_log("Attempting to decrypt: " . $encrypted_file);
-    error_log("Key exists: " . (!empty($encryption_key) ? "Yes" : "No"));
-    error_log("IV exists: " . (!empty($iv) ? "Yes" : "No"));
-    error_log("Tag exists: " . (!empty($tag) ? "Yes" : "No"));
-
-    // เพิ่มการตรวจสอบพื้นฐาน
-    if (!file_exists($encrypted_file)) {
-        error_log("ไฟล์ " . $encrypted_file . " ไม่มีอยู่");
-        return false;
-    }
-
-    // ตรวจสอบว่าคีย์เข้ารหัสไม่ว่าง
-    if (empty($encryption_key) || empty($iv)) {
-        error_log("คีย์การเข้ารหัสไม่ครบถ้วน");
-        return false;
-    }
-
-    try {
-        // แปลง key, iv กลับจาก base64
-        $decoded_key = base64_decode($encryption_key);
-        $decoded_iv = base64_decode($iv);
-        $decoded_tag = !empty($tag) ? base64_decode($tag) : null;
-
-        // ตรวจสอบการแปลง base64
-        if ($decoded_key === false || $decoded_iv === false) {
-            error_log("การแปลง base64 ล้มเหลว");
-            return false;
-        }
-
-        // โหลดข้อมูลไฟล์ที่เข้ารหัส
-        $encrypted_data = file_get_contents($encrypted_file);
-        
-        if ($encrypted_data === false) {
-            error_log("ไม่สามารถอ่านไฟล์ที่เข้ารหัส: " . $encrypted_file);
-            return false;
-        }
-
-        // กำหนดไซเฟอร์ตามการมีอยู่ของ tag
-        $cipher = !empty($decoded_tag) ? 'aes-256-gcm' : 'aes-256-cbc';
-        error_log("ใช้ไซเฟอร์: " . $cipher);
-
-        // ถอดรหัสข้อมูล
-        if ($cipher == 'aes-256-gcm') {
-            $decrypted_data = openssl_decrypt(
-                $encrypted_data,
-                $cipher,
-                $decoded_key,
-                OPENSSL_RAW_DATA,
-                $decoded_iv,
-                $decoded_tag
-            );
-        } else {
-            $decrypted_data = openssl_decrypt(
-                $encrypted_data,
-                $cipher,
-                $decoded_key,
-                OPENSSL_RAW_DATA,
-                $decoded_iv
-            );
-        }
-
-        // ตรวจสอบการถอดรหัส
-        if ($decrypted_data === false) {
-            error_log("การถอดรหัสล้มเหลว: " . openssl_error_string());
-            return false;
-        }
-
-        error_log("Decryption successful");
-        return $decrypted_data;
-
-    } catch (Exception $e) {
-        error_log("เกิดข้อผิดพลาดในการถอดรหัสภาพ: " . $e->getMessage());
-        return false;
-    }
-}
 
 // ฟังก์ชันถอดรหัสเบอร์โทรศัพท์
 function decryptPhone($encrypted_phone, $phone_key, $phone_iv) {

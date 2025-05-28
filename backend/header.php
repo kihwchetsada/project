@@ -16,7 +16,6 @@ if (!isset($_SESSION['userData'])) {
 $userId = $_SESSION['userData']['id'] ?? null;
 if ($userId) {
     $stmt = $conn->prepare("UPDATE users SET last_activity = NOW() WHERE id = ?");
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
+    $stmt->execute([$userId]);
 }
 ?>
