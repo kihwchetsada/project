@@ -1,4 +1,4 @@
-/* สไตล์หลักสำหรับหน้าเข้าสู่ระบบ */
+
 * {
   margin: 0;
   padding: 0;
@@ -89,6 +89,7 @@ h2 {
 }
 
 input[type="text"],
+input[type="email"],
 input[type="password"] {
   width: 100%;
   padding: 14px 14px 14px 45px;
@@ -100,6 +101,7 @@ input[type="password"] {
 }
 
 input[type="text"]:focus,
+input[type="email"]:focus,
 input[type="password"]:focus {
   border-color: #8E54E9;
   box-shadow: 0 0 0 3px rgba(142, 84, 233, 0.2);
@@ -108,6 +110,7 @@ input[type="password"]:focus {
 }
 
 input[type="text"]::placeholder,
+input[type="email"]::placeholder,
 input[type="password"]::placeholder {
   color: #bbb;
 }
@@ -240,6 +243,7 @@ input[type="password"]::placeholder {
   }
   
   input[type="text"],
+  input[type="email"],
   input[type="password"] {
       padding: 12px 12px 12px 40px;
   }

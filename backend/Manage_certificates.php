@@ -196,7 +196,7 @@
                 </div>
             </a>
 
-            <a href="Certificate/generate-certificate.php" style="text-decoration: none; color: inherit;">
+            <a href="Certificate/index.php" style="text-decoration: none; color: inherit;">
                 <div class="option-card option-3">
                     <span class="option-icon">📜</span>
                     <h3 class="option-title">สร้างเกียรติบัตร</h3>
@@ -204,13 +204,17 @@
                 </div>
             </a>
 
-            <a href="Certificate/view-history.php" style="text-decoration: none; color: inherit;">
+        
+        <!--   
+              <a href="Certificate/view-history.php" style="text-decoration: none; color: inherit;">
                 <div class="option-card option-4">
                     <span class="option-icon">📊</span>
                     <h3 class="option-title">ประวัติการสร้าง</h3>
                     <p class="option-desc">ดูประวัติการสร้างเกียรติบัตรที่ผ่านมา</p>
                 </div>
             </a>
+        -->
+
         </div>
     </div>
 

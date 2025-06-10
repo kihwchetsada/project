@@ -1,6 +1,8 @@
 <?php
 require 'db.php';
-session_start();
+require 'vendor/autoload.php'; // ถ้าใช้ PHPMailer ติดตั้งผ่าน Composer
+
+use PHPMailer\PHPMailer\PHPMailer;
 
 $success = '';
 $error = '';
@@ -8,42 +10,53 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = trim($_POST['username']);
     $password = $_POST['password'];
-    
-    // กำหนดให้สิทธิ์เริ่มต้นเป็น "ผู้เข้าร่วมการแข่งขัน" เสมอ
+    $email = trim($_POST['email']);
     $role = "participant";
 
-    // ตรวจสอบว่า username ซ้ำหรือไม่
-    $checkStmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
-    $checkStmt->bind_param("s", $username);
-    $checkStmt->execute();
-    $checkResult = $checkStmt->get_result();
+    // ตรวจสอบว่าชื่อผู้ใช้หรืออีเมลซ้ำหรือไม่
+    $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+    $stmt->execute([$username, $email]);
 
-    if ($checkResult->num_rows > 0) {
-        $error = "ชื่อผู้ใช้นี้ถูกใช้ไปแล้ว";
+    if ($stmt->rowCount() > 0) {
+        $error = "ชื่อผู้ใช้หรืออีเมลนี้ถูกใช้ไปแล้ว";
     } else {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        $verify_token = bin2hex(random_bytes(16)); // สร้าง token
 
-        $stmt = $conn->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $username, $hashedPassword, $role);
+        $stmt = $conn->prepare("INSERT INTO users (username, password, email, role, verify_token)
+                                VALUES (?, ?, ?, ?, ?)");
+        if ($stmt->execute([$username, $hashedPassword, $email, $role, $verify_token])) {
 
-        if ($stmt->execute()) {
-            $user_id = $stmt->insert_id;
+            // ส่งอีเมลยืนยัน
+            $mail = new PHPMailer();
+            $mail->isSMTP();
+            $mail->Host = 'smtp.example.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'your_email@example.com';
+            $mail->Password = 'your_password';
+            $mail->SMTPSecure = 'tls';
+            $mail->Port = 587;
 
-            $_SESSION['loggedin'] = true;
-            $_SESSION['userData'] = [
-                'id' => $user_id,
-                'username' => $username,
-                'role' => $role
-            ];
+            $mail->setFrom('your_email@example.com', 'ระบบลงทะเบียน');
+            $mail->addAddress($email);
+            $mail->Subject = 'ยืนยันอีเมล';
+            $mail->isHTML(true);
+            $mail->Body = "คลิกที่ลิงก์นี้เพื่อยืนยันการสมัคร: 
+            <a href='http://localhost/project/verify.php?token=$verify_token'>ยืนยันอีเมล</a>";
 
-            header("Location: backend/participant_dashboard.php");
-            exit;
-                } else {
-            $error = "เกิดข้อผิดพลาดขณะสมัครสมาชิก";
+            if ($mail->send()) {
+                $success = "สมัครสำเร็จ! กรุณาตรวจสอบอีเมลเพื่อยืนยันก่อนเข้าสู่ระบบ";
+            } else {
+                $error = "สมัครสำเร็จ แต่ไม่สามารถส่งอีเมลยืนยันได้: " . $mail->ErrorInfo;
+            }
+
+        } else {
+            $error = "เกิดข้อผิดพลาดขณะบันทึกข้อมูล";
         }
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="th">
@@ -78,6 +91,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
 
             <div class="form-group">
+                <label for="email">อีเมล</label>
+                <div class="input-with-icon">
+                    <i class="input-icon fas fa-envelope"></i>
+                    <input type="email" id="email" name="email" placeholder="กรอกอีเมล" required>
+                </div>
+            </div>
+
+            <div class="form-group">
                 <label for="password">รหัสผ่าน</label>
                 <div class="input-with-icon">
                     <i class="input-icon fas fa-lock"></i>
@@ -86,7 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
 
             <button type="submit" class="login-button">สมัครสมาชิก <i class="fas fa-user-check"></i></button>
-
+            <br>
+            
+            <button type="button" onclick="window.location.href='login.php'" class="login-button">กลับไปที่หน้า login<i class="fas fa-sign-out-alt"></i></button>
         </form>
 
         <div class="register-link">

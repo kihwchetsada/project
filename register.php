@@ -179,6 +179,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
                 <div class="flex justify-between items-center mb-2 relative">
                     <div class="w-full bg-gray-200 h-1 absolute"></div>
                     <div class="flex justify-between w-full relative z-10">
+                        
+                        <!--
                         <div class="flex flex-col items-center">
                             <div class="w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
                             <div class="text-sm mt-2 text-primary-600 font-medium">กรอกข้อมูลทีม</div>
@@ -195,6 +197,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
                             <div class="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">4</div>
                             <div class="text-sm mt-2 text-gray-500">เสร็จสิ้น</div>
                         </div>
+                        -->
+
                     </div>
                 </div>
             </div>
@@ -314,11 +318,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
                             <div>
                                 <select name="member_position_<?php echo $i; ?>" id="member_position_<?php echo $i; ?>" class="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200">
                                     <option value="">เลือกตำแหน่งที่เล่น</option>
-                                    <option value="เลน Dark Slayer">เลน Dark Slayer</option>
-                                    <option value="เลนกลาง">เลนกลาง</option>
-                                    <option value="เลน Abyssal Dragon">เลน Abyssal Dragon</option>
-                                    <option value="ซัพพอร์ต">ซัพพอร์ต</option>
-                                    <option value="ฟาร์มป่า">ฟาร์มป่า</option>
+                                    <option value="เลน Dark Slayer / ออฟเลน">เลน Dark Slayer / ออฟเลน</option>
+                                    <option value="เลนกลาง">เลนกลาง / เมท</option>
+                                    <option value="เลน Abyssal Dragon">เลน Abyssal Dragon / แครี่</option>
+                                    <option value="ซัพพอร์ต">ซัพพอร์ต / แทงค์</option>
+                                    <option value="ฟาร์มป่า">ฟาร์มป่า / แอสซาซิน</option>
                                 </select>
                             </div>
                         </div>

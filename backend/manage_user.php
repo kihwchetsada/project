@@ -23,16 +23,16 @@ if (isset($_GET['logout'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_role'])) {
     $user_id = $_POST['user_id'];
     $new_role = $_POST['new_role'];
-    
+
     // อนุญาตเฉพาะการเปลี่ยนเป็น participant หรือ organizer เท่านั้น
     if ($new_role === 'participant' || $new_role === 'organizer') {
         $stmt = $conn->prepare("UPDATE users SET role = ? WHERE id = ?");
-        $stmt->bind_param("si", $new_role, $user_id);
-        
-        if ($stmt->execute()) {
+        $stmt->execute([$new_role, $user_id]);
+
+        if ($stmt->rowCount()) {
             $success = "อัปเดตสิทธิ์ผู้ใช้เรียบร้อย";
         } else {
-            $error = "เกิดข้อผิดพลาดในการอัปเดตสิทธิ์: " . $conn->error;
+            $error = "ไม่พบผู้ใช้หรือไม่มีการเปลี่ยนแปลง";
         }
     } else {
         $error = "สิทธิ์ไม่ถูกต้อง";
@@ -42,12 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_role'])) {
 // ดึงข้อมูลผู้ใช้ทั้งหมด (ยกเว้นแอดมิน)
 $stmt = $conn->prepare("SELECT id, username, role, last_activity FROM users WHERE role != 'admin' ORDER BY username");
 $stmt->execute();
-$result = $stmt->get_result();
-$users = [];
-
-while ($row = $result->fetch_assoc()) {
-    $users[] = $row;
-}
+$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -68,35 +63,35 @@ while ($row = $result->fetch_assoc()) {
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
-        
+
         .users-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
-        
+
         .users-table th, .users-table td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
-        
+
         .users-table th {
             background-color: #f7f7f7;
             font-weight: 500;
         }
-        
+
         .users-table tr:hover {
             background-color: #f5f5f5;
         }
-        
+
         .role-select {
             padding: 8px;
             border-radius: 4px;
             border: 1px solid #ddd;
             width: 100%;
         }
-        
+
         .update-btn {
             background-color: #4CAF50;
             color: white;
@@ -106,11 +101,11 @@ while ($row = $result->fetch_assoc()) {
             cursor: pointer;
             transition: background-color 0.3s;
         }
-        
+
         .update-btn:hover {
             background-color: #45a049;
         }
-        
+
         .user-role {
             display: inline-block;
             padding: 5px 10px;
@@ -118,28 +113,28 @@ while ($row = $result->fetch_assoc()) {
             font-size: 14px;
             font-weight: 500;
         }
-        
+
         .role-participant {
             background-color: #e3f2fd;
             color: #1565c0;
         }
-        
+
         .role-organizer {
             background-color: #e8f5e9;
             color: #2e7d32;
         }
-        
+
         .back-link {
             display: inline-block;
             margin-bottom: 20px;
             color: #333;
             text-decoration: none;
         }
-        
+
         .back-link i {
             margin-right: 5px;
         }
-        
+
         .success-message {
             background-color: #d4edda;
             color: #155724;
@@ -148,7 +143,7 @@ while ($row = $result->fetch_assoc()) {
             border-radius: 5px;
             border: 1px solid #c3e6cb;
         }
-        
+
         .error-message {
             background-color: #f8d7da;
             color: #721c24;
@@ -157,21 +152,31 @@ while ($row = $result->fetch_assoc()) {
             border-radius: 5px;
             border: 1px solid #f5c6cb;
         }
+
+        .role-online {
+            background-color: #e0f7fa;
+            color: #00796b;
+        }
+
+        .role-offline {
+            background-color: #f3e5f5;
+            color: #6a1b9a;
+        }
     </style>
 </head>
 <body>
     <div class="admin-container">
         <a href="admin_dashboard.php" class="back-link"><i class="fas fa-arrow-left"></i> กลับไปยังหน้าแดชบอร์ด</a>
         <h2><i class="fas fa-users-cog"></i> จัดการผู้ใช้งาน</h2>
-        
+
         <?php if ($success): ?>
             <div class="success-message"><?php echo $success; ?></div>
         <?php endif; ?>
-        
+
         <?php if ($error): ?>
             <div class="error-message"><i class="fas fa-exclamation-circle"></i> <?php echo $error; ?></div>
         <?php endif; ?>
-        
+
         <?php if (count($users) > 0): ?>
             <table class="users-table">
                 <thead>
@@ -223,7 +228,6 @@ while ($row = $result->fetch_assoc()) {
                                         $isOnline = true;
                                     }
                                 }
-
                                 ?>
                                 <span class="user-role <?php echo $isOnline ? 'role-online' : 'role-offline'; ?>">
                                     <?php echo $isOnline ? '🟢 ออนไลน์' : '⚪ ออฟไลน์'; ?>

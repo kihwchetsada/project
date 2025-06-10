@@ -8,8 +8,7 @@ if (isset($_GET['logout'])) {
 
         $userId = $_SESSION['userData']['id'];
         $stmt = $conn->prepare("UPDATE users SET last_activity = NULL WHERE id = ?");
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
+        $stmt->execute([$userId]);
     }
 
     session_destroy();
