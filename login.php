@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <input type="checkbox" id="remember" name="remember">
                     <label for="remember">จดจำฉัน</label>
                 </div>
-                <a href="#" class="forgot-password">ลืมรหัสผ่าน?</a>
+                <a href="forgot_password.php" class="forgot-password">ลืมรหัสผ่าน?</a>
             </div>
             
             <button type="submit" class="login-button">เข้าสู่ระบบ <i class="fas fa-sign-in-alt"></i></button><br>
