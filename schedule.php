@@ -150,7 +150,7 @@
                 <a href="javascript:void(0);" onclick="showIframe('iframe2')">ตารางการแข่งขัน</a>
                 <div id="iframe2" class="iframe-container">
                     <h3>ตารางการแข่งขัน</h3>
-                    <iframe src="https://challonge.com/th/ROV_RMUTI5/module" width="100%" height="500" frameborder="100" scrolling="auto" allowtransparency="true"></iframe>
+                    <iframe src="https://challonge.com/th/qg79p2nk/module" width="100%" height="500" frameborder="0" scrolling="auto" allowtransparency="true"></iframe>
                 </div>
             </div>
         </div>
