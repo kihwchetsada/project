@@ -3,6 +3,7 @@ session_start();
 require 'db.php'; // เชื่อม DB
 require 'vendor/autoload.php'; // PHPMailer (ใช้ Composer โหลด)
 
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -25,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $otp = random_int(100000, 999999);
             $_SESSION['reset_otp'] = $otp;
             $_SESSION['reset_user_id'] = $user['id'];
-            $_SESSION['reset_otp_expire'] = time() + 300; // หมดอายุ 5 นาที
+            $_SESSION['reset_otp_expire'] = time() + 600; // หมดอายุ 10 นาที
 
             // ส่งเมล OTP
             $mail = new PHPMailer(true);
@@ -39,12 +40,106 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mail->SMTPSecure = 'tls';
                 $mail->Port = 587;
 
-                $mail->setFrom('thepopyth15@gmail.com', 'ระบบลืมรหัสผ่าน');
+                $mail->setFrom('thepopyth15@gmail.com', 'แก้ไขรหัสผ่าน');
                 $mail->addAddress($email);
 
                 $mail->isHTML(true);
-                $mail->Subject = 'รหัส OTP สำหรับรีเซ็ตรหัสผ่าน';
-                $mail->Body = "รหัส OTP ของคุณคือ <b>$otp</b> ใช้ได้ภายใน 5 นาที";
+                $mail->CharSet = 'UTF-8';
+                $mail->Subject = 'รหัส OTP สำหรับรีเซ็ตรหัสผ่าน RMUTI TOURNAMENT';
+
+                $mail->Body = "
+                    <!DOCTYPE html>
+                    <html lang='th'>
+                    <head>
+                        <meta charset='UTF-8'>
+                        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                        <title>รหัส OTP</title>
+                    </head>
+                    <body style='margin: 0; padding: 0; font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;'>
+                        <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden;'>
+                            
+                            <!-- Header -->
+                            <div style='background: linear-gradient(135deg,rgb(119, 107, 255) 0%,rgb(43, 36, 238) 50%,rgb(189, 159, 255) 100%); padding: 35px; text-align: center; position: relative; overflow: hidden;'>
+                                <div style='position: absolute; top: -50px; left: -50px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; animation: float 3s ease-in-out infinite;'></div>
+                                <div style='position: absolute; bottom: -30px; right: -30px; width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 50%; animation: float 4s ease-in-out infinite reverse;'></div>
+                                <h1 style='color: #ffffff; margin: 0; font-size: 32px; font-weight: 600; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.3);'>
+                                    RMUTI TOURNAMENT
+                                </h1>
+                            </div>
+                            
+                            <!-- Content -->
+                            <div style='padding: 40px 30px; text-align: center;'>
+                                <div style='margin-bottom: 30px;'>
+                                    <h2 style='color: #333333; margin: 0 0 20px 0; font-size: 24px; font-weight: 400;'>
+                                        รหัส OTP ของคุณ
+                                    </h2>
+                                    <p style='color: #666666; margin: 0; font-size: 16px; line-height: 1.6;'>
+                                        กรุณาใช้รหัสด้านล่างเพื่อรีเซ็ตรหัสผ่านของคุณ
+                                    </p>
+                                    <p style='color: #666666; margin: 0; font-size: 16px; line-height: 1.6;'>
+                                        ใช้รหัสนี้ภายใน 10 นาทีหลังจากได้รับอีเมลนี้
+                                    </p>
+                                </div>
+                                
+                                <!-- OTP Code Box -->
+                                <div style='background: linear-gradient(135deg,rgb(99, 119, 231) 0%,rgb(43, 0, 255) 100%); padding: 25px; border-radius: 12px; margin: 30px 0; box-shadow: 0 8px 25px rgba(240, 147, 251, 0.3);'>
+                                    <div style='background-color: #ffffff; padding: 20px; border-radius: 8px; display: inline-block; min-width: 200px;'>
+                                        <h1 style='color: #333333; margin: 0; font-size: 36px; font-weight: bold; letter-spacing: 8px; font-family: \"Courier New\", monospace;'>
+                                            $otp
+                                        </h1>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                        <!-- Mobile responsive styles -->
+                        <style>
+                            @keyframes float {
+                                0%, 100% { transform: translateY(0px); }
+                                50% { transform: translateY(-10px); }
+                            }
+                            
+                            @keyframes pulse {
+                                0%, 100% { transform: scale(1); opacity: 1; }
+                                50% { transform: scale(1.1); opacity: 0.8; }
+                            }
+                            
+                            @keyframes glow {
+                                0%, 100% { box-shadow: 0 0 20px rgba(255, 107, 107, 0.5); }
+                                50% { box-shadow: 0 0 30px rgba(255, 107, 107, 0.8); }
+                            }
+                            
+                            @media only screen and (max-width: 600px) {
+                                .container {
+                                    margin: 10px !important;
+                                    border-radius: 5px !important;
+                                }
+                                .header {
+                                    padding: 20px !important;
+                                }
+                                .content {
+                                    padding: 25px 20px !important;
+                                }
+                                .otp-code {
+                                    font-size: 32px !important;
+                                    letter-spacing: 6px !important;
+                                }
+                                .step-grid {
+                                    grid-template-columns: 1fr !important;
+                                }
+                            }
+                            
+                            /* Extra sparkle effects */
+                            .sparkle::before {
+                                content: '✨';
+                                position: absolute;
+                                top: -10px;
+                                right: -10px;
+                                animation: pulse 3s infinite;
+                            }
+                        </style>
+                    </body>
+                    </html>
+                    ";
 
                 $mail->send();
 

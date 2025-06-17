@@ -1,9 +1,18 @@
 <?php
-
 session_start();
 require 'db.php'; // เชื่อมต่อฐานข้อมูล
 
+// สร้าง CSRF Token ถ้ายังไม่มี
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // ตรวจสอบ CSRF Token ก่อน
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        die('CSRF token ไม่ถูกต้อง');
+    }
+
     $username = $_POST['username'];
     $password = $_POST['password'];
 
@@ -13,6 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($user) {
         if (password_verify($password, $user['password'])) {
+
+            // รีเซ็ต token ใหม่หลัง login สำเร็จ (ป้องกัน reuse)
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
             $_SESSION['loggedin'] = true;
             $_SESSION['userData'] = [
                 'username' => $user['username'],
@@ -20,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'id' => $user['id']
             ];
 
-            // เปลี่ยนเส้นทางตามสิทธิ์
             switch ($user['role']) {
                 case 'admin':
                     header('Location: backend/admin_dashboard.php');
@@ -44,8 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = 'ไม่พบบัญชีผู้ใช้';
     }
 }
-
 ?>
+
 
 <!DOCTYPE html>
 <html lang="th">
@@ -95,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
                 <a href="forgot_password.php" class="forgot-password">ลืมรหัสผ่าน?</a>
             </div>
-            
+            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
             <button type="submit" class="login-button">เข้าสู่ระบบ <i class="fas fa-sign-in-alt"></i></button><br>
             
             <button type="button" onclick="window.location.href='index.php'" class="login-button">กลับไปที่หน้าหลัก<i class="fas fa-sign-out-alt"></i></button>
