@@ -3,7 +3,6 @@ session_start();
 require 'db.php';         // user_db
 require 'db_connect.php'; // competition_db
 
-session_start();
 
 if (!isset($_SESSION['userData']) || $_SESSION['userData']['role'] !== 'organizer') {
     die('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
