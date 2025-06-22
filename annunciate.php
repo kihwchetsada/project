@@ -77,6 +77,7 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/s.css">
     <style>
         body {
             font-family: 'Sarabun', sans-serif;
@@ -107,26 +108,22 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
             animation: pulse 1.5s infinite;
         }
     </style>
+     <div class="navbar">
+        <div class="logo">
+            <img src="img/logo.jpg" alt="ROV Tournament Hub Logo">
+            <h2>ROV Tournament Hub</h2>
+        </div>
+        <nav>
+            <a href="index.php">หน้าหลัก</a>
+            <a href="schedule.php">ตารางการแข่งขัน</a>
+            <a href="register.php">สมัครทีม</a>
+            <a href="annunciate.php">ประกาศ</a>
+            <a href="contact.php">ติดต่อเรา</a>
+            <a href="login.php">เข้าสู่ระบบ</a>
+        </nav>
+    </div> 
 </head>
 <body class="flex flex-col">
-    <!-- Navigation Bar -->
-    <nav class="bg-white shadow-md">
-        <div class="container mx-auto px-4 py-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <img src="img/logo.jpg" alt="Logo" class="h-10 w-10 rounded-full">
-                    <h1 class="text-2xl font-bold text-blue-600">ระบบประกาศ</h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="index.php" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md font-medium">หน้าหลัก</a>
-                    <a href="#" class="bg-blue-600 text-white px-3 py-2 rounded-md font-medium">ประกาศทั้งหมด</a>
-                    <a href="backend/Certificate/index.php" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md font-medium">เกียรติบัตร</a>
-                    <a href="contact.php" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md font-medium">ติดต่อเรา</a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
     <!-- Main Content -->
     <div class="container mx-auto px-4 py-8 flex-grow" x-data="{ showFilters: false }">
         <div class="max-w-6xl mx-auto">

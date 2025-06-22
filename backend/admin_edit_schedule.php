@@ -24,7 +24,8 @@ while ($row = $stmt->fetch()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>จัดการลิงก์ตาราง - Admin Panel</title>
+    <title>จัดการลิงก์ตาราง</title>
+    <link rel="icon" type="image/png" href="../img/logo.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -61,8 +62,6 @@ while ($row = $stmt->fetch()) {
         position: relative;
         overflow-x: hidden;
     }
-
-    /* Animated background elements */
     .bg-animation {
         position: fixed;
         top: 0;
@@ -521,7 +520,6 @@ while ($row = $stmt->fetch()) {
 </style>
 
 <body>
-    <!-- Animated background -->
     <div class="bg-animation">
         <div class="floating-shape"></div>
         <div class="floating-shape"></div>
@@ -529,13 +527,10 @@ while ($row = $stmt->fetch()) {
     </div>
 
     <div class="container">
-        <!-- Back Button -->
         <a href="admin_dashboard.php" class="back-btn">
             <i class="fas fa-arrow-left"></i>
             กลับไปหน้า Admin
         </a>
-
-        <!-- Header -->
         <div class="admin-header">
             <div class="admin-icon">
                 <i class="fas fa-cogs"></i>
@@ -548,16 +543,12 @@ while ($row = $stmt->fetch()) {
                 แอดมินแพนเนล - แก้ไขตารางการแข่งขัน
             </div>
         </div>
-
-        <!-- Success Message -->
         <?php if (!empty($message)): ?>
             <div class="success-message">
                 <i class="fas fa-check-circle"></i>
                 <?= htmlspecialchars($message) ?>
             </div>
         <?php endif; ?>
-
-        <!-- Form -->
         <div class="form-container">
             <form method="POST" id="scheduleForm">
                 <div class="form-group">
@@ -601,8 +592,6 @@ while ($row = $stmt->fetch()) {
                     บันทึกการเปลี่ยนแปลง
                 </button>
             </form>
-
-            <!-- Preview Section -->
             <div class="preview-section">
                 <h3 class="preview-title">
                     <i class="fas fa-eye"></i>

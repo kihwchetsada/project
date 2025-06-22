@@ -7,9 +7,125 @@
     <link rel="stylesheet" href="css/contact.css">
     <title>ติดต่อเรา - RMUTI SURIN E-Sport Club</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 5%;
+    background-color: rgba(10, 14, 23, 0.9);
+    -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(15px);
+    border-bottom: 2px solid var(--primary-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    object-fit: cover;
+    border: 3px solid var(--primary-color);
+    margin-right: 15px;
+    box-shadow: 0 0 15px rgba(52, 152, 219, 0.7);
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+}
+
+.logo img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(41, 45, 244, 0.9);
+}
+
+.logo h2 {
+    color: var(--primary-color);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(219, 52, 52, 0.5);
+    transition: color 0.3s ease;
+}
+
+.logo:hover h2 {
+    color: #992222;
+    text-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+}
+
+nav {
+    display: flex;
+    gap: 25px;
+}
+
+nav a {
+    color: var(--light-text);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 1.3rem;
+}
+
+nav a:hover {
+    color: var(--primary-color);
+    background-color: rgba(52, 152, 219, 0.1);
+    transform: translateY(-3px);
+}
+
+nav a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 3px;
+    background-color: var(--primary-color);
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: width 0.3s ease;
+    border-radius: 3px;
+}
+
+nav a:hover::after {
+    width: 70%;
+}
+
+#banner {
+    width: 100%;
+    height: 720px;
+    background-image: url("../img/poster1.png");
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    border-bottom: 2px solid var(--secondary-color);
+};
+    </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
-    
+    <div class="navbar">
+        <div class="logo">
+            <img src="img/logo.jpg" alt="ROV Tournament Hub Logo">
+            <h2>ROV Tournament Hub</h2>
+        </div>
+        <nav>
+            <a href="index.php">หน้าหลัก</a>
+            <a href="schedule.php">ตารางการแข่งขัน</a>
+            <a href="register.php">สมัครทีม</a>
+            <a href="annunciate.php">ประกาศ</a>
+            <a href="contact.php">ติดต่อเรา</a>
+            <a href="login.php">เข้าสู่ระบบ</a>
+        </nav>
+    </div> 
+
     <div class="w-full max-w-md">
         <div class="bg-white bg-opacity-20 shadow-2xl rounded-lg p-8 card animate-fade-in">
             <h1 class="text-4xl font-bold text-center text-black mb-6 text-glow">ติดต่อเรา</h1>

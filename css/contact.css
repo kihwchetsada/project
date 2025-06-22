@@ -1,4 +1,7 @@
 
+:root{
+    --nav-hover: #2980b9;
+}
         body {
             background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0,0,0,0.6)), 
                               url('https://fat.surin.rmuti.ac.th/web/wp-content/uploads/2022/11/DSC_0024-768x512.jpg');

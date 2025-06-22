@@ -122,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
     <title>ลงทะเบียนทีม</title>
     <link rel="icon" type="image/png" href="img/logo.jpg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/s.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -150,6 +151,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
             }
         }
     </script>
+    <div class="navbar">
+        <div class="logo">
+            <img src="img/logo.jpg" alt="ROV Tournament Hub Logo">
+            <h2>ROV Tournament Hub</h2>
+        </div>
+        <nav>
+            <a href="index.php">หน้าหลัก</a>
+            <a href="schedule.php">ตารางการแข่งขัน</a>
+            <a href="register.php">สมัครทีม</a>
+            <a href="annunciate.php">ประกาศ</a>
+            <a href="contact.php">ติดต่อเรา</a>
+            <a href="login.php">เข้าสู่ระบบ</a>
+        </nav>
+    </div> 
+
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
     <header class="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-8 shadow-md text-center">

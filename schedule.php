@@ -13,7 +13,8 @@ while ($row = $stmt->fetch()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ตารางการแข่งขัน - ROV Tournament Hub</title>
+    <title>ตารางการแข่งขัน | ROV Tournament Hub</title>
+    <link rel="icon" type="image/png" href="img/logo.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -501,10 +502,12 @@ while ($row = $stmt->fetch()) {
             <div class="iframe-wrapper">
                 <div class="iframe-container">
                     <?php if (!empty($iframes['under_18'])): ?>
+
                         <div class="loading-overlay" id="loading-under-18">
                             <div class="loading-spinner"></div>
                             <div class="loading-text">กำลังโหลดตารางการแข่งขัน...</div>
                         </div>
+
                         <iframe 
                             src="<?= htmlspecialchars($iframes['under_18']) ?>" 
                             onload="document.getElementById('loading-under-18').style.display='none'"
@@ -533,10 +536,12 @@ while ($row = $stmt->fetch()) {
             <div class="iframe-wrapper">
                 <div class="iframe-container">
                     <?php if (!empty($iframes['above_18'])): ?>
+
                         <div class="loading-overlay" id="loading-above-18">
                             <div class="loading-spinner"></div>
                             <div class="loading-text">กำลังโหลดตารางการแข่งขัน...</div>
                         </div>
+
                         <iframe 
                             src="<?= htmlspecialchars($iframes['above_18']) ?>" 
                             onload="document.getElementById('loading-above-18').style.display='none'"
