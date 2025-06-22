@@ -1,5 +1,7 @@
 <?php
+
 session_start();
+
 require 'db.php'; // เชื่อมต่อฐานข้อมูล
 
 // สร้าง CSRF Token ถ้ายังไม่มี

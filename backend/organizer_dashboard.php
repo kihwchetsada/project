@@ -108,7 +108,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
 
             <!-- ส่วนการกรอง -->
             <div class="schedule-filters">
-                <button class="filter-button active" data-filter="all">รายชื่อทีมทั้งหมด</button>
+                <button class="filter-button" data-filter="all" onclick="location.href='../organizer_approve_teams.php'">การอนุมัติทีม</button>
                 <button class="filter-button" data-filter="completed">รายชื่อทีมที่อนุมัติ</button>
                 <button class="filter-button" data-filter="upcoming">กำลังจะมาถึง</button>
                 <button class="filter-button" data-filter="pending">รายชื่อทีมที่รออนุมัติ</button>
