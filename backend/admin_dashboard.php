@@ -8,7 +8,7 @@ if (isset($_GET['logout'])) {
         require_once '../db.php'; // ให้แน่ใจว่ามีการเชื่อม DB ก่อน
 
         $userId = $_SESSION['userData']['id'];
-        $stmt = $conn->prepare("UPDATE users SET last_activity = NULL WHERE id = ?");
+        $stmt = $userDb->prepare("UPDATE users SET last_activity = NULL WHERE id = ?");
         $stmt->execute([$userId]);
     }
 
@@ -63,7 +63,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
                     <a href="admin_view_the_teams.php"><i class="fas fa-users"></i><span>จัดการทีม</span></a>
                 </li>
                 <li>
-                    <a href="https://challonge.com/th/ROV_RMUTI5/"><i class="fas fa-calendar-days"></i><span>ตารางการแข่งขัน</span></a>
+                    <a href="https://challonge.com/th/dashboard"><i class="fas fa-calendar-days"></i><span>ตารางการแข่งขัน</span></a>
                 </li>
                 <li>
                     <a href="results.php"><i class="fas fa-ranking-star"></i><span>ผลการแข่งขัน</span></a>

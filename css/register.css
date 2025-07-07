@@ -532,7 +532,6 @@
     
     .progress-steps {
       overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
       padding-bottom: 1rem;
     }
     

@@ -124,10 +124,10 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
     </div> 
 </head>
 <body class="flex flex-col">
-    <!-- Main Content -->
+    
     <div class="container mx-auto px-4 py-8 flex-grow" x-data="{ showFilters: false }">
         <div class="max-w-6xl mx-auto">
-            <!-- Header and Search -->
+            
             <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
                 <h1 class="text-3xl font-bold text-gray-800 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -153,7 +153,7 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
                     </form>
                 </div>
             </div>
-
+ 
             <!-- Filters -->
             <div x-show="showFilters" x-transition class="bg-white p-4 rounded-lg shadow-md mb-6">
                 <form action="" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -328,36 +328,22 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
             <?php endif; ?>
         </div>
     </div>
-    
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-6 mt-12">
+    <footer class="bg-gray-800 text-white py-8 mt-12">
         <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">เกี่ยวกับเรา</h3>
-                    <p class="text-gray-300">ระบบประกาศออนไลน์ สำหรับการแจ้งข้อมูลข่าวสารต่างๆ ภายในองค์กร</p>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">ลิงก์ด่วน</h3>
-                    <ul class="space-y-2">
-                        <li><a href="index.php" class="text-gray-300 hover:text-white">หน้าหลัก</a></li>
-                        <li><a href="#" class="text-blue-300 hover:text-white">ประกาศทั้งหมด</a></li>
-                        <li><a href="project/backend/Certificate/index.php" class="text-gray-300 hover:text-white">เกียรติบัตร</a></li>
-                        <li><a href="contact.php" class="text-gray-300 hover:text-white">ติดต่อเรา</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">ติดต่อ</h3>
-                    <address class="not-italic text-gray-300">
-                        <p class="mb-2">เลขที่ 123 ถนนสุขุมวิท</p>
-                        <p class="mb-2">แขวงคลองเตย เขตคลองเตย</p>
-                        <p class="mb-2">กรุงเทพมหานคร 10110</p>
-                        <p>อีเมล: info@announcement.com</p>
-                    </address>
-                </div>
+            <div class="flex justify-center mb-8">
+                <button onclick="window.location.href='backend/Certificate/index.php'" 
+                        class="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-800 text-white px-12 py-4 rounded-xl font-bold text-lg flex items-center space-x-3 transition-all duration-300 transform hover:scale-110 shadow-2xl hover:shadow-purple-500/25 border-2 border-transparent hover:border-purple-300 relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                    <span class="relative z-10 text-xl">🏆 เกียรติบัตร</span>
+                    <div class="absolute top-1 right-1 w-2 h-2 bg-yellow-300 rounded-full animate-ping"></div>
+                    <div class="absolute bottom-1 left-1 w-1 h-1 bg-white rounded-full animate-pulse"></div>
+                </button>
             </div>
-            <div class="border-t border-gray-700 mt-8 pt-6 text-center">
-                <p>&copy; <?php echo date('Y'); ?> ระบบประกาศ. สงวนลิขสิทธิ์</p>
+            <div class="border-t border-gray-700 pt-6 text-center">
+                <p class="text-gray-400">&copy; <?php echo date('Y'); ?> ระบบประกาศ. สงวนลิขสิทธิ์</p>
             </div>
         </div>
     </footer>

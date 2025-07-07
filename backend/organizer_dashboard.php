@@ -7,7 +7,7 @@ if (isset($_GET['logout'])) {
         require_once '../db.php'; // เชื่อม DB
 
         $userId = $_SESSION['userData']['id'];
-        $stmt = $conn->prepare("UPDATE users SET last_activity = NULL WHERE id = ?");
+        $stmt = $userDb->prepare("UPDATE users SET last_activity = NULL WHERE id = ?");
         $stmt->execute([$userId]);
     }
 

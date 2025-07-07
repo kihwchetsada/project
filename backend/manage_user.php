@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_role'])) {
 
     // อนุญาตเฉพาะการเปลี่ยนเป็น participant หรือ organizer เท่านั้น
     if ($new_role === 'participant' || $new_role === 'organizer') {
-        $stmt = $conn->prepare("UPDATE users SET role = ? WHERE id = ?");
+        $stmt = $userDb->prepare("UPDATE users SET role = ? WHERE id = ?");
         $stmt->execute([$new_role, $user_id]);
 
         if ($stmt->rowCount()) {
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_role'])) {
 }
 
 // ดึงข้อมูลผู้ใช้ทั้งหมด (ยกเว้นแอดมิน)
-$stmt = $conn->prepare("SELECT id, username, role, last_activity FROM users WHERE role != 'admin' ORDER BY username");
+$stmt = $userDb->prepare("SELECT id, username, role, last_activity FROM users WHERE role != 'admin' ORDER BY username");
 $stmt->execute();
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>

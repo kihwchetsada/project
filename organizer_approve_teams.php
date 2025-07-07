@@ -13,8 +13,8 @@ if (!isset($_SESSION['userData']) || $_SESSION['userData']['role'] !== 'organize
 
 $approved_by = $_SESSION['userData']['username'];
 
-// ดึงทีมที่ยังไม่อนุมัติ
-$stmt = $conn->query("SELECT * FROM teams WHERE is_approved = 0 ORDER BY created_at DESC");
+// ดึงทีมที่ยังไม่อนุมัติ - แก้ไข Query ให้ใช้ team_id
+$stmt = $conn->query("SELECT team_id, team_name, competition_type, coach_name, coach_phone, leader_school, created_at FROM teams WHERE is_approved = 0 ORDER BY created_at DESC");
 $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -25,6 +25,7 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>อนุมัติทีมการแข่งขัน</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             margin: 0;
@@ -290,6 +291,7 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
             gap: 8px;
             min-width: 120px;
             justify-content: center;
+            text-decoration: none;
         }
 
         .btn-approve {
@@ -319,6 +321,15 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
             color: #7f8c8d;
             margin-top: 10px;
             font-style: italic;
+        }
+
+        .debug-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
         }
 
         @media (max-width: 768px) {
@@ -448,16 +459,22 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
 
                         <div class="approval-form">
+                            <!-- Debug Info -->
+                            <div class="debug-info">
+                                <strong>Debug:</strong> Team ID = <?php echo isset($team['team_id']) ? $team['team_id'] : 'ไม่พบ'; ?>
+                            </div>
+
                             <form method="post" action="process_team_approval.php" onsubmit="showLoading(this)">
-                                <input type="hidden" name="team_id" value="<?php echo isset($team['id']) ? htmlspecialchars($team['id']) : ''; ?>">
+                                <!-- ใช้ team_id แทน id -->
+                                <input type="hidden" name="team_id" value="<?php echo isset($team['team_id']) ? htmlspecialchars($team['team_id']) : ''; ?>">
 
                                 <div class="form-group">
-                                    <label for="rejection_reason_<?php echo isset($team['id']) ? htmlspecialchars($team['id']) : ''; ?>" class="form-label">
+                                    <label for="rejection_reason_<?php echo isset($team['team_id']) ? htmlspecialchars($team['team_id']) : ''; ?>" class="form-label">
                                         <i class="fas fa-comment-alt"></i> เหตุผล (กรณีไม่อนุมัติ)
                                     </label>
                                     <textarea 
                                         name="rejection_reason" 
-                                        id="rejection_reason_<?php echo isset($team['id']) ? htmlspecialchars($team['id']) : ''; ?>"
+                                        id="rejection_reason_<?php echo isset($team['team_id']) ? htmlspecialchars($team['team_id']) : ''; ?>"
                                         class="form-textarea" 
                                         rows="3" 
                                         placeholder="ระบุเหตุผลหากไม่อนุมัติทีมนี้..."
@@ -465,13 +482,19 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
 
                                 <div class="button-group">
-                                    <button type="submit" name="action" value="approve" class="btn btn-approve">
-                                        <i class="fas fa-check"></i> อนุมัติ
-                                    </button>
-                                    <button type="submit" name="action" value="reject" class="btn btn-reject" 
-                                            onclick="return confirmReject()">
-                                        <i class="fas fa-times"></i> ไม่อนุมัติ
-                                    </button>
+                                    <?php if (isset($team['team_id']) && $team['team_id'] > 0): ?>
+                                        <button type="submit" name="action" value="approve" class="btn btn-approve">
+                                            <i class="fas fa-check"></i> อนุมัติ
+                                        </button>
+                                        <button type="submit" name="action" value="reject" class="btn btn-reject" 
+                                                onclick="return confirmReject()">
+                                            <i class="fas fa-times"></i> ไม่อนุมัติ
+                                        </button>
+                                    <?php else: ?>
+                                        <div style="color: red; font-weight: bold;">
+                                            ข้อผิดพลาด: ไม่พบ Team ID - ไม่สามารถดำเนินการได้
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
 
                                 <div class="loading">
@@ -485,6 +508,19 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <?php endif; ?>
         </div>
     </div>
+
+    <?php if (!empty($_SESSION['approval_status'])): ?>
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: '<?php echo $_SESSION['approval_status'] === "approved" ? "อนุมัติทีมสำเร็จ!" : "ไม่อนุมัติทีมแล้ว"; ?>',
+            text: 'ระบบได้บันทึกการดำเนินการเรียบร้อยแล้ว',
+            confirmButtonText: 'ตกลง',
+            confirmButtonColor: '#3085d6'
+        });
+    </script>
+    <?php unset($_SESSION['approval_status']); ?>
+    <?php endif; ?>
 
     <script>
         function confirmReject() {
