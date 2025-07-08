@@ -459,10 +459,10 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
 
                         <div class="approval-form">
-                            <!-- Debug Info -->
+                            <!-- Debug Info 
                             <div class="debug-info">
                                 <strong>Debug:</strong> Team ID = <?php echo isset($team['team_id']) ? $team['team_id'] : 'ไม่พบ'; ?>
-                            </div>
+                            </div> -->
 
                             <form method="post" action="process_team_approval.php" onsubmit="showLoading(this)">
                                 <!-- ใช้ team_id แทน id -->
@@ -484,12 +484,12 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="button-group">
                                     <?php if (isset($team['team_id']) && $team['team_id'] > 0): ?>
                                         <button type="submit" name="action" value="approve" class="btn btn-approve">
-                                            <i class="fas fa-check"></i> อนุมัติ
+                                            ✔ อนุมัติ
                                         </button>
-                                        <button type="submit" name="action" value="reject" class="btn btn-reject" 
-                                                onclick="return confirmReject()">
-                                            <i class="fas fa-times"></i> ไม่อนุมัติ
+                                        <button type="submit" name="action" value="reject" class="btn btn-reject" onclick="return confirmReject()">
+                                            ✘ ไม่อนุมัติ
                                         </button>
+
                                     <?php else: ?>
                                         <div style="color: red; font-weight: bold;">
                                             ข้อผิดพลาด: ไม่พบ Team ID - ไม่สามารถดำเนินการได้
@@ -527,17 +527,36 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return confirm('คุณแน่ใจหรือไม่ว่าต้องการไม่อนุมัติทีมนี้?\n\nการกระทำนี้ไม่สามารถย้อนกลับได้');
         }
 
-        function showLoading(form) {
-            const buttons = form.querySelectorAll('.btn');
-            const loading = form.querySelector('.loading');
-            
-            buttons.forEach(btn => {
-                btn.disabled = true;
-                btn.style.opacity = '0.6';
-            });
-            
-            loading.style.display = 'block';
+        document.querySelectorAll('button[name="action"], input[name="action"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // ลบ class clicked ออกจากปุ่มอื่น ๆ
+            document.querySelectorAll('button[name="action"], input[name="action"]').forEach(b => b.classList.remove('clicked'));
+            this.classList.add('clicked');
+        });
+    });
+
+    function showLoading(form) {
+        const buttons = form.querySelectorAll('.btn');
+        const loading = form.querySelector('.loading');
+
+        // หาค่าของปุ่มที่ถูกกด
+        const clicked = form.querySelector('.clicked');
+        if (clicked && clicked.name === 'action') {
+            // เพิ่ม hidden input เพื่อส่งค่า action ไปแน่นอน
+            let input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'action';
+            input.value = clicked.value;
+            form.appendChild(input);
         }
+
+        buttons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+        });
+
+        loading.style.display = 'block';
+    }
 
         // เพิ่ม animation เมื่อโหลดหน้า
         document.addEventListener('DOMContentLoaded', function() {
