@@ -168,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
 
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
-    <header class="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-8 shadow-md text-center">
+    <header class="bg-blue-600/40 backdrop-blur-sm from-primary-600 to-primary-700 text-white py-8 shadow-md text-center">
         <div class="container mx-auto px-4 max-w-5xl">
             <h1 class="text-3xl font-bold mb-2">ลงทะเบียนการแข่งขัน</h1>
             <p class="text-primary-50">กรอกข้อมูลทีมของคุณเพื่อเข้าร่วมการแข่งขัน</p>
@@ -231,9 +231,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
             <form action="" method="post" enctype="multipart/form-data" id="registrationForm">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                 
-                <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-                    <h3 class="text-xl font-bold text-gray-800 pb-4 mb-6 border-b border-gray-200">
-                        <i class="fas fa-users-cog mr-2 text-primary-600"></i> ข้อมูลทีม
+                <div class="bg-white/60 backdrop-blur-sm rounded-lg shadow-lg p-6 mb-8">
+                    <h3 class="text-xl font-bold text-black-800 pb-4 mb-6 border-b border-black-200">
+                        <i class="fas fa-users-cog mr-2 text-black-600"></i> ข้อมูลทีม
                     </h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -280,11 +280,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-                    <h3 class="text-xl font-bold text-gray-800 pb-4 mb-6 border-b border-gray-200">
-                        <i class="fas fa-users mr-2 text-primary-600"></i> ข้อมูลสมาชิก
+                <div class="bg-white/60 backdrop-blur-sm rounded-lg shadow-lg p-6 mb-8">
+                    <h3 class="text-xl font-bold text-black-800 pb-4 mb-6 border-b border-black-200">
+                        <i class="fas fa-users mr-2 text-black-600"></i> ข้อมูลสมาชิก
                     </h3>
-                    <p class="mb-6 text-gray-600">กรุณากรอกข้อมูลสมาชิกในทีมของคุณ (จำเป็นต้องมีอย่างน้อย 5 คน, สูงสุด 8 คน)</p>
+                    <p class="mb-6 text-danger-600">กรุณากรอกข้อมูลสมาชิกในทีมของคุณ (จำเป็นต้องมีอย่างน้อย 5 คน, สูงสุด 8 คน)</p>
                     
                     <?php for ($i = 1; $i <= 8; $i++): ?>
                     <div class="bg-gray-50 rounded-lg border border-gray-200 p-6 mb-6 relative <?php echo $i > 5 ? 'border-dashed' : ''; ?>">

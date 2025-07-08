@@ -17,7 +17,7 @@
 body {
     background-color: var(--dark-bg);
     color: var(--light-text);
-    background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url("../img/game-bg.jpg");
+    background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url("../img/banner.png");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
