@@ -78,6 +78,7 @@ $conn = null;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ลบข้อมูลทีม</title>
+    <link rel="icon" type="image/png" href="../img/logo.jpg">
     <style>
         body {
             font-family: 'Sarabun', sans-serif;

@@ -26,13 +26,6 @@ if (!$user || $user['role'] !== 'organizer') {
 $team_id = isset($_POST['team_id']) ? intval($_POST['team_id']) : 0;
 $action = $_POST['action'] ?? null;
 
-// Debug: แสดงข้อมูลที่ส่งมา (ลบออกหลังจากแก้ไขเสร็จ)
-// echo "Debug - team_id: " . $team_id . "<br>";
-// echo "Debug - action: " . $action . "<br>";
-// echo "Debug - POST data: ";
-// var_dump($_POST);
-// echo "<br><br>";
-
 // ตรวจสอบข้อมูลแบบแยก เพื่อให้ทราบว่าปัญหาอยู่ตรงไหน
 if ($team_id <= 0) {
     die('Team ID ไม่ถูกต้อง: ' . $team_id);
