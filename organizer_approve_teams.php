@@ -436,9 +436,9 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
 
-            <button class="card" onclick="location.href='backend/organizer_dashboard.php'">
+    <button class="card" onclick="location.href='backend/organizer_dashboard.php'">
                 <span class="text"><i class="fas fa-sign-out-alt"></i> กลับไปหน้าหลัก</span>
-            </button>
+    </button>
 
     <div class="container">
         <div class="header">
