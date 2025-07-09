@@ -27,7 +27,6 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="icon" type="image/png" href="img/logo.jpg">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <style>
         * {
             margin: 0;
@@ -40,6 +39,52 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+        }
+ 
+        .card {
+        align-items: center;
+        background-image: linear-gradient(144deg, #af40ff, #5b42f3 50%, #00ddeb);
+        border: 0;
+        border-radius: 8px;
+        box-shadow: rgba(151, 65, 252, 0.2) 0 15px 30px -5px;
+        box-sizing: border-box;
+        color: #ffffff;
+        display: flex;
+        font-size: 18px;
+        justify-content: center;
+        line-height: 1em;
+        max-width: 100%;
+        min-width: 140px;
+        padding: 3px;
+        text-decoration: none;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.3s;
+        }
+
+        .card:active,
+        .card:hover {
+        outline: 0;
+        }
+
+        .card span {
+        background-color: rgb(5, 6, 45);
+        padding: 16px 24px;
+        border-radius: 6px;
+        width: 100%;
+        height: 100%;
+        transition: 300ms;
+        }
+
+        .card:hover span {
+        background: none;
+        }
+
+        .card:active {
+        transform: scale(0.9);
         }
 
         .container {
@@ -390,6 +435,11 @@ $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </style>
 </head>
 <body>
+
+            <button class="card" onclick="location.href='backend/organizer_dashboard.php'">
+                <span class="text"><i class="fas fa-sign-out-alt"></i> กลับไปหน้าหลัก</span>
+            </button>
+
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-clipboard-check"></i> อนุมัติทีมการแข่งขัน</h1>
