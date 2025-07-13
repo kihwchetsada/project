@@ -356,9 +356,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
                         <div class="mb-6">
                             <div class="flex items-start space-x-2">
                                 <input type="checkbox" id="pdpa_consent" name="pdpa_consent" value="1" required class="mt-1">
-                                <label for="pdpa_consent" class="text-sm text-gray-700">
+                                <label for="pdpa_consent" class="text-lg text-gray-700">
                                     ข้าพเจ้ายินยอมให้จัดเก็บและใช้ข้อมูลส่วนบุคคลตาม
-                                    <button type="button" onclick="openPdpaModal()" class="text-primary-600 underline hover:text-primary-800">
+                                    <button type="button" onclick="openPdpaModal()" class="text-danger-600 underline hover:text-primary-800">
                                         นโยบายความเป็นส่วนตัว
                                     </button>
                                 </label>
@@ -376,12 +376,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
     
     <!-- PDPA Modal -->
     <div id="pdpaModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 <?php echo !$pdpa_accepted ? 'block' : 'hidden'; ?>">
-        <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
-            <h2 class="text-2xl font-bold mb-4 text-primary-700">นโยบายความเป็นส่วนตัว (PDPA)</h2>
-            <div class="max-h-[60vh] overflow-y-auto text-sm text-gray-700 space-y-4 pr-2">
+        <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full p-6 relative">
+            <h2 class="text-4xl font-bold mb-4 text-primary-700">นโยบายความเป็นส่วนตัว (PDPA)</h2>
+            <div class="max-h-[60vh] overflow-y-auto text-xl text-gray-700 space-y-4 pr-2">
                 <p>เว็บไซต์นี้ให้ความสำคัญกับความเป็นส่วนตัวของผู้ใช้งาน และปฏิบัติตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA) อย่างเคร่งครัด</p>
                 <p><strong>1. ข้อมูลที่เราเก็บ:</strong> ชื่อ, เบอร์โทร, วันเกิด, ข้อมูลการแข่งขัน</p>
-                <p><strong>2. วัตถุประสงค์:</strong> ใช้สำหรับลงทะเบียน ติดต่อ ยืนยัน และการบริหารจัดการแข่งขัน</p>
+                <p><strong>2. วัตถุประสงค์:</strong> ใช้สำหรับลงทะเบียน ติดต่อ ยืนยัน ออกเกียรติบัตร และการบริหารจัดการแข่งขัน</p>
                 <p><strong>3. การจัดเก็บข้อมูล:</strong> จะเก็บข้อมูลไว้ภายในระยะเวลาที่จำเป็นและมีมาตรการรักษาความปลอดภัย</p>
                 <p><strong>4. สิทธิของท่าน:</strong> ท่านสามารถขอเข้าถึง ลบ แก้ไข หรือถอนความยินยอมได้ทุกเมื่อ</p>
                 <p><strong>5. การเปิดเผยข้อมูล:</strong> จะไม่เปิดเผยแก่บุคคลภายนอก เว้นแต่มีข้อกำหนดทางกฎหมาย</p>
@@ -389,7 +389,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
             <div class="text-right mt-6">
                 <form method="post" action="">
                     <input type="hidden" name="redirect_url" value="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
-                    <button type="submit" name="pdpa_accept" value="1" class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                    <button type="submit" name="pdpa_accept" value="1" class="px-6 py-3 bg-success-600 text-xl text-white rounded-lg hover:bg-success-700 transition">
                         ยอมรับและดำเนินการต่อ
                     </button>
                 </form>
