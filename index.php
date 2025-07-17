@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ROV Tournament Hub</title>
     <link rel="icon" type="image/png" href="img/logo.jpg">
-    <link rel="stylesheet" href="css/s.css">
+    <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
     <div class="navbar">
@@ -32,10 +32,10 @@
             </div>
         </section>
     </section>
-    
-    <footer class="footer">
-        <p>© <?php echo date('Y'); ?> RMUTI Tournament System by Chetsadaphon wongwiwong</p>
-    </footer>
 
 </body>
+
+  <footer class="footer">
+        <p>© <?php echo date('Y'); ?> RMUTI Tournament System by Chetsadaphon wongwiwong</p>
+    </footer>
 </html>
