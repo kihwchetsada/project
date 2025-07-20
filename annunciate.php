@@ -153,7 +153,6 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
                     </form>
                 </div>
             </div>
- 
             <!-- Filters -->
             <div x-show="showFilters" x-transition class="bg-white p-4 rounded-lg shadow-md mb-6">
                 <form action="" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -347,7 +346,6 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
             </div>
         </div>
     </footer>
-
     <script>
         // Function to show loading skeleton while images and content load
         document.addEventListener('DOMContentLoaded', function() {
@@ -356,7 +354,6 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
             document.body.classList.remove('opacity-0');
         });
     </script>
-
     <?php $conn->close(); ?>
 </body>
 </html>
