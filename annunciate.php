@@ -24,43 +24,101 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $items_per_page = 9;
 $offset = ($page - 1) * $items_per_page;
 
-// Prepare SQL query with filters
-$sql = "SELECT id, title, description, date, category, priority FROM announcements WHERE 1=1";
+// Prepare SQL query with filters using prepared statements
+$where_conditions = [];
+$count_params = [];
+$count_param_types = "";
 
 // Add search filter if provided
 if (!empty($search_query)) {
-    $search_query = $conn->real_escape_string($search_query);
-    $sql .= " AND (title LIKE '%$search_query%' OR description LIKE '%$search_query%')";
+    $where_conditions[] = "(title LIKE ? OR description LIKE ?)";
+    $search_param = '%' . $search_query . '%';
+    $count_params[] = $search_param;
+    $count_params[] = $search_param;
+    $count_param_types .= "ss";
 }
 
 // Add category filter if provided
 if (!empty($category_filter)) {
-    $category_filter = $conn->real_escape_string($category_filter);
-    $sql .= " AND category = '$category_filter'";
+    $where_conditions[] = "category = ?";
+    $count_params[] = $category_filter;
+    $count_param_types .= "s";
 }
 
 // Add priority filter if provided
 if (!empty($priority_filter)) {
-    $priority_filter = $conn->real_escape_string($priority_filter);
-    $sql .= " AND priority = '$priority_filter'";
+    $where_conditions[] = "priority = ?";
+    $count_params[] = $priority_filter;
+    $count_param_types .= "s";
+}
+
+// Add status filter to show only active announcements
+$where_conditions[] = "status = 'active'";
+
+// Build the WHERE clause
+$where_clause = "";
+if (!empty($where_conditions)) {
+    $where_clause = " WHERE " . implode(" AND ", $where_conditions);
 }
 
 // Count total records for pagination
-$count_sql = str_replace("SELECT id, title, description, date, category, priority", "SELECT COUNT(*)", $sql);
-$count_result = $conn->query($count_sql);
+$count_sql = "SELECT COUNT(*) FROM announcements" . $where_clause;
+$count_stmt = $conn->prepare($count_sql);
+
+if (!$count_stmt) {
+    die("Error preparing count query: " . $conn->error);
+}
+
+if (!empty($count_params)) {
+    $count_stmt->bind_param($count_param_types, ...$count_params);
+}
+
+if (!$count_stmt->execute()) {
+    die("Error in count query: " . $count_stmt->error);
+}
+
+$count_result = $count_stmt->get_result();
 $total_records = $count_result->fetch_row()[0];
 $total_pages = ceil($total_records / $items_per_page);
+$count_stmt->close();
 
-// Complete the SQL query with ordering and pagination
-$sql .= " ORDER BY date DESC LIMIT $offset, $items_per_page";
-$result = $conn->query($sql);
+// Prepare parameters for main query (copy from count params)
+$main_params = $count_params; // Copy all the filter parameters
+$main_param_types = $count_param_types; // Copy parameter types
+
+// Main query with pagination - ใช้ created_at แทน date
+$sql = "SELECT id, title, description, created_at as date, category, priority FROM announcements" . 
+       $where_clause . " ORDER BY created_at DESC LIMIT ?, ?";
+
+$stmt = $conn->prepare($sql);
+
+if (!$stmt) {
+    die("Error preparing main query: " . $conn->error);
+}
+
+// Add pagination parameters
+$main_params[] = $offset;
+$main_params[] = $items_per_page;
+$main_param_types .= "ii";
+
+if (!empty($main_param_types)) {
+    $stmt->bind_param($main_param_types, ...$main_params);
+}
+
+if (!$stmt->execute()) {
+    die("Error in main query: " . $stmt->error);
+}
+
+$result = $stmt->get_result();
 
 // Get all available categories for filter dropdown
-$categories_sql = "SELECT DISTINCT category FROM announcements ORDER BY category";
+$categories_sql = "SELECT DISTINCT category FROM announcements WHERE status = 'active' ORDER BY category";
 $categories_result = $conn->query($categories_sql);
 $categories = [];
-while ($row = $categories_result->fetch_assoc()) {
-    $categories[] = $row['category'];
+if ($categories_result) {
+    while ($row = $categories_result->fetch_assoc()) {
+        $categories[] = $row['category'];
+    }
 }
 
 // Define priority options
@@ -108,7 +166,9 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
             animation: pulse 1.5s infinite;
         }
     </style>
-     <div class="navbar">
+</head>
+<body class="flex flex-col">
+    <div class="navbar">
         <div class="logo">
             <img src="img/logo.jpg" alt="ROV Tournament Hub Logo">
             <h2>ROV Tournament Hub</h2>
@@ -121,9 +181,7 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
             <a href="contact.php">ติดต่อเรา</a>
             <a href="login.php">เข้าสู่ระบบ</a>
         </nav>
-    </div> 
-</head>
-<body class="flex flex-col">
+    </div>
     
     <div class="container mx-auto px-4 py-8 flex-grow" x-data="{ showFilters: false }">
         <div class="max-w-6xl mx-auto">
@@ -204,7 +262,7 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
             <?php endif; ?>
 
             <!-- Announcements Grid -->
-            <?php if ($result->num_rows > 0): ?>
+            <?php if ($result && $result->num_rows > 0): ?>
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <?php while($row = $result->fetch_assoc()): ?>
                         <?php 
@@ -215,6 +273,9 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
                             'ต่ำ' => ['color' => 'bg-green-100 text-green-800', 'icon' => '🟢', 'badge' => 'border-green-300 bg-green-50'],
                             default => ['color' => 'bg-gray-100 text-gray-800', 'icon' => '⚪', 'badge' => 'border-gray-300 bg-gray-50']
                         };
+                        
+                        // Format date to Thai format
+                        $date_formatted = date('d/m/Y H:i', strtotime($row['date']));
                         ?>
                         <div class="announcement-card bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
                             <div class="p-6">
@@ -237,12 +298,17 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
-                                        <span><?php echo htmlspecialchars($row['date']); ?></span>
+                                        <span><?php echo $date_formatted; ?></span>
                                     </div>
                                     <span class="border rounded-md px-2 py-1 text-xs <?php echo $priorityDetails['badge']; ?>">
                                         <?php echo htmlspecialchars($row['category']); ?>
                                     </span>
                                 </div>
+                                <?php if (!empty($row['image_path'])): ?>
+                                    <img src="../uploads/<?php echo htmlspecialchars($row['image_path']); ?>" 
+                                        alt="รูปภาพประกาศ" 
+                                        class="w-full h-48 object-cover rounded-t-2xl">
+                                <?php endif; ?>
                                 <a href="view_announcement.php?id=<?php echo $row['id']; ?>" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 text-center py-2 rounded-lg transition font-medium">
                                     อ่านเพิ่มเติม
                                 </a>
@@ -354,6 +420,9 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
             document.body.classList.remove('opacity-0');
         });
     </script>
-    <?php $conn->close(); ?>
+    <?php 
+    if ($stmt) $stmt->close();
+    $conn->close(); 
+    ?>
 </body>
 </html>
