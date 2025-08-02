@@ -78,16 +78,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
     <div class="main-content">
         <!-- Top Navigation -->
         <div class="top-navbar">
-            <div class="search-container">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="ค้นหาการแข่งขัน...">
-            </div>
-            
             <div class="user-menu">
-                <div class="notifications">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge">5</span>
-                </div>
                 <div class="user-info">
                     <?php include 'header.php'; ?>
                     <span><?php echo htmlspecialchars($userData['username']); ?></span>

@@ -403,7 +403,7 @@ body {
     }
 }
 
-@media (max-width: 992px) {
+@media (max-width: 432px) {
     .dashboard-widgets {
         grid-template-columns: 1fr;
     }
@@ -446,6 +446,9 @@ body {
     
     .search-container {
         width: 150px;
+    }
+    .sidebar-menu{
+        padding: 10px 0;
     }
 }
  /* เพิ่มสไตล์เฉพาะสำหรับหน้าตารางการแข่งขัน */

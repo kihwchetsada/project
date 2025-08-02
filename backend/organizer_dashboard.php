@@ -130,7 +130,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
 
         // ปิด sidebar เมื่อคลิกที่เนื้อหาหลักในโหมดมือถือ
         document.querySelector('.main-content').addEventListener('click', function() {
-            if (window.innerWidth <= 768) {
+            if (window.innerWidth <= 375) {
                 document.querySelector('.sidebar').classList.remove('sidebar-active');
             }
         });
