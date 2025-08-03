@@ -151,21 +151,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
             }
         }
     </script>
-    <div class="navbar">
-        <div class="logo">
-            <img src="img/logo.jpg" alt="ROV Tournament Hub Logo">
-            <h2>ROV Tournament Hub</h2>
-        </div>
-        <nav>
-            <a href="index.php">หน้าหลัก</a>
-            <a href="schedule.php">ตารางการแข่งขัน</a>
-            <a href="register.php">สมัครทีม</a>
-            <a href="annunciate.php">ประกาศ</a>
-            <a href="contact.php">ติดต่อเรา</a>
-            <a href="login.php">เข้าสู่ระบบ</a>
-        </nav>
-    </div> 
-
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
     <header class="bg-blue-600/40 backdrop-blur-sm from-primary-600 to-primary-700 text-white py-8 shadow-md text-center">

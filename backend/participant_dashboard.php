@@ -4,13 +4,11 @@ session_start();
 // 🔒 ตรวจสอบการ logout
 if (isset($_GET['logout'])) {
     if (isset($_SESSION['userData']['id'])) {
-        require_once '../db.php'; // ให้แน่ใจว่ามีการเชื่อม DB ก่อน
-
+        require_once '../db.php';
         $userId = $_SESSION['userData']['id'];
         $stmt = $userDb->prepare("UPDATE users SET last_activity = NULL WHERE id = ?");
         $stmt->execute([$userId]);
     }
-
     session_destroy();
     header('Location: ../login.php');
     exit;
@@ -23,11 +21,16 @@ if (!isset($_SESSION['userData']) || $_SESSION['userData']['role'] !== 'particip
 }
 
 $userData = $_SESSION['userData']; 
-// ดึงข้อมูลผู้ใช้
 
-$tournaments = [/* ตัวอย่างข้อมูลหรือ query จาก DB */];
+require '../db_connect.php';
+
+// ดึงข้อมูล iframe URLs
+$stmt = $conn->query("SELECT category, iframe_url FROM tournament_links");
+$iframes = [];
+while ($row = $stmt->fetch()) {
+    $iframes[$row['category']] = $row['iframe_url'];
+}
 ?>
-
 
 <!DOCTYPE html>
 <html lang="th">
@@ -92,33 +95,106 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
         <!-- Dashboard Content -->
         <div class="dashboard-container">
             <div class="welcome-header">
-                <h2> ROV Tournament</h2>
+                <h2>ROV Tournament</h2>
                 <p>จัดการกำหนดการแข่งขันทั้งหมดของทัวร์นาเมนต์</p>
             </div>
 
             <!-- ส่วนการกรอง -->
             <div class="schedule-filters">
-                <button class="filter-button active" data-filter="all" onclick="showTournaments(1)">ตารางการแข่งขัน</button>
-                <button class="filter-button" data-filter="completed">รายชื่อทีมที่อนุมัติ</button>
-                <button class="filter-button" data-filter="upcoming">กำลังจะมาถึง</button>
-                <button class="filter-button" data-filter="pending">รายชื่อทีมที่รออนุมัติ</button>
+                <button class="filter-button active" data-filter="tournaments" onclick="showContent('tournaments')">
+                    <i class="fas fa-calendar-alt"></i> ตารางการแข่งขัน
+                </button>
+                <button class="filter-button" data-filter="approved" onclick="showContent('approved')">
+                    <i class="fas fa-check-circle"></i> สมัครทีมเข้าร่วมการแข่งขัน
+                </button>
+                <button class="filter-button" data-filter="upcoming" onclick="showContent('upcoming')">
+                    <i class="fas fa-clock"></i> กำลังจะมาถึง
+                </button>
+                <button class="filter-button" data-filter="pending" onclick="showContent('pending')">
+                    <i class="fas fa-hourglass-half"></i> รายชื่อทีมที่รออนุมัติ
+                </button>
             </div>
 
-            <div id="page1" class="tournament-active">
-                <h3>ตารางการแข่งขัน</h3>
-                <iframe src="https://challonge.com/th/ROV_RMUTI5/module" width="100%" height="500" frameborder="100" scrolling="auto" allowtransparency="true"></iframe>
+            <!-- เนื้อหาหลัก -->
+            <div id="content-tournaments" class="content-section active">
+                <div class="tournament-container">
+                    <!-- Tabs สำหรับสลับระหว่างรุ่นอายุ -->
+                    <div class="tournament-tabs">
+                        <button class="tournament-tab active" onclick="switchTournament('above_18')">
+                            <i class="fas fa-users"></i> รุ่นอายุ 18 ปีขึ้นไป
+                        </button>
+                        <button class="tournament-tab" onclick="switchTournament('under_18')">
+                            <i class="fas fa-user-friends"></i> รุ่นอายุต่ำกว่า 18 ปี
+                        </button>
+                    </div>
+
+                    <!-- ตารางรุ่น 18 ปีขึ้นไป -->
+                    <div id="tournament-above_18" class="tournament-page active">
+                        <h3><i class="fas fa-trophy"></i> ตารางการแข่งขันรุ่นอายุ 18 ปีขึ้นไป</h3>
+                        <?php if (!empty($iframes['above_18'])): ?>
+                            <div id="loading-above-18" class="loading-spinner">
+                                <i class="fas fa-spinner"></i>
+                                <p>กำลังโหลดตารางการแข่งขัน...</p>
+                            </div>
+                            <iframe 
+                                class="tournament-iframe"
+                                src="<?= htmlspecialchars($iframes['above_18']) ?>" 
+                                onload="document.getElementById('loading-above-18').style.display='none'"
+                                title="ตารางการแข่งขันรุ่นอายุตั้งแต่ 18 ปีขึ้นไป">
+                            </iframe>
+                        <?php else: ?>
+                            <div class="no-iframe-message">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 2em; margin-bottom: 10px;"></i>
+                                <p>ยังไม่มีตารางการแข่งขันสำหรับรุ่นอายุ 18 ปีขึ้นไป</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- ตารางรุ่นต่ำกว่า 18 ปี -->
+                    <div id="tournament-under_18" class="tournament-page">
+                        <h3><i class="fas fa-trophy"></i> ตารางการแข่งขันรุ่นอายุต่ำกว่า 18 ปี</h3>
+                        <?php if (!empty($iframes['under_18'])): ?>
+                            <div id="loading-under-18" class="loading-spinner">
+                                <i class="fas fa-spinner"></i>
+                                <p>กำลังโหลดตารางการแข่งขัน...</p>
+                            </div>
+                            <iframe 
+                                class="tournament-iframe"
+                                src="<?= htmlspecialchars($iframes['under_18']) ?>" 
+                                onload="document.getElementById('loading-under-18').style.display='none'"
+                                title="ตารางการแข่งขันรุ่นอายุต่ำกว่า 18 ปี">
+                            </iframe>
+                        <?php else: ?>
+                            <div class="no-iframe-message">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 2em; margin-bottom: 10px;"></i>
+                                <p>ยังไม่มีตารางการแข่งขันสำหรับรุ่นอายุต่ำกว่า 18 ปี</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
-            <script>
-                function showTournaments(pageNumber) {
-                    // ฟังก์ชันนี้จะถูกเรียกเมื่อคลิกที่ปุ่ม "ตารางการแข่งขัน"
-                    let pages = document.querySelectorAll('.page');
-                    pages.forEach(page => {
-                        page.classList.remove('active'); // ซ่อนทุกหน้า
-                    });
-                    document.getElementById('page' + pageNumber).classList.add('active'); // แสดงเฉพาะหน้าที่เลือก
-                   
-                }
-            </script>
+
+            <!-- เนื้อหาอื่นๆ (placeholder) -->
+            <div id="content-approved" class="content-section">
+                <div class="placeholder-content">
+                    <h3><i class="fas fa-check-circle"></i> สมัครทีมเข้าร่วมการแข่งขัน</h3>
+                    <a href="../register.php">คลิกที่นี่เพื่อสมัคร</a>
+                </div>
+            </div>
+
+            <div id="content-upcoming" class="content-section">
+                <div class="placeholder-content">
+                    <h3><i class="fas fa-clock"></i> การแข่งขันที่กำลังจะมาถึง</h3>
+                    <p>ส่วนนี้จะแสดงการแข่งขันที่กำลังจะมาถึง</p>
+                </div>
+            </div>
+
+            <div id="content-pending" class="content-section">
+                <div class="placeholder-content">
+                    <h3><i class="fas fa-hourglass-half"></i> รายชื่อทีมที่รออนุมัติ</h3>
+                    <p>ส่วนนี้จะแสดงรายชื่อทีมที่รออนุมัติ</p>
+                </div>
+            </div>
 
             <!-- Footer -->
             <div class="dashboard-footer">
@@ -140,29 +216,63 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
             }
         });
 
-        // ฟังก์ชันสำหรับกรองรายการแข่งขัน
-        document.querySelectorAll('.filter-button').forEach(button => {
-            button.addEventListener('click', function() {
-                // เอาคลาส active ออกจากปุ่มทั้งหมด
-                document.querySelectorAll('.filter-button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                
-                // เพิ่มคลาส active ให้กับปุ่มที่ถูกคลิก
-                this.classList.add('active');
-                
-                const filter = this.getAttribute('data-filter');
-                const rounds = document.querySelectorAll('.schedule-round');
-                
-                rounds.forEach(round => {
-                    if (filter === 'all' || round.getAttribute('data-status') === filter) {
-                        round.style.display = 'block';
-                    } else {
-                        round.style.display = 'none';
-                    }
-                });
+        // ฟังก์ชันสำหรับสลับเนื้อหาหลัก
+        function showContent(contentType) {
+            // ซ่อนเนื้อหาทั้งหมด
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
             });
-        });
+            
+            // แสดงเนื้อหาที่เลือก
+            document.getElementById('content-' + contentType).classList.add('active');
+            
+            // อัพเดทปุ่ม active
+            document.querySelectorAll('.filter-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('[data-filter="' + contentType + '"]').classList.add('active');
+        }
+
+        // ฟังก์ชันสำหรับสลับระหว่างตารางการแข่งขัน
+        function switchTournament(category) {
+            // ซ่อนตารางทั้งหมด
+            document.querySelectorAll('.tournament-page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // แสดงตารางที่เลือก
+            document.getElementById('tournament-' + category).classList.add('active');
+            
+            // อัพเดท tab active
+            document.querySelectorAll('.tournament-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // เพิ่ม CSS สำหรับ content sections
+        const style = document.createElement('style');
+        style.textContent = `
+            .content-section {
+                display: none;
+            }
+            .content-section.active {
+                display: block;
+            }
+            .placeholder-content {
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                text-align: center;
+                color: #7f8c8d;
+            }
+            .placeholder-content h3 {
+                color: #2c3e50;
+                margin-bottom: 15px;
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>

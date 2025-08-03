@@ -472,7 +472,7 @@ while ($row = $stmt->fetch()) {
         <nav>
             <a href="index.php">หน้าหลัก</a>
             <a href="schedule.php">ตารางการแข่งขัน</a>
-            <a href="register.php">สมัครทีม</a>
+            <a href="register_user.php">สมัครทีม</a>
             <a href="annunciate.php">ประกาศ</a>
             <a href="contact.php">ติดต่อเรา</a>
             <a href="login.php">เข้าสู่ระบบ</a>

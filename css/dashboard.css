@@ -396,16 +396,330 @@ body {
     border-top: 1px solid #f0f0f0;
 }
 
-/* Responsive */
+/* Filter Buttons */
+.schedule-filters {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.filter-button {
+    padding: 12px 20px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    border: none;
+    cursor: pointer;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6c757d;
+    position: relative;
+    overflow: hidden;
+}
+
+.filter-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s;
+}
+
+.filter-button:hover::before {
+    left: 100%;
+}
+
+.filter-button:hover {
+    background-color: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.filter-button.active {
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: white;
+    box-shadow: 0 4px 15px rgba(106, 17, 203, 0.3);
+    transform: translateY(-2px);
+}
+
+.filter-button.active:hover {
+    background: linear-gradient(135deg, #5a0eb5, #1e5fd9);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(106, 17, 203, 0.4);
+}
+
+.filter-button i {
+    font-size: 1rem;
+}
+
+/* Content Sections */
+.content-section {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.content-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.placeholder-content {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    color: #7f8c8d;
+    border: 2px dashed #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.placeholder-content:hover {
+    border-color: #6a11cb;
+    box-shadow: 0 6px 25px rgba(106, 17, 203, 0.1);
+}
+
+.placeholder-content h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.placeholder-content h3 i {
+    color: #6a11cb;
+}
+
+/* Tournament Container */
+.tournament-container {
+    margin-top: 20px;
+}
+
+.tournament-page {
+    display: none;
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+    border: 1px solid #f0f0f0;
+    transition: all 0.3s ease;
+}
+
+.tournament-page:hover {
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.tournament-page.active {
+    display: block;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.tournament-page h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #3498db;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.3rem;
+    position: relative;
+}
+
+.tournament-page h3::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    border-radius: 2px;
+}
+
+.tournament-iframe {
+    width: 100%;
+    height: 650px;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.tournament-iframe:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 60px;
+    color: #7f8c8d;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.loading-spinner i {
+    font-size: 2.5em;
+    animation: spin 1s linear infinite;
+    color: #6a11cb;
+    margin-bottom: 15px;
+}
+
+.loading-spinner p {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.tournament-tabs {
+    display: flex;
+    margin-bottom: 25px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tournament-tab {
+    flex: 1;
+    padding: 14px 24px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.tournament-tab::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.tournament-tab:hover::before {
+    left: 100%;
+}
+
+.tournament-tab:hover {
+    background: #e9ecef;
+    color: #495057;
+    transform: translateY(-1px);
+}
+
+.tournament-tab.active {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    transform: translateY(-2px);
+}
+
+.tournament-tab.active:hover {
+    background: linear-gradient(135deg, #2980b9, #1f5f99);
+    box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+}
+
+.tournament-tab i {
+    font-size: 1.1rem;
+}
+
+.no-iframe-message {
+    text-align: center;
+    padding: 50px;
+    color: #7f8c8d;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 12px;
+    border: 2px dashed #bdc3c7;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.no-iframe-message::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(106, 17, 203, 0.05) 0%, transparent 50%);
+    animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(0.8); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+.no-iframe-message:hover {
+    border-color: #6a11cb;
+    color: #5a6c7d;
+    box-shadow: 0 4px 15px rgba(106, 17, 203, 0.1);
+}
+
+.no-iframe-message i {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    color: #6a11cb;
+    position: relative;
+    z-index: 1;
+}
+
+.no-iframe-message p {
+    font-size: 1.1rem;
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
+}
+
+/* Responsive Design */
 @media (max-width: 1200px) {
     .stat-cards {
         grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 432px) {
-    .dashboard-widgets {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -420,6 +734,7 @@ body {
     
     .main-content {
         margin-left: 0;
+        padding: 15px;
     }
     
     .mobile-toggle {
@@ -432,6 +747,35 @@ body {
     
     .search-container {
         width: 200px;
+    }
+    
+    .schedule-filters {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .filter-button {
+        width: 100%;
+        justify-content: center;
+        padding: 14px 20px;
+    }
+    
+    .tournament-tabs {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .tournament-tab {
+        width: 100%;
+        padding: 16px 20px;
+    }
+    
+    .tournament-iframe {
+        height: 500px;
+    }
+    
+    .dashboard-widgets {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -447,206 +791,55 @@ body {
     .search-container {
         width: 150px;
     }
-    .sidebar-menu{
+    
+    .sidebar-menu {
         padding: 10px 0;
     }
-}
- /* เพิ่มสไตล์เฉพาะสำหรับหน้าตารางการแข่งขัน */
- .schedule-filters {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.filter-button {
-    padding: 8px 16px;
-    border-radius: 6px;
-    background-color: #f0f0f0;
-    border: none;
-    cursor: pointer;
-    font-family: 'Kanit', sans-serif;
-    font-weight: 400;
-    transition: all 0.3s;
-}
-
-.filter-button.active {
-    background-color: #4A90E2;
-    color: white;
-}
-
-.schedule-round {
-    margin-bottom: 30px;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.round-header {
-    padding: 15px;
-    background-color: #f5f5f5;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.round-title {
-    font-size: 18px;
-    font-weight: 500;
-}
-
-.round-badge {
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.badge-completed {
-    background-color: #28a745;
-    color: white;
-}
-
-.badge-upcoming {
-    background-color: #fd7e14;
-    color: white;
-}
-
-.badge-pending {
-    background-color: #6c757d;
-    color: white;
-}
-
-.match-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.match-table th {
-    background-color: #f8f9fa;
-    padding: 12px;
-    text-align: left;
-    font-weight: 500;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-.match-table td {
-    padding: 15px 12px;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-.match-table tr:last-child td {
-    border-bottom: none;
-}
-
-.match-teams {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.team-vs {
-    margin: 0 10px;
-    color: #888;
-    font-weight: 500;
-}
-
-.match-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.btn-action {
-    padding: 6px 12px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    font-family: 'Kanit', sans-serif;
-    transition: all 0.3s;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.btn-edit {
-    background-color: #4A90E2;
-    color: white;
-}
-
-.btn-edit:hover {
-    background-color: #3a7bc8;
-}
-
-.btn-delete {
-    background-color: #e74c3c;
-    color: white;
-}
-
-.btn-delete:hover {
-    background-color: #c0392b;
-}
-
-.btn-watch {
-    background-color: #9b59b6;
-    color: white;
-}
-
-.btn-watch:hover {
-    background-color: #8e44ad;
-}
-
-.btn-add-match {
-    background-color: #4A90E2;
-    color: white;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-family: 'Kanit', sans-serif;
-    font-weight: 400;
-    margin-left: auto;
-}
-
-.btn-add-round {
-    background-color: #28a745;
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'Kanit', sans-serif;
-    font-weight: 500;
-    margin: 20px 0;
-}
-
-.empty-round {
-    padding: 30px;
-    text-align: center;
-    color: #777;
-}
-
-@media (max-width: 768px) {
-    .match-table {
-        display: block;
-        overflow-x: auto;
+    
+    .welcome-header h2 {
+        font-size: 1.5rem;
     }
     
-    .round-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
+    .tournament-page {
+        padding: 20px 15px;
     }
     
-    .match-actions {
-        flex-direction: column;
+    .tournament-iframe {
+        height: 400px;
+    }
+    
+    .loading-spinner {
+        padding: 40px 20px;
+    }
+    
+    .no-iframe-message {
+        padding: 40px 20px;
+    }
+}
+
+
+
+/* Accessibility improvements */
+.filter-button:focus,
+.tournament-tab:focus {
+    outline: 2px solid #6a11cb;
+    outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+    .sidebar,
+    .mobile-toggle,
+    .top-navbar {
+        display: none;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .tournament-iframe {
+        height: auto;
+        min-height: 500px;
     }
 }
