@@ -12,33 +12,46 @@ $message = "";
 $messageType = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $team_name = $conn->real_escape_string($_POST['team_name']);
+    $team_name = trim($_POST['team_name']);
     $tournament_id = (int)$_POST['tournament_id'];
 
     if (!empty($team_name) && $tournament_id > 0) {
-        // ตรวจสอบว่าชื่อทีมซ้ำในทัวร์นาเมนต์เดียวกันหรือไม่
-        $check_sql = "SELECT id FROM teams WHERE team_name = '$team_name' AND tournament_id = $tournament_id";
-        $check_result = $conn->query($check_sql);
-        
+        // ตรวจสอบชื่อทีมซ้ำ
+        $stmt = $conn->prepare("SELECT team_id FROM teams WHERE team_name = ? AND tournament_id = ?");
+        if (!$stmt) {
+            die("Prepare failed: " . $conn->error);
+        }
+
+        $stmt->bind_param("si", $team_name, $tournament_id);
+        $stmt->execute();
+        $check_result = $stmt->get_result();
+
         if ($check_result->num_rows > 0) {
             $message = "ชื่อทีมนี้มีอยู่ในทัวร์นาเมนต์แล้ว";
             $messageType = "error";
         } else {
-            $sql = "INSERT INTO teams (team_name, tournament_id) VALUES ('$team_name', $tournament_id)";
-            if ($conn->query($sql) === TRUE) {
+            $stmt->close(); // ปิด statement ก่อนใช้ใหม่
+
+            $stmt = $conn->prepare("INSERT INTO teams (team_name, tournament_id) VALUES (?, ?)");
+            if (!$stmt) {
+                die("Prepare failed (insert): " . $conn->error);
+            }
+
+            $stmt->bind_param("si", $team_name, $tournament_id);
+            if ($stmt->execute()) {
                 $message = "เพิ่มทีมสำเร็จ!";
                 $messageType = "success";
             } else {
-                $message = "เกิดข้อผิดพลาด: " . $conn->error;
+                $message = "เกิดข้อผิดพลาดในการเพิ่มทีม: " . $stmt->error;
                 $messageType = "error";
             }
         }
+        $stmt->close();
     } else {
         $message = "กรุณากรอกชื่อทีมและเลือกทัวร์นาเมนต์";
         $messageType = "error";
     }
 }
-
 // ดึงทัวร์นาเมนต์
 $tournaments = $conn->query("SELECT id, tournament_name FROM tournaments ORDER BY tournament_name");
 ?>
