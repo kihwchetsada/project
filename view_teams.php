@@ -586,7 +586,7 @@ if ($result && $result->num_rows > 0) {
                                         <?= htmlspecialchars($team) ?>
                                     </div>
                                     <div class="team-rank">
-                                        Rank #<?= $index + 1 ?>
+                                        Number <?= $index + 1 ?>
                                     </div>
                                 </div>
                             <?php endforeach; ?>

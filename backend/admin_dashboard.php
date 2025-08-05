@@ -107,7 +107,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
             <div class="schedule-filters">
                 <button class="filter-button" onclick="window.location.href='admin_edit_schedule.php'">เพิ่มตารางการแข่งขันไปแสดง</button>
                 <button class="filter-button" onclick="location.href='../approved_teams.php'">รายชื่อทีมที่อนุมัติ</button>
-                <button class="filter-button" data-filter="upcoming">กำลังจะมาถึง</button>
+                <button class="filter-button" onclick="window.location.href='../view_teams.php'">เพิ่มทีมเข้า Tournament </button>
                 <button class="filter-button" onclick="window.location.href='challonge_config.php'">จัดการ API</button>
                 <button class="filter-button" onclick="window.location.href='competition.php'">กำหนดวันแข่งขัน</button>
             </div>

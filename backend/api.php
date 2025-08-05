@@ -39,7 +39,7 @@ if ($result && $result->num_rows > 0) {
     <link rel="icon" type="image/png" href="../img/logo.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../api.css">
+    <link rel="stylesheet" href="../css/api.css">
     <title>🎮 Tournament Control Center - Add Teams</title>
    
 </head>
