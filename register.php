@@ -64,11 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
 
                             $phone_key = base64_encode($phone_key_raw);
                             $phone_iv = base64_encode($phone_iv_raw);
-
                             $stmt = $conn->prepare("INSERT INTO team_members 
                                 (team_id, member_name, game_name, age, phone, position, birthdate, phone_key, phone_iv) 
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
                             $stmt->execute([
                                 $team_id,
                                 $member_name,
@@ -82,7 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
                             ]);
                         }
                     }
-
                     $conn->commit();
                     $team_success = true;
                 } catch (PDOException $e) {
@@ -170,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
                 <p class="mb-2 text-lg">ขอบคุณสำหรับการลงทะเบียน เราได้รับข้อมูลของทีม <?php echo htmlspecialchars($team_name); ?> เรียบร้อยแล้ว</p>
                 <p class="mb-8 text-gray-600">ทางทีมงานจะติดต่อกลับไปที่หมายเลข <?php echo htmlspecialchars($coach_phone); ?> เพื่อยืนยันการลงทะเบียน</p>
                 <div class="mt-8">
-                    <a href="index.php" class="inline-flex items-center px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors duration-200">
+                    <a href="backend/participant_dashboard.php" class="inline-flex items-center px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors duration-200">
                         <i class="fas fa-home mr-2"></i> กลับสู่หน้าหลัก
                     </a>
                 </div>
@@ -259,9 +256,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
                     
                     <div class="mb-6">
                         <label for="leader_school" class="block mb-2 font-medium text-gray-700">
-                            สังกัด/โรงเรียน <span class="text-danger-500">*</span>
+                            สังกัด/โรงเรียน
                         </label>
-                        <input type="text" id="leader_school" name="leader_school" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200" required>
+                        <input type="text" id="leader_school" name="leader_school" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200">
                     </div>
                 </div>
                 
@@ -428,7 +425,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
             if (!document.getElementById('pdpaModal').classList.contains('hidden')) {
                 document.body.style.overflow = 'hidden';
             }
-         });
+            });
 
         function openPdpaModal() {
             document.getElementById('pdpaModal').classList.remove('hidden');

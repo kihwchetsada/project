@@ -8,10 +8,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // รับข้อมูลจากแบบฟอร์ม
 $api_key = isset($_POST['api_key']) ? $_POST['api_key'] : '';
-$tournament_url = isset($_POST['tournament_url']) ? $_POST['tournament_url'] : '';
 
 // ตรวจสอบข้อมูล
-if (empty($api_key) || empty($tournament_url)) {
+if (empty($api_key)) {
     echo json_encode(['success' => false, 'message' => 'กรุณากรอกข้อมูลให้ครบถ้วน']);
     exit;
 }
@@ -32,11 +31,10 @@ if ($result->num_rows == 0) {
     $create_table = "CREATE TABLE challonge_config (
         id INT(11) PRIMARY KEY AUTO_INCREMENT,
         api_key VARCHAR(255) NOT NULL,
-        tournament_url VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )";
-    
+
     if (!$conn->query($create_table)) {
         echo json_encode(['success' => false, 'message' => 'ไม่สามารถสร้างตารางในฐานข้อมูลได้']);
         exit;
@@ -49,19 +47,20 @@ $result = $conn->query($check_data);
 
 if ($result->num_rows > 0) {
     // อัปเดตข้อมูลที่มีอยู่
-    $sql = "UPDATE challonge_config SET api_key = ?, tournament_url = ? WHERE id = 1";
+    $sql = "UPDATE challonge_config SET api_key = ? WHERE id = 1";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $api_key, $tournament_url);
+    $stmt->bind_param("s", $api_key);
 } else {
     // เพิ่มข้อมูลใหม่
-    $sql = "INSERT INTO challonge_config (api_key, tournament_url) VALUES (?, ?)";
+    $sql = "INSERT INTO challonge_config (id, api_key) VALUES (1, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $api_key, $tournament_url);
+    $stmt->bind_param("s", $api_key);
 }
 
 // ดำเนินการบันทึกข้อมูล
 if ($stmt->execute()) {
-    echo json_encode(['success' => true, 'message' => 'บันทึกการตั้งค่าเรียบร้อยแล้ว']);
+    header("Location: challonge_config.php?success=1");
+    exit;
 } else {
     echo json_encode(['success' => false, 'message' => 'ไม่สามารถบันทึกข้อมูลได้: ' . $stmt->error]);
 }

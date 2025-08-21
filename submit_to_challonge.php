@@ -387,6 +387,30 @@ $processed = 0;
 $successful = 0;
 $errors = 0;
 
+// ✅ ตรวจสอบก่อนว่าทัวร์นาเมนต์เข้าถึงได้จริง
+$test_url = "https://api.challonge.com/v1/tournaments/{$tournament_url}.json?api_key={$api_key}";
+$ch = curl_init($test_url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // ปิด SSL verify สำหรับ localhost
+$response = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($http_code >= 200 && $http_code < 300) {
+    $t_data = json_decode($response, true);
+    echo '<div class="status success">✅ ตรวจสอบแล้ว: เจอทัวร์นาเมนต์ <strong>' 
+        . htmlspecialchars($t_data['tournament']['name']) . '</strong></div>';
+} else {
+    echo '<div class="status error">❌ ไม่สามารถเข้าถึงทัวร์นาเมนต์: ' 
+        . htmlspecialchars($tournament_url) . '</div>';
+    echo '<div class="response-container">';
+    echo '<strong>HTTP Code:</strong> ' . $http_code . '<br>';
+    echo '<strong>Response:</strong> ' . htmlspecialchars($response);
+    echo '</div>';
+    exit;
+}
+
+// ✅ เริ่มเพิ่มทีม
 foreach ($team_names as $index => $team) {
     $processed++;
     $progress_percent = ($processed / $total_teams) * 100;
@@ -396,63 +420,52 @@ foreach ($team_names as $index => $team) {
     echo '<h3 class="team-name">' . htmlspecialchars($team) . '</h3>';
     echo '</div>';
     
-    // แสดง loading state
     echo '<div class="loading">กำลังเพิ่มทีม...</div>';
-    
-    // Flush output เพื่อแสดงผลทันที
-    if (ob_get_level()) {
-        ob_flush();
-    }
+    if (ob_get_level()) ob_flush();
     flush();
     
+    // URL API เพิ่มทีม
     $url = "https://api.challonge.com/v1/tournaments/{$tournament_url}/participants.json?api_key={$api_key}";
-
-    $data = [
-        "participant" => [
-            "name" => $team
-        ]
-    ];
-
-    $options = [
-        "http" => [
-            "header"  => "Content-type: application/json",
-            "method"  => "POST",
-            "content" => json_encode($data),
-        ]
-    ];
-
-    $context = stream_context_create($options);
-    $response = file_get_contents($url, false, $context);
-
-    // ลบ loading state
-    echo '<script>
-        document.querySelectorAll(".loading").forEach(function(el) {
-            if (el.parentNode.querySelector(".team-name").textContent.includes("' . htmlspecialchars($team) . '")) {
-                el.remove();
-            }
-        });
-    </script>';
+    $data = ["participant" => ["name" => $team]];
     
-    if ($response === FALSE) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    
+    if (curl_errno($ch)) {
         $errors++;
-        echo '<div class="status error">เกิดข้อผิดพลาดในการเพิ่มทีม: ' . htmlspecialchars($team) . '</div>';
+        echo '<div class="status error">cURL Error: ' . curl_error($ch) . '</div>';
     } else {
-        $successful++;
-        echo '<div class="status success">เพิ่มทีม ' . htmlspecialchars($team) . ' สำเร็จ!</div>';
-        
-        // แสดง response data
-        echo '<div class="response-container">';
-        $response_data = json_decode($response, true);
-        if ($response_data) {
-            echo '<strong>ข้อมูลการตอบกลับ:</strong><br>';
-            echo htmlspecialchars(json_encode($response_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        if ($http_code >= 200 && $http_code < 300) {
+            $successful++;
+            echo '<div class="status success">เพิ่มทีม ' . htmlspecialchars($team) . ' สำเร็จ!</div>';
+            echo '<div class="response-container">';
+            $response_data = json_decode($response, true);
+            if ($response_data) {
+                echo '<strong>ข้อมูลการตอบกลับ:</strong><br>';
+                echo htmlspecialchars(json_encode($response_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            }
+            echo '</div>';
+        } else {
+            $errors++;
+            echo '<div class="status error">เกิดข้อผิดพลาดในการเพิ่มทีม: ' . htmlspecialchars($team) . '</div>';
+            echo '<div class="response-container">';
+            echo '<strong>HTTP Code:</strong> ' . $http_code . '<br>';
+            echo '<strong>Response:</strong> ' . htmlspecialchars($response);
+            echo '</div>';
         }
-        echo '</div>';
     }
+    curl_close($ch);
     
-    echo '</div>'; // ปิด team-item
+    echo '</div>'; // team-item
     
-    // อัพเดทสถิติและ progress bar
+    // อัพเดท progress bar
     echo '<script>
         document.getElementById("processed-count").textContent = "' . $processed . '";
         document.getElementById("success-count").textContent = "' . $successful . '";
@@ -460,16 +473,10 @@ foreach ($team_names as $index => $team) {
         document.getElementById("progress-fill").style.width = "' . $progress_percent . '%";
     </script>';
     
-    // Flush output
-    if (ob_get_level()) {
-        ob_flush();
-    }
+    if (ob_get_level()) ob_flush();
     flush();
     
-    // หน่วงเวลา 1 วินาที (ยกเว้นรายการสุดท้าย)
-    if ($index < count($team_names) - 1) {
-        sleep(1);
-    }
+    if ($index < count($team_names) - 1) sleep(1);
 }
 
 echo '</div>'; // ปิด content

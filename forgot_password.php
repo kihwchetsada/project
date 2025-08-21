@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "กรุณากรอก Username และ Email ให้ครบ";
     } else {
         // ตรวจสอบว่ามี username+email ตรงกันใน DB ไหม
-        $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? AND email = ?");
+        $stmt = $userDb->prepare("SELECT id FROM users WHERE username = ? AND email = ?");
         $stmt->execute([$username, $email]);
         $user = $stmt->fetch();
 
@@ -35,12 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mail->isSMTP();
                 $mail->Host = 'smtp.gmail.com';  // SMTP server ของคุณ
                 $mail->SMTPAuth = true;
-                $mail->Username = 'thepopyth15@gmail.com'; // เมลผู้ส่ง
-                $mail->Password = 'rhja tnpg agih fmcg'; // รหัสผ่านแอป (App Password) ของ Gmail
+                $mail->Username = 'rmutisurinesports@gmail.com'; // เมลผู้ส่ง
+                $mail->Password = 'qszc slbu iefw viue'; // รหัสผ่านแอป (keyApp Password) ของ Gmail
                 $mail->SMTPSecure = 'tls';
                 $mail->Port = 587;
 
-                $mail->setFrom('thepopyth15@gmail.com', 'แก้ไขรหัสผ่าน');
+                $mail->setFrom('rmutisurinesports@gmail.com', 'แก้ไขรหัสผ่าน');
                 $mail->addAddress($email);
 
                 $mail->isHTML(true);
@@ -49,96 +49,174 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $mail->Body = "
                     <!DOCTYPE html>
-                    <html lang='th'>
-                    <head>
-                        <meta charset='UTF-8'>
-                        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-                        <title>รหัส OTP</title>
-                    </head>
-                    <body style='margin: 0; padding: 0; font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;'>
-                        <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden;'>
-                            
-                            <!-- Header -->
-                            <div style='background: linear-gradient(135deg,rgb(119, 107, 255) 0%,rgb(43, 36, 238) 50%,rgb(189, 159, 255) 100%); padding: 35px; text-align: center; position: relative; overflow: hidden;'>
-                                <div style='position: absolute; top: -50px; left: -50px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; animation: float 3s ease-in-out infinite;'></div>
-                                <div style='position: absolute; bottom: -30px; right: -30px; width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 50%; animation: float 4s ease-in-out infinite reverse;'></div>
-                                <h1 style='color: #ffffff; margin: 0; font-size: 32px; font-weight: 600; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.3);'>
-                                    RMUTI TOURNAMENT
-                                </h1>
-                            </div>
-                            
-                            <!-- Content -->
-                            <div style='padding: 40px 30px; text-align: center;'>
-                                <div style='margin-bottom: 30px;'>
-                                    <h2 style='color: #333333; margin: 0 0 20px 0; font-size: 24px; font-weight: 400;'>
-                                        รหัส OTP ของคุณ
-                                    </h2>
-                                    <p style='color: #666666; margin: 0; font-size: 16px; line-height: 1.6;'>
-                                        กรุณาใช้รหัสด้านล่างเพื่อรีเซ็ตรหัสผ่านของคุณ
-                                    </p>
-                                    <p style='color: #666666; margin: 0; font-size: 16px; line-height: 1.6;'>
-                                        ใช้รหัสนี้ภายใน 10 นาทีหลังจากได้รับอีเมลนี้
-                                    </p>
+                        <html lang='th'>
+                        <head>
+                            <meta charset='UTF-8'>
+                            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                            <title>รหัส OTP - RMUTI TOURNAMENT</title>
+                        </head>
+                        <body style='margin: 0; padding: 0; font-family: &quot;Segoe UI&quot;, Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #0a0e1b 0%, #1a2456 50%, #2d4087 100%); min-height: 100vh;'>
+                            <div style='max-width: 600px; margin: 20px auto; background: linear-gradient(145deg, #1e2749 0%, #0f1529 100%); box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 60px rgba(41, 128, 185, 0.2); border-radius: 20px; overflow: hidden; border: 2px solid #2980b9; position: relative;'>
+                                
+                                <!-- Decorative particles -->
+                                <div style='position: absolute; top: 10px; left: 20px; width: 4px; height: 4px; background: #3498db; border-radius: 50%; animation: sparkle 2s infinite;'></div>
+                                <div style='position: absolute; top: 40px; right: 30px; width: 3px; height: 3px; background: #e74c3c; border-radius: 50%; animation: sparkle 2.5s infinite;'></div>
+                                <div style='position: absolute; bottom: 50px; left: 40px; width: 5px; height: 5px; background: #f39c12; border-radius: 50%; animation: sparkle 3s infinite;'></div>
+                                
+                                <!-- Header with ROV styling -->
+                                <div style='background: linear-gradient(135deg, #c0392b 0%, #e74c3c 25%, #3498db 50%, #2980b9 75%, #8e44ad 100%); padding: 40px 30px; text-align: center; position: relative; overflow: hidden;'>
+                                    <!-- Animated background elements -->
+                                    <div style='position: absolute; top: -100px; left: -100px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(52,152,219,0.15) 0%, transparent 70%); border-radius: 50%; animation: rotate 10s linear infinite;'></div>
+                                    <div style='position: absolute; bottom: -80px; right: -80px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(231,76,60,0.15) 0%, transparent 70%); border-radius: 50%; animation: rotate 15s linear infinite reverse;'></div>
+                                    
+                                    <!-- ROV-style title -->
+                                    <div style='position: relative; z-index: 10;'>
+                                        <h1 style='color: #ffffff; margin: 0 0 10px 0; font-size: 28px; font-weight: 800; letter-spacing: 3px; text-shadow: 0 0 20px rgba(255,255,255,0.5), 0 4px 10px rgba(0,0,0,0.8); text-transform: uppercase;'>
+                                            ⚔️ RMUTI SURIN ⚔️
+                                        </h1>
+                                        <div style='background: linear-gradient(90deg, #e74c3c, #3498db, #f39c12); height: 3px; width: 200px; margin: 15px auto; border-radius: 2px; animation: glow 2s ease-in-out infinite;'></div>
+                                        <h2 style='color: #ecf0f1; margin: 10px 0 0 0; font-size: 18px; font-weight: 400; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.7);'>
+                                            TOURNAMENT SYSTEM
+                                        </h2>
+                                    </div>
                                 </div>
                                 
-                                <!-- OTP Code Box -->
-                                <div style='background: linear-gradient(135deg,rgb(99, 119, 231) 0%,rgb(43, 0, 255) 100%); padding: 25px; border-radius: 12px; margin: 30px 0; box-shadow: 0 8px 25px rgba(240, 147, 251, 0.3);'>
-                                    <div style='background-color: #ffffff; padding: 20px; border-radius: 8px; display: inline-block; min-width: 200px;'>
-                                        <h1 style='color: #333333; margin: 0; font-size: 36px; font-weight: bold; letter-spacing: 8px; font-family: \"Courier New\", monospace;'>
-                                            $otp
-                                        </h1>
+                                <!-- Content with game-inspired design -->
+                                <div style='padding: 40px 30px; text-align: center; background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%); position: relative;'>
+                                    <!-- Decorative borders -->
+                                    <div style='position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #e74c3c, #3498db, #f39c12); animation: slide 3s ease-in-out infinite;'></div>
+                                    
+                                    <div style='margin-bottom: 30px;'>
+                                        <h2 style='color: #ecf0f1; margin: 0 0 20px 0; font-size: 26px; font-weight: 600; text-shadow: 0 2px 10px rgba(0,0,0,0.7);'>
+                                            🔐 รหัสยืนยันตัวตน
+                                        </h2>
+                                        <p style='color: #bdc3c7; margin: 0 0 10px 0; font-size: 16px; line-height: 1.6;'>
+                                            ใช้รหัสด้านล่างเพื่อเข้าสู่ระบบแข่งขัน RMUTI SURIN TOURNAMENT
+                                        </p>
+                                        <p style='color: #95a5a6; margin: 0; font-size: 14px; line-height: 1.6;'>
+                                            ⏰ รหัสจะหมดอายุภายใน <span style='color: #e74c3c; font-weight: bold;'>10 นาที</span>
+                                        </p>
+                                    </div>
+                                    <!-- ROV-style OTP Box -->
+                                    <div style='background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%); padding: 30px; border-radius: 15px; margin: 30px 0; box-shadow: 0 15px 35px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.1); border: 2px solid #3498db; position: relative; overflow: hidden;'>
+                                        <!-- Animated border -->
+                                        <div style='position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; background: linear-gradient(45deg, #e74c3c, #3498db, #f39c12, #e74c3c); border-radius: 15px; z-index: -1; animation: borderGlow 3s linear infinite;'></div>
+                                        
+                                        <!-- Inner glow effect -->
+                                        <div style='position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; background: radial-gradient(circle, rgba(52,152,219,0.1) 0%, transparent 70%); border-radius: 15px; animation: pulse 2s ease-in-out infinite;'></div>
+                                        
+                                        <!-- OTP Display -->
+                                        <div style='background: linear-gradient(145deg, #34495e 0%, #2c3e50 100%); padding: 25px; border-radius: 12px; display: inline-block; min-width: 250px; border: 1px solid #3498db; position: relative; overflow: hidden;'>
+                                            <!-- Shimmer effect -->
+                                            <div style='position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%); animation: shimmer 2s ease-in-out infinite;'></div>
+                                            <h1 style='color: #ecf0f1; margin: 0; font-size: 42px; font-weight: bold; letter-spacing: 12px; font-family: &quot;Courier New&quot;, monospace; text-shadow: 0 0 15px rgba(52,152,219,0.8), 0 0 30px rgba(231,76,60,0.4); position: relative; z-index: 10;'>
+                                                $otp
+                                            </h1>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        
-                        <!-- Mobile responsive styles -->
-                        <style>
-                            @keyframes float {
-                                0%, 100% { transform: translateY(0px); }
-                                50% { transform: translateY(-10px); }
-                            }
-                            
-                            @keyframes pulse {
-                                0%, 100% { transform: scale(1); opacity: 1; }
-                                50% { transform: scale(1.1); opacity: 0.8; }
-                            }
-                            
-                            @keyframes glow {
-                                0%, 100% { box-shadow: 0 0 20px rgba(255, 107, 107, 0.5); }
-                                50% { box-shadow: 0 0 30px rgba(255, 107, 107, 0.8); }
-                            }
-                            
-                            @media only screen and (max-width: 600px) {
-                                .container {
-                                    margin: 10px !important;
-                                    border-radius: 5px !important;
+
+                            <!-- Enhanced animations and effects -->
+                            <style>
+                                @keyframes sparkle {
+                                    0%, 100% { opacity: 0.3; transform: scale(1); }
+                                    50% { opacity: 1; transform: scale(1.5); }
                                 }
-                                .header {
-                                    padding: 20px !important;
+                                
+                                @keyframes rotate {
+                                    0% { transform: rotate(0deg); }
+                                    100% { transform: rotate(360deg); }
                                 }
-                                .content {
-                                    padding: 25px 20px !important;
+                                
+                                @keyframes glow {
+                                    0%, 100% { box-shadow: 0 0 10px rgba(52,152,219,0.5); }
+                                    50% { box-shadow: 0 0 25px rgba(231,76,60,0.8), 0 0 35px rgba(52,152,219,0.6); }
                                 }
-                                .otp-code {
-                                    font-size: 32px !important;
-                                    letter-spacing: 6px !important;
+                                
+                                @keyframes pulse {
+                                    0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+                                    50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
                                 }
-                                .step-grid {
-                                    grid-template-columns: 1fr !important;
+                                
+                                @keyframes slide {
+                                    0% { transform: translateX(-100%); }
+                                    100% { transform: translateX(100%); }
                                 }
-                            }
-                            
-                            /* Extra sparkle effects */
-                            .sparkle::before {
-                                content: '✨';
-                                position: absolute;
-                                top: -10px;
-                                right: -10px;
-                                animation: pulse 3s infinite;
-                            }
-                        </style>
-                    </body>
-                    </html>
+                                
+                                @keyframes borderGlow {
+                                    0% { background-position: 0% 50%; }
+                                    50% { background-position: 100% 50%; }
+                                    100% { background-position: 0% 50%; }
+                                }
+                                
+                                @keyframes shimmer {
+                                    0% { left: -100%; }
+                                    100% { left: 100%; }
+                                }
+                                
+                                @media only screen and (max-width: 600px) {
+                                    body > div {
+                                        margin: 10px !important;
+                                        border-radius: 15px !important;
+                                    }
+                                    
+                                    body > div > div:first-child {
+                                        padding: 25px 20px !important;
+                                    }
+                                    
+                                    body > div > div:first-child h1 {
+                                        font-size: 22px !important;
+                                        letter-spacing: 2px !important;
+                                    }
+                                    
+                                    body > div > div:nth-child(2) {
+                                        padding: 25px 20px !important;
+                                    }
+                                    
+                                    body > div > div:nth-child(2) h1 {
+                                        font-size: 36px !important;
+                                        letter-spacing: 8px !important;
+                                    }
+                                    
+                                    body > div > div:nth-child(2) > div:nth-child(3) > div > div {
+                                        min-width: 200px !important;
+                                        padding: 20px !important;
+                                    }
+                                    
+                                    body > div > div:nth-child(2) > div:last-child {
+                                        flex-direction: column !important;
+                                        gap: 10px !important;
+                                    }
+                                }
+                                
+                                /* Additional sparkle effects */
+                                body::before {
+                                    content: '';
+                                    position: fixed;
+                                    top: 0;
+                                    left: 0;
+                                    width: 100%;
+                                    height: 100%;
+                                    background-image: 
+                                        radial-gradient(2px 2px at 20px 30px, #3498db, transparent),
+                                        radial-gradient(2px 2px at 40px 70px, #e74c3c, transparent),
+                                        radial-gradient(1px 1px at 90px 40px, #f39c12, transparent),
+                                        radial-gradient(1px 1px at 130px 80px, #9b59b6, transparent);
+                                    background-repeat: repeat;
+                                    background-size: 200px 200px;
+                                    animation: sparkleBackground 20s linear infinite;
+                                    pointer-events: none;
+                                    z-index: -1;
+                                }
+                                
+                                @keyframes sparkleBackground {
+                                    0% { transform: translateY(0px); }
+                                    100% { transform: translateY(-200px); }
+                                }
+                            </style>
+                        </body>
+                        </html>
                     ";
 
                 $mail->send();

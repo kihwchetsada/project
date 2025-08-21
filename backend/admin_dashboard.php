@@ -66,7 +66,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
                     <a href="https://challonge.com/th/dashboard"><i class="fas fa-calendar-days"></i><span>ตารางการแข่งขัน</span></a>
                 </li>
                 <li>
-                    <a href="api.php"><i class="fas fa-ranking-star"></i><span>จัดการ API</span></a>
+                    <a href="../view_tournaments.php"><i class="fas fa-ranking-star"></i><span>ดูทัวร์นาเมนต์</span></a>
                 </li>
                 <li>
                     <a href="../add_tournament.php"><i class="fas fa-chart-bar"></i><span>จัดการส่งข้อมูลรายชื่อทีม</span></a>
