@@ -110,7 +110,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
             <div class="schedule-filters">
                 <button class="filter-button" data-filter="all" onclick="location.href='../organizer_approve_teams.php'">รายชื่อทีมที่รออนุมัติ</button>
                 <button class="filter-button" data-filter="completed" onclick="location.href='../approved_teams.php'">รายชื่อทีมที่อนุมัติแล้ว</button>
-                <button class="filter-button" data-filter="upcoming" onclick="location.href='new_announcement_form.php'">จัดการข่าวสาร</button>
+                <button class="filter-button" data-filter="upcoming" onclick="location.href='../add_announcement.php'">จัดการข่าวสาร</button>
                 <button class="filter-button" data-filter="pending" onclick="location.href='../add_announcement.php'">เพิ่มข่าวสาร</button>
             </div>
 

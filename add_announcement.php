@@ -99,8 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="relative">
                     <input type="file" name="image" accept="image/*" id="imageInput" class="hidden" onchange="showFileName(this)">
                     <label for="imageInput" class="block w-full border-2 border-dashed border-gray-300 rounded-xl p-8 text-center 
-                                              cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 
-                                              group bg-gray-50">
+                                            cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 
+                                            group bg-gray-50">
                         <div class="group-hover:animate-pulse-slow">
                             <i class="fas fa-cloud-upload-alt text-5xl text-gray-400 group-hover:text-blue-500 transition-colors duration-300 mb-4"></i>
                             <p class="text-gray-600 text-lg font-medium mb-2">คลิกเพื่ออัปโหลดรูปภาพ</p>
@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
             <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">บันทึกประกาศ</button>
-            <a href="annunciate.php" class="ml-4 text-gray-600 hover:underline">← กลับ</a>
+            <a href="backend/organizer_dashboard.php" class="ml-4 text-gray-600 hover:underline">← กลับ</a>
         </form>
     </div>
 

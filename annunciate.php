@@ -414,9 +414,7 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
         </div>
     </footer>
     <script>
-        // Function to show loading skeleton while images and content load
         document.addEventListener('DOMContentLoaded', function() {
-            // Fade in the content
             document.body.classList.add('opacity-100');
             document.body.classList.remove('opacity-0');
         });
