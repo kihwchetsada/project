@@ -21,7 +21,7 @@ $category_filter = isset($_GET['category']) ? $_GET['category'] : '';
 $priority_filter = isset($_GET['priority']) ? $_GET['priority'] : '';
 $search_query = isset($_GET['search']) ? $_GET['search'] : '';
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$items_per_page = 9;
+$items_per_page = 3;
 $offset = ($page - 1) * $items_per_page;
 
 // Prepare SQL query with filters using prepared statements

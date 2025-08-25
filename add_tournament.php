@@ -64,6 +64,7 @@ $conn->close();
 <head>
 <meta charset="UTF-8">
 <title>เพิ่มทัวร์นาเมนต์</title>
+<link rel="icon" type="image/png" href="img/logo.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="css/add_tournament.css">

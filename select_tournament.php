@@ -30,6 +30,7 @@ if (!$tournaments) {
     <title>Challonge Tournament Deployment</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/select_tournament.css">
+    <link rel="icon" type="image/png" href="img/logo.jpg">
 </head>
 <body>
     <div class="container">

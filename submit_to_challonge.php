@@ -47,6 +47,7 @@ echo '<head>';
 echo '<meta charset="UTF-8">';
 echo '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
 echo '<title>เพิ่มทีมเข้าการแข่งขัน</title>';
+echo '<link rel="icon" type="image/x-icon" href="img/logo.jpg">';
 echo '<style>
     * {
         margin: 0;
