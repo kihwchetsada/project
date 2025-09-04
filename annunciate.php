@@ -217,7 +217,7 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
                 <form action="" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label for="category" class="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
-                        <select name="category" id="category" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select name="category" id="category" class="w-full px-3 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">ทั้งหมด</option>
                             <?php foreach ($categories as $cat): ?>
                                 <option value="<?php echo htmlspecialchars($cat); ?>" <?php echo ($category_filter == $cat) ? 'selected' : ''; ?>>
@@ -228,7 +228,7 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
                     </div>
                     <div>
                         <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">ความสำคัญ</label>
-                        <select name="priority" id="priority" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select name="priority" id="priority" class="w-full px-3 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">ทั้งหมด</option>
                             <?php foreach ($priorities as $pri): ?>
                                 <option value="<?php echo htmlspecialchars($pri); ?>" <?php echo ($priority_filter == $pri) ? 'selected' : ''; ?>>
