@@ -66,7 +66,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
                     <a href="https://challonge.com/th/dashboard"><i class="fas fa-calendar-days"></i><span>จัดการตารางการแข่งขัน</span></a>
                 </li>
                 <li>
-                    <a href="../view_tournaments.php"><i class="fas fa-ranking-star"></i><span>ดูทัวร์นาเมนต์</span></a>
+                    <a href="../view_teams.php"><i class="fas fa-ranking-star"></i><span>ดูทัวร์นาเมนต์</span></a>
                 </li>
                 <li>
                     <a href="../add_tournament.php"><i class="fas fa-chart-bar"></i><span>จัดการส่งข้อมูลรายชื่อทีม</span></a>
@@ -107,7 +107,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
             <div class="schedule-filters">
                 <button class="filter-button" onclick="window.location.href='admin_edit_schedule.php'">เพิ่มตารางการแข่งขันไปแสดง</button>
                 <button class="filter-button" onclick="location.href='../approved_teams.php'">รายชื่อทีมที่อนุมัติ</button>
-                <button class="filter-button" onclick="window.location.href='../view_teams.php'">เพิ่มทีมเข้า Tournament </button>
+                <button class="filter-button" onclick="window.location.href='../add_tournament.php'">เพิ่มทีมเข้า Tournament </button>
                 <button class="filter-button" onclick="window.location.href='challonge_config.php'">จัดการ API</button>
                 <button class="filter-button" onclick="window.location.href='competition.php'">กำหนดวันแข่งขัน</button>
             </div>

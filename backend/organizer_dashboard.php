@@ -69,7 +69,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
                     <a href="https://challonge.com/th/dashboard"><i class="fas fa-calendar-days"></i><span>จัดตารางการแข่งขัน</span></a>
                 </li>
                 <li>
-                    <a href="results.php"><i class="fas fa-ranking-star"></i><span>ผลการแข่งขัน</span></a>
+                    <a href="../select_tournament_print.php"><i class="fas fa-ranking-star"></i><span>พิมพ์รายชื่อทีม</span></a>
                 </li>
                 <li>
                     <a href="stats.php"><i class="fas fa-chart-bar"></i><span>สถิติ</span></a>

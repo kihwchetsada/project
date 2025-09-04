@@ -50,43 +50,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_team'])) {
 
                     for ($i = 1; $i <= 8; $i++) {
                         if (!empty($_POST["member_name_$i"])) {
-                            $member_name = trim($_POST["member_name_$i"]);
-                            $member_game_name = trim($_POST["member_game_name_$i"] ?? '');
+                            $member_name = $_POST["member_name_$i"];
+                            $member_game_name = $_POST["member_game_name_$i"] ?? '';
                             $member_age = $_POST["member_age_$i"] ?? null;
-                            $member_phone = trim($_POST["member_phone_$i"] ?? '');
-                            $member_birthdate = $_POST["member_birthdate_$i"] ?? null; 
-                            $member_position = trim($_POST["member_position_$i"] ?? '');
-
-                            if (!empty($member_birthdate)) {
-                                $d = DateTime::createFromFormat('Y-m-d', $member_birthdate);
-                                $isValidDate = $d && $d->format('Y-m-d') === $member_birthdate;
-
-                                if (!$isValidDate) {
-                                    throw new Exception("วันเดือนปีเกิดของสมาชิกคนที่ $i ไม่ถูกต้อง");
-                                }
-
-                                $today = new DateTime();
-                                if ($d > $today) {
-                                    throw new Exception("วันเดือนปีเกิดของสมาชิกคนที่ $i ไม่สามารถเป็นอนาคตได้");
-                                }
-                            }
+                            $member_phone = $_POST["member_phone_$i"] ?? '';
+                            $member_birthdate = $_POST["member_birthdate_$i"] ?? null;
+                            $member_position = $_POST["member_position_$i"] ?? '';
 
                             $stmt = $conn->prepare("INSERT INTO team_members 
-                                (team_id, member_name, game_name, age, phone, position, birthdate) 
-                                VALUES (:team_id, :member_name, :game_name, :age, :phone, :position, :birthdate)");
+                            (team_id, member_name, game_name, age, phone, position, birthdate) 
+                            VALUES (:team_id, :member_name, :game_name, :age, :phone, :position, :birthdate)");
 
-                            $stmt->execute([
-                                ':team_id' => $team_id,
-                                ':member_name' => $member_name,
-                                ':game_name' => $member_game_name,
-                                ':age' => $member_age,
-                                ':phone' => $member_phone,
-                                ':position' => $member_position,
-                                ':birthdate' => $member_birthdate 
-                            ]);
+                        $stmt->execute([
+                            ':team_id' => $team_id,
+                            ':member_name' => $member_name,
+                            ':game_name' => $member_game_name,
+                            ':age' => $member_age,
+                            ':phone' => $member_phone,
+                            ':position' => $member_position,
+                            ':birthdate' => !empty($member_birthdate) ? $member_birthdate : null
+                        ]);
+
                         }
                     }
-
                     $conn->commit();
                     $team_success = true;
                 } catch (PDOException $e) {
@@ -174,11 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
             <p class="text-primary-50">กรอกข้อมูลทีมของคุณเพื่อเข้าร่วมการแข่งขัน</p>
         </div>
     </header>
-
-    <a href="backend/participant_dashboard.php" class="back-btn inline-block bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-10 rounded-lg transition-colors duration-200">
-        <i class="fas fa-arrow-left"></i>
-    </a>
-
+    
     <div class="container mx-auto px-4 py-8 max-w-5xl">
         <?php if ($team_success): ?>
             <div class="bg-white rounded-lg shadow-lg p-8 text-center">

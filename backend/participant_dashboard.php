@@ -20,7 +20,7 @@ if (!isset($_SESSION['userData']) || $_SESSION['userData']['role'] !== 'particip
     exit;
 }
 
-$userData = $_SESSION['userData']; 
+$userData = $_SESSION['userData'];
 
 require '../db_connect.php';
 
@@ -37,29 +37,311 @@ while ($row = $stmt->fetch()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ผู้เข้าร่วมการแข่งขัน | ระบบจัดการการแข่งขัน ROV</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <title>ผู้เข้าร่วมการแข่งขัน | ระบบจัดการการแข่งขัน ROV</title>
     <link rel="icon" type="image/png" href="../img/logo.jpg">
-    <link rel="stylesheet" href="../css/dashboard.css">
-</head>
+    
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #f4f7f6;
+            --sidebar-bg: #2c3e50;
+            --sidebar-text: #ecf0f1;
+            --sidebar-active-bg: #34495e;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3e5771;
+        }
+
+        .sidebar-header .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .sidebar-header .logo i {
+            margin-right: 10px;
+        }
+
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--sidebar-text);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .sidebar-menu ul {
+            list-style: none;
+        }
+
+        .sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .sidebar-menu li a i {
+            margin-right: 15px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-menu li a:hover,
+        .sidebar-menu li a.active {
+            background-color: var(--sidebar-active-bg);
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        .top-navbar {
+            background: var(--card-bg);
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-info span {
+            margin-right: 15px;
+            font-weight: 500;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+        
+        .dashboard-container {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .welcome-header {
+            margin-bottom: 20px;
+        }
+
+        .schedule-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-button {
+            background: #e9ecef;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Kanit', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .filter-button.active, .filter-button:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .tournament-tabs {
+            display: flex;
+            gap: 10px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .tournament-tab {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-family: 'Kanit', sans-serif;
+            font-size: 1rem;
+            position: relative;
+            color: #7f8c8d;
+        }
+
+        .tournament-tab.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .tournament-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-color);
+        }
+
+        .loading-spinner, .no-iframe-message, .placeholder-content {
+            text-align: center;
+            padding: 50px 20px;
+            background: #fdfdfd;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+        }
+        
+        .loading-spinner .fa-spinner {
+            font-size: 2.5em;
+            color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tournament-iframe {
+            width: 100%;
+            height: 70vh; /* Adjust height as needed */
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        
+        .tournament-page {
+            display: none;
+        }
+        .tournament-page.active {
+            display: block;
+        }
+        
+        .dashboard-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        /* 📱 MEDIA QUERIES FOR MOBILE */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            }
+
+            .sidebar.sidebar-active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 10px;
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+            
+            .top-navbar {
+                justify-content: space-between;
+            }
+
+            /* This moves the hamburger menu to the top-nav bar on mobile */
+            .top-navbar .mobile-toggle {
+                order: -1; /* Place it at the start */
+                color: var(--secondary-color);
+                font-size: 1.2rem;
+            }
+
+            .welcome-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .schedule-filters, .tournament-tabs {
+                justify-content: center;
+            }
+        }
+    </style>
+    </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo">
                 <i class="fas fa-trophy"></i>
                 <span>ROV Tournament</span>
             </div>
-            <button class="mobile-toggle" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
         </div>
         
         <div class="sidebar-menu">
             <ul>
                 <li>
-                    <a href="participant_dashboard.php"><i class="fas fa-home"></i><span>หน้าหลัก</span></a>
+                    <a href="participant_dashboard.php" class="active"><i class="fas fa-home"></i><span>หน้าหลัก</span></a>
                 </li>
                 <li>
                     <a href="results.php"><i class="fas fa-ranking-star"></i><span>ผลการแข่งขัน</span></a>
@@ -77,13 +359,14 @@ while ($row = $stmt->fetch()) {
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
-        <!-- Top Navigation -->
         <div class="top-navbar">
+            <button class="mobile-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
             <div class="user-menu">
                 <div class="user-info">
-                    <?php include 'header.php'; ?>
+                    <?php // include 'header.php'; // Consider including header content directly or ensure it's mobile-friendly ?>
                     <span><?php echo htmlspecialchars($userData['username']); ?></span>
                     <div class="user-avatar">
                         <i class="fas fa-user"></i>
@@ -92,43 +375,38 @@ while ($row = $stmt->fetch()) {
             </div>
         </div>
 
-        <!-- Dashboard Content -->
         <div class="dashboard-container">
             <div class="welcome-header">
                 <h2>ROV Tournament</h2>
                 <p>จัดการกำหนดการแข่งขันทั้งหมดของทัวร์นาเมนต์</p>
             </div>
 
-            <!-- ส่วนการกรอง -->
             <div class="schedule-filters">
                 <button class="filter-button active" data-filter="tournaments" onclick="showContent('tournaments')">
                     <i class="fas fa-calendar-alt"></i> ตารางการแข่งขัน
                 </button>
                 <button class="filter-button" data-filter="approved" onclick="showContent('approved')">
-                    <i class="fas fa-check-circle"></i> สมัครทีมเข้าร่วมการแข่งขัน
+                    <i class="fas fa-check-circle"></i> สมัครทีมเข้าร่วม
                 </button>
                 <button class="filter-button" data-filter="upcoming" onclick="showContent('upcoming')">
                     <i class="fas fa-clock"></i> กำลังจะมาถึง
                 </button>
                 <button class="filter-button" data-filter="pending" onclick="showContent('pending')">
-                    <i class="fas fa-hourglass-half"></i> รายชื่อทีมที่รออนุมัติ
+                    <i class="fas fa-hourglass-half"></i> ทีมที่รออนุมัติ
                 </button>
             </div>
 
-            <!-- เนื้อหาหลัก -->
             <div id="content-tournaments" class="content-section active">
                 <div class="tournament-container">
-                    <!-- Tabs สำหรับสลับระหว่างรุ่นอายุ -->
                     <div class="tournament-tabs">
-                        <button class="tournament-tab active" onclick="switchTournament('above_18')">
+                        <button class="tournament-tab active" onclick="switchTournament(event, 'above_18')">
                             <i class="fas fa-users"></i> รุ่นอายุ 18 ปีขึ้นไป
                         </button>
-                        <button class="tournament-tab" onclick="switchTournament('under_18')">
+                        <button class="tournament-tab" onclick="switchTournament(event, 'under_18')">
                             <i class="fas fa-user-friends"></i> รุ่นอายุต่ำกว่า 18 ปี
                         </button>
                     </div>
 
-                    <!-- ตารางรุ่น 18 ปีขึ้นไป -->
                     <div id="tournament-above_18" class="tournament-page active">
                         <h3><i class="fas fa-trophy"></i> ตารางการแข่งขันรุ่นอายุ 18 ปีขึ้นไป</h3>
                         <?php if (!empty($iframes['above_18'])): ?>
@@ -150,7 +428,6 @@ while ($row = $stmt->fetch()) {
                         <?php endif; ?>
                     </div>
 
-                    <!-- ตารางรุ่นต่ำกว่า 18 ปี -->
                     <div id="tournament-under_18" class="tournament-page">
                         <h3><i class="fas fa-trophy"></i> ตารางการแข่งขันรุ่นอายุต่ำกว่า 18 ปี</h3>
                         <?php if (!empty($iframes['under_18'])): ?>
@@ -174,11 +451,11 @@ while ($row = $stmt->fetch()) {
                 </div>
             </div>
 
-            <!-- เนื้อหาอื่นๆ (placeholder) -->
             <div id="content-approved" class="content-section">
                 <div class="placeholder-content">
                     <h3><i class="fas fa-check-circle"></i> สมัครทีมเข้าร่วมการแข่งขัน</h3>
-                    <a href="../register.php">คลิกที่นี่เพื่อสมัคร</a>
+                    <p>คุณสามารถสมัครเข้าร่วมการแข่งขันได้ที่นี่</p>
+                    <a href="../register.php" style="display:inline-block; margin-top:10px; padding:10px 20px; background:var(--primary-color); color:white; text-decoration:none; border-radius:5px;">คลิกที่นี่เพื่อสมัคร</a>
                 </div>
             </div>
 
@@ -195,84 +472,56 @@ while ($row = $stmt->fetch()) {
                     <p>ส่วนนี้จะแสดงรายชื่อทีมที่รออนุมัติ</p>
                 </div>
             </div>
-
-            <!-- Footer -->
-            <div class="dashboard-footer">
-                <p>&copy; <?php echo date('Y'); ?> ระบบจัดการการแข่งขัน ROV. สงวนลิขสิทธิ์</p>
-            </div>
+            
+        </div>
+        <div class="dashboard-footer">
+            <p>&copy; <?php echo date('Y'); ?> ระบบจัดการการแข่งขัน ROV. สงวนลิขสิทธิ์</p>
         </div>
     </div>
 
     <script>
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const mainContent = document.querySelector('.main-content');
+
         // Toggle sidebar on mobile
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.toggle('sidebar-active');
+        sidebarToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            sidebar.classList.toggle('sidebar-active');
         });
 
         // ปิด sidebar เมื่อคลิกที่เนื้อหาหลักในโหมดมือถือ
-        document.querySelector('.main-content').addEventListener('click', function() {
-            if (window.innerWidth <= 768) {
-                document.querySelector('.sidebar').classList.remove('sidebar-active');
+        mainContent.addEventListener('click', function() {
+            if (sidebar.classList.contains('sidebar-active')) {
+                sidebar.classList.remove('sidebar-active');
             }
         });
 
         // ฟังก์ชันสำหรับสลับเนื้อหาหลัก
         function showContent(contentType) {
-            // ซ่อนเนื้อหาทั้งหมด
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
-            
-            // แสดงเนื้อหาที่เลือก
             document.getElementById('content-' + contentType).classList.add('active');
             
-            // อัพเดทปุ่ม active
             document.querySelectorAll('.filter-button').forEach(btn => {
                 btn.classList.remove('active');
             });
-            document.querySelector('[data-filter="' + contentType + '"]').classList.add('active');
+            document.querySelector(`[data-filter="${contentType}"]`).classList.add('active');
         }
 
         // ฟังก์ชันสำหรับสลับระหว่างตารางการแข่งขัน
-        function switchTournament(category) {
-            // ซ่อนตารางทั้งหมด
+        function switchTournament(event, category) {
             document.querySelectorAll('.tournament-page').forEach(page => {
                 page.classList.remove('active');
             });
-            
-            // แสดงตารางที่เลือก
             document.getElementById('tournament-' + category).classList.add('active');
             
-            // อัพเดท tab active
             document.querySelectorAll('.tournament-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
-            event.target.classList.add('active');
+            event.currentTarget.classList.add('active');
         }
-
-        // เพิ่ม CSS สำหรับ content sections
-        const style = document.createElement('style');
-        style.textContent = `
-            .content-section {
-                display: none;
-            }
-            .content-section.active {
-                display: block;
-            }
-            .placeholder-content {
-                background: white;
-                padding: 30px;
-                border-radius: 10px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                text-align: center;
-                color: #7f8c8d;
-            }
-            .placeholder-content h3 {
-                color: #2c3e50;
-                margin-bottom: 15px;
-            }
-        `;
-        document.head.appendChild(style);
     </script>
 </body>
 </html>
