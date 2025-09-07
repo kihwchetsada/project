@@ -46,9 +46,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
                 <i class="fas fa-trophy"></i>
                 <span>ROV Tournament</span>
             </div>
-            <button class="mobile-toggle" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
+            
         </div>
         
         <div class="sidebar-menu">
@@ -85,6 +83,9 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
     <div class="main-content">
         <!-- Top Navigation -->
         <div class="top-navbar">
+            <button class="mobile-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
             <div class="user-menu">
                 <div class="user-info">
                     <?php include 'header.php'; ?>
@@ -121,40 +122,41 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
     </div>
 
     <script>
-        // Toggle sidebar on mobile
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.toggle('sidebar-active');
-        });
+    // Toggle sidebar on mobile
+    document.getElementById('sidebarToggle').addEventListener('click', function(event) {
+        event.stopPropagation(); // สั่งให้หยุด Event Bubbling
+        document.querySelector('.sidebar').classList.toggle('sidebar-active');
+    });
 
-        // ปิด sidebar เมื่อคลิกที่เนื้อหาหลักในโหมดมือถือ
-        document.querySelector('.main-content').addEventListener('click', function() {
-            if (window.innerWidth <= 768) {
-                document.querySelector('.sidebar').classList.remove('sidebar-active');
-            }
-        });
+    // ปิด sidebar เมื่อคลิกที่เนื้อหาหลักในโหมดมือถือ
+    document.querySelector('.main-content').addEventListener('click', function() {
+        if (window.innerWidth <= 768 && document.querySelector('.sidebar').classList.contains('sidebar-active')) {
+            document.querySelector('.sidebar').classList.remove('sidebar-active');
+        }
+    });
 
-        // ฟังก์ชันสำหรับกรองรายการแข่งขัน
-        document.querySelectorAll('.filter-button').forEach(button => {
-            button.addEventListener('click', function() {
-                // เอาคลาส active ออกจากปุ่มทั้งหมด
-                document.querySelectorAll('.filter-button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                
-                // เพิ่มคลาส active ให้กับปุ่มที่ถูกคลิก
-                this.classList.add('active');
-                
-                const filter = this.getAttribute('data-filter');
-                const rounds = document.querySelectorAll('.schedule-round');
-                
-                rounds.forEach(round => {
-                    if (filter === 'all' || round.getAttribute('data-status') === filter) {
-                        round.style.display = 'block';
-                    } else {
-                        round.style.display = 'none';
-                    }
-                });
+    // ฟังก์ชันสำหรับกรองรายการแข่งขัน (โค้ดส่วนนี้เหมือนเดิม)
+    document.querySelectorAll('.filter-button').forEach(button => {
+        button.addEventListener('click', function() {
+            // เอาคลาส active ออกจากปุ่มทั้งหมด
+            document.querySelectorAll('.filter-button').forEach(btn => {
+                btn.classList.remove('active');
             });
+            
+            // เพิ่มคลาส active ให้กับปุ่มที่ถูกคลิก
+            this.classList.add('active');
+            
+            const filter = this.getAttribute('data-filter');
+            const rounds = document.querySelectorAll('.schedule-round');
+            
+            rounds.forEach(round => {
+                if (filter === 'all' || round.getAttribute('data-status') === filter) {
+                    round.style.display = 'block';
+                } else {
+                    round.style.display = 'none';
+                }
+            });
+        });
         });
     </script>
 </body>

@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "รหัสผ่านไม่ตรงกัน";
     } else {
         $hashedPassword = password_hash($new_password, PASSWORD_DEFAULT);
-        $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+        $stmt = $userDb->prepare("UPDATE users SET password = ? WHERE id = ?");
         $stmt->execute([$hashedPassword, $_SESSION['reset_user_id']]);
 
         // เคลียร์ session ที่เกี่ยวข้อง

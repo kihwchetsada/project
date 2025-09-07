@@ -67,98 +67,7 @@ if ($team_count > 0) {
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="img/logo.jpg">
-    <style>
-        :root {
-            --primary-color: #3498db;
-            --secondary-color: #2c3e50;
-            --background-color: #f4f7f6;
-            --card-bg-color: #ffffff;
-            --text-color: #333;
-            --text-light: #7f8c8d;
-            --shadow-color: rgba(0, 0, 0, 0.1);
-            --border-color: #e0e0e0;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Sarabun', sans-serif; background-color: var(--background-color); color: var(--text-color); line-height: 1.6; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
-        .header h1 { font-size: 2.5rem; margin-bottom: 10px; font-weight: 700; }
-        .header .subtitle { font-size: 1.1rem; opacity: 0.9; }
-
-        /* === CSS สำหรับกล่องกรองข้อมูล === */
-        .filter-container {
-            background-color: var(--card-bg-color);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 15px var(--shadow-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-        }
-        .filter-container label { font-weight: 700; color: var(--secondary-color); }
-        .filter-container select, .filter-container button {
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-family: 'Sarabun', sans-serif;
-            font-size: 1rem;
-        }
-        .filter-container button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .filter-container button:hover { background-color: #2980b9; }
-        
-        .stats-card { background-color: var(--card-bg-color); border-radius: 12px; padding: 25px; text-align: center; margin-bottom: 40px; box-shadow: 0 4px 15px var(--shadow-color); border-left: 5px solid var(--primary-color); }
-        .stats-content { display: flex; align-items: center; justify-content: center; gap: 20px; }
-        .stats-icon i { font-size: 3rem; color: var(--primary-color); }
-        .stats-text h3 { font-size: 2.5rem; font-weight: 700; color: var(--secondary-color); }
-        .stats-text p { font-size: 1rem; color: var(--text-light); }
-        .teams-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 25px; }
-        .team-card { background-color: var(--card-bg-color); border-radius: 12px; box-shadow: 0 4px 15px var(--shadow-color); overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .team-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
-        .card-header { background-color: var(--secondary-color); color: white; padding: 20px; }
-        .team-name { font-size: 1.5rem; font-weight: 700; margin-bottom: 5px; }
-        .team-name i { margin-right: 10px; }
-        .team-school { font-size: 1rem; opacity: 0.9; }
-        .team-school i { margin-right: 8px; }
-        .card-body { padding: 20px; }
-        .card-section { margin-bottom: 20px; }
-        .card-section:last-child { margin-bottom: 0; }
-        .section-title { font-size: 1.1rem; font-weight: 700; color: var(--secondary-color); margin-bottom: 10px; border-bottom: 2px solid var(--border-color); padding-bottom: 5px; }
-        .section-title i { margin-right: 8px; color: var(--primary-color); }
-        .info-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.95rem; }
-        .info-row i { width: 20px; color: var(--text-light); margin-right: 10px; }
-        .no-data { text-align: center; padding: 60px 20px; background-color: var(--card-bg-color); border-radius: 12px; box-shadow: 0 4px 15px var(--shadow-color); }
-        .no-data i { font-size: 4rem; color: #bdc3c7; margin-bottom: 20px; }
-        .no-data h3 { font-size: 1.5rem; color: var(--secondary-color); margin-bottom: 10px; }
-        @media (max-width: 400px) { .teams-grid { grid-template-columns: 1fr; } }
-        .members-container { display: flex; flex-direction: column; gap: 10px; }
-        .member-item { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px 15px; transition: background-color 0.2s ease; }
-        .member-item:hover { background-color: #f1f3f5; }
-        .member-info { display: flex; justify-content: space-between; align-items: center; font-weight: 500; margin-bottom: 8px; }
-        .member-name { color: var(--secondary-color); font-weight: 700; font-size: 1.05rem; }
-        .member-position { background-color: var(--primary-color); color: white; font-size: 0.8rem; padding: 3px 10px; border-radius: 12px; font-weight: 500; }
-        .member-details { display: flex; flex-wrap: wrap; gap: 10px 20px; font-size: 0.9rem; color: var(--text-light); }
-        .member-details span { display: flex; align-items: center; }
-        .member-details i { width: 16px; text-align: center; margin-right: 6px; }
-        .no-members-info { color: var(--text-light); text-align: center; padding: 15px; font-style: italic; }
-        .competition-badge {
-            display: inline-block;
-            background-color: #e74c3c;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin-top: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/approved_teams.css">
 </head>
 <body>
     <div class="container">
@@ -169,6 +78,7 @@ if ($team_count > 0) {
 
         <div class="filter-container">
             <form action="approved_teams.php" method="GET" style="display: flex; align-items: center; gap: 15px;">
+                <a href="backend/organizer_dashboard.php" class="btn">กลับไปหน้าแดชบอร์ด</a>
                 <label for="tournament_id"><i class="fas fa-filter"></i> เลือกดูตามรุ่น:</label>
                 <select name="tournament_id" id="tournament_id">
                     <option value="">-- แสดงทุกรุ่น --</option>
@@ -256,5 +166,28 @@ if ($team_count > 0) {
             </div>
         <?php endif; ?>
     </div>
-</body>
+    <button id="backToTopBtn" title="กลับไปด้านบนสุด"><i class="fas fa-arrow-up"></i></button>
+<script>
+    const backToTopButton = document.getElementById("backToTopBtn");
+    const scrollFunction = () => {
+      // ถ้าเลื่อนหน้าจอลงมาเกิน 300px
+        if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+        backToTopButton.classList.add("show"); // เพิ่มคลาส .show เพื่อแสดงปุ่ม
+        } else {
+        backToTopButton.classList.remove("show"); // เอาคลาส .show ออกเพื่อซ่อนปุ่ม
+        }
+    };
+    const scrollToTop = () => {
+        window.scrollTo({
+        top: 0,
+        behavior: 'smooth' 
+        });
+    };
+    window.onscroll = () => {
+        scrollFunction();
+    };
+    backToTopButton.addEventListener("click", scrollToTop);
+    </script>
+    </body>
+
 </html>

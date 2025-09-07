@@ -1,235 +1,124 @@
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #f4f7f6;
+            --card-bg-color: #ffffff;
+            --text-color: #333;
+            --text-light: #7f8c8d;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --border-color: #e0e0e0;
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Sarabun', sans-serif; background-color: var(--background-color); color: var(--text-color); line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; font-weight: 700; }
+        .header .subtitle { font-size: 1.1rem; opacity: 0.9; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+        /* === CSS สำหรับกล่องกรองข้อมูล === */
+        .filter-container {
+            background-color: var(--card-bg-color);
             padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .header h1 {
-            color: white;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header .subtitle {
-            color: rgba(255,255,255,0.9);
-            font-size: 1.1rem;
-        }
-
-        .stats-card {
-            background: rgba(255,255,255,0.95);
-            border-radius: 15px;
-            padding: 20px;
+            border-radius: 12px;
             margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-        }
-
-        .stats-content {
+            box-shadow: 0 4px 15px var(--shadow-color);
             display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 20px;
-        }
-
-        .stats-icon {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
+            gap: 15px;
         }
-
-        .stats-text h3 {
-            color: #333;
-            font-size: 1.8rem;
-            margin-bottom: 5px;
-        }
-
-        .stats-text p {
-            color: #666;
+        .filter-container label { font-weight: 700; color: var(--secondary-color); }
+        .filter-container select, .filter-container button {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-family: 'Sarabun', sans-serif;
             font-size: 1rem;
         }
-
-        .table-container {
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+        .filter-container button {
+            background-color: var(--primary-color);
             color: white;
-            padding: 20px 15px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        th i {
-            margin-right: 8px;
-        }
-
-        td {
-            padding: 18px 15px;
-            border-bottom: 1px solid #eee;
-            color: #333;
-            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
             transition: background-color 0.3s ease;
         }
-
-        tr:hover td {
-            background-color: #f8f9ff;
-        }
-
-        .team-name {
-            font-weight: 600;
-            color: #667eea;
-        }
-
-        .members-list {
-            line-height: 1.6;
-            max-width: 300px;
-        }
-
-        .advisor-name {
-            color: #764ba2;
-            font-weight: 500;
-        }
-
-        .contact-number {
-            font-family: 'Courier New', monospace;
-            background: #f0f2ff;
-            padding: 5px 10px;
-            border-radius: 15px;
+        .filter-container button:hover { background-color: #2980b9; }
+        .btn{ padding:10px 15px; text-decoration: none; color:#2980b9; border:none; border-radius:8px; cursor:pointer; transition:background-color 0.3s ease; }
+        .btn:hover{ background-color:#2980b9; color:#ffffff; transition:background-color 0.3s ease;}
+        .stats-card { background-color: var(--card-bg-color); border-radius: 12px; padding: 25px; text-align: center; margin-bottom: 40px; box-shadow: 0 4px 15px var(--shadow-color); border-left: 5px solid var(--primary-color); }
+        .stats-content { display: flex; align-items: center; justify-content: center; gap: 20px; }
+        .stats-icon i { font-size: 3rem; color: var(--primary-color); }
+        .stats-text h3 { font-size: 2.5rem; font-weight: 700; color: var(--secondary-color); }
+        .stats-text p { font-size: 1rem; color: var(--text-light); }
+        .teams-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 25px; }
+        .team-card { background-color: var(--card-bg-color); border-radius: 12px; box-shadow: 0 4px 15px var(--shadow-color); overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .team-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .card-header { background-color: var(--secondary-color); color: white; padding: 20px; }
+        .team-name { font-size: 1.5rem; font-weight: 700; margin-bottom: 5px; }
+        .team-name i { margin-right: 10px; }
+        .team-school { font-size: 1rem; opacity: 0.9; }
+        .team-school i { margin-right: 8px; }
+        .card-body { padding: 20px; }
+        .card-section { margin-bottom: 20px; }
+        .card-section:last-child { margin-bottom: 0; }
+        .section-title { font-size: 1.1rem; font-weight: 700; color: var(--secondary-color); margin-bottom: 10px; border-bottom: 2px solid var(--border-color); padding-bottom: 5px; }
+        .section-title i { margin-right: 8px; color: var(--primary-color); }
+        .info-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.95rem; }
+        .info-row i { width: 20px; color: var(--text-light); margin-right: 10px; }
+        .no-data { text-align: center; padding: 60px 20px; background-color: var(--card-bg-color); border-radius: 12px; box-shadow: 0 4px 15px var(--shadow-color); }
+        .no-data i { font-size: 4rem; color: #bdc3c7; margin-bottom: 20px; }
+        .no-data h3 { font-size: 1.5rem; color: var(--secondary-color); margin-bottom: 10px; }
+        @media (max-width: 400px) { .teams-grid { grid-template-columns: 1fr; } }
+        .members-container { display: flex; flex-direction: column; gap: 10px; }
+        .member-item { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px 15px; transition: background-color 0.2s ease; }
+        .member-item:hover { background-color: #f1f3f5; }
+        .member-info { display: flex; justify-content: space-between; align-items: center; font-weight: 500; margin-bottom: 8px; }
+        .member-name { color: var(--secondary-color); font-weight: 700; font-size: 1.05rem; }
+        .member-position { background-color: var(--primary-color); color: white; font-size: 0.8rem; padding: 3px 10px; border-radius: 12px; font-weight: 500; }
+        .member-details { display: flex; flex-wrap: wrap; gap: 10px 20px; font-size: 0.9rem; color: var(--text-light); }
+        .member-details span { display: flex; align-items: center; }
+        .member-details i { width: 16px; text-align: center; margin-right: 6px; }
+        .no-members-info { color: var(--text-light); text-align: center; padding: 15px; font-style: italic; }
+        .competition-badge {
             display: inline-block;
-            color: #667eea;
+            background-color: #e74c3c;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
             font-weight: 500;
+            margin-top: 10px;
+        }
+        /* ===== สไตล์สำหรับปุ่ม Back to Top ===== */
+        #backToTopBtn {
+        display: none; /* 1. ซ่อนปุ่มไว้เป็นค่าเริ่มต้น */
+        position: fixed; /* 2. ตำแหน่งลอยตัวตามหน้าจอ */
+        bottom: 25px; /* 3. ระยะห่างจากขอบล่าง */
+        right: 25px; /* 4. ระยะห่างจากขอบขวา */
+        z-index: 100; /* 5. ให้แสดงอยู่ชั้นบนสุด */
+        border: none;
+        outline: none;
+        background-color: #6a11cb; /* สีพื้นหลัง (สีม่วงจากเว็บคุณ) */
+        color: white; /* สีไอคอน */
+        cursor: pointer;
+        padding: 15px;
+        border-radius: 50%; /* ทำให้เป็นวงกลม */
+        font-size: 20px;
+        width: 55px; /* กำหนดความกว้าง */
+        height: 55px; /* กำหนดความสูง */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: opacity 0.3s, transform 0.3s;
+        opacity: 0; /* ซ่อนแบบโปร่งใส */
+        transform: translateY(10px); /* เลื่อนลงเล็กน้อยตอนซ่อน */
         }
 
-        .no-data {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666;
+        /* คลาส .show ที่จะถูกเพิ่มโดย JavaScript */
+        #backToTopBtn.show {
+        display: block;
+        opacity: 1; /* ทำให้มองเห็น */
+        transform: translateY(0); /* เลื่อนกลับมาตำแหน่งเดิม */
         }
 
-        .no-data i {
-            font-size: 4rem;
-            color: #ddd;
-            margin-bottom: 20px;
+        #backToTopBtn:hover {
+        background-color: #2575fc; /* เปลี่ยนสีเมื่อเอาเมาส์ไปชี้ */
         }
-
-        .no-data h3 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .no-data p {
-            font-size: 1rem;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .stats-content {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            table {
-                font-size: 0.85rem;
-            }
-            
-            th, td {
-                padding: 12px 8px;
-            }
-            
-            .members-list {
-                max-width: 200px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header h1 {
-                font-size: 1.8rem;
-            }
-            
-            th, td {
-                padding: 10px 5px;
-                font-size: 0.8rem;
-            }
-            
-            .contact-number {
-                font-size: 0.8rem;
-                padding: 3px 8px;
-            }
-        }
-
-        /* Animation */
-        .table-container {
-            animation: slideUp 0.6s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .stats-card {
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-   

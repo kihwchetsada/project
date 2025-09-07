@@ -49,9 +49,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
                 <i class="fas fa-trophy"></i>
                 <span>ROV Tournament</span>
             </div>
-            <button class="mobile-toggle" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
+
         </div>
         
         <div class="sidebar-menu">
@@ -88,6 +86,9 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
     <div class="main-content">
         <!-- Top Navigation -->
         <div class="top-navbar">
+            <button class="mobile-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
             <div class="user-menu">
                 <div class="user-info">
                     <?php include 'header.php'; ?>

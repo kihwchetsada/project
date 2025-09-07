@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             background: #f8f9fa;
             border: 2px solid #e9ecef;
             border-radius: 10px;
-            padding: 20px;
+            padding: 5px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
         .role-icon {
-            font-size: 2.5em;
+            font-size: 0.7em;
             margin-bottom: 10px;
             color: #007bff;
             transition: all 0.3s ease;
@@ -338,8 +338,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="confirm-password-match" id="confirm-password-match"></div>
                 <div class="form-validation-error" id="confirm_password-error"></div>
             </div>
-
-            <button type="submit" class="login-button">สมัครสมาชิก <i class="fas fa-user-check"></i></button>
+            
+            <button type="submit" class="login-button">สมัครสมาชิก <i class="fas fa-user-check"></i></button><br>
+            <button type="button" onclick="window.location.href='index.php'" class="login-button">กลับไปที่หน้าหลัก<i class="fas fa-sign-out-alt"></i></button>
         </form>
 
         <div class="register-link">
@@ -572,10 +573,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         function isPasswordStrong(password) {
             return password.length >= 8 &&
-                   /[a-z]/.test(password) &&
-                   /[A-Z]/.test(password) &&
-                   /[0-9]/.test(password) &&
-                   /[^A-Za-z0-9]/.test(password);
+                    /[a-z]/.test(password) &&
+                    /[A-Z]/.test(password) &&
+                    /[0-9]/.test(password) &&
+                    /[^A-Za-z0-9]/.test(password);
         }
 
         // การแสดง/ซ่อน รหัสผ่าน
