@@ -3,7 +3,7 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 session_start();
-require 'db.php';         // user_db
+
 require 'db_connect.php'; // competition_db
 
 // ฟังก์ชันคำนวณอายุจากวันเกิด
@@ -20,12 +20,12 @@ function calculateAge($birthdate) {
 }
 
 // ตรวจสอบว่าเข้าสู่ระบบหรือยัง
-if (!isset($_SESSION['userData']) || $_SESSION['userData']['role'] !== 'organizer') {
+if (!isset($_SESSION['conn']) || $_SESSION['conn']['role'] !== 'organizer') {
     header('Location: login.php'); // Redirect to login page
     exit();
 }
 
-$approved_by = $_SESSION['userData']['username'];
+$approved_by = $_SESSION['conn']['username'];
 
 // ดึงทีมที่ยังไม่อนุมัติพร้อมกับข้อมูลสมาชิก
 $stmt = $conn->query("

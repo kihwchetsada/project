@@ -4,17 +4,14 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // ======= ตั้งค่า DB =======
-$DB_HOST = "localhost";
-$DB_USER = "root";
-$DB_PASS = "";
-$DB_NAME = "tournament_registration";
+require 'db_connect.php'; 
 
 // ตัวแปรสำหรับแสดงข้อความ
 $message = null;
 $message_type = null;
 
 // เชื่อมต่อ DB
-$conn = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }

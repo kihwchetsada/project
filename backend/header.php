@@ -4,18 +4,18 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once '../db.php'; // ปรับ path ให้ตรงกับโครงสร้างโปรเจกต์ของคุณ
+require_once '../db_connect.php'; // ปรับ path ให้ตรงกับโครงสร้างโปรเจกต์ของคุณ
 
 // ตรวจสอบการ login
-if (!isset($_SESSION['userData'])) {
+if (!isset($_SESSION['conn'])) {
     header('Location: ../login.php');
     exit;
 }
 
 // อัปเดต last_activity
-$userId = $_SESSION['userData']['id'] ?? null;
+$userId = $_SESSION['conn']['id'] ?? null;
 if ($userId) {
-    $stmt = $userDb->prepare("UPDATE users SET last_activity = NOW() WHERE id = ?");
+    $stmt = $conn->prepare("UPDATE users SET last_activity = NOW() WHERE id = ?");
     $stmt->execute([$userId]);
 }
 ?>

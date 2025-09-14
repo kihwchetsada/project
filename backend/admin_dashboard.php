@@ -1,14 +1,16 @@
 <?php
-session_start();
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
+session_start();
 
 // 🔒 ตรวจสอบการ logout
 if (isset($_GET['logout'])) {
-    if (isset($_SESSION['userData']['id'])) {
-        require_once '../db.php'; // ให้แน่ใจว่ามีการเชื่อม DB ก่อน
+    if (isset($_SESSION['conn']['id'])) {
+        require_once '../db_connect.php'; // เชื่อม DB
 
-        $userId = $_SESSION['userData']['id'];
-        $stmt = $userDb->prepare("UPDATE users SET last_activity = NULL WHERE id = ?");
+        $userId = $_SESSION['conn']['id'];
+        $stmt = $conn->prepare("UPDATE users SET last_activity = NULL WHERE id = ?");
         $stmt->execute([$userId]);
     }
 
@@ -18,12 +20,13 @@ if (isset($_GET['logout'])) {
 }
 
 // ตรวจสอบว่ามีการล็อกอินหรือไม่
-if (!isset($_SESSION['userData']) || $_SESSION['userData']['role'] !== 'admin') {
+if (!isset($_SESSION['conn']) || $_SESSION['conn']['role'] !== 'admin') {
     header('Location: ../login.php');
     exit;
 }
-
-$userData = $_SESSION['userData'];
+$username = $_SESSION['conn']['username'];
+$role     = $_SESSION['conn']['role'];
+$user_id  = $_SESSION['conn']['id'];
 $tournaments = [/* ตัวอย่างข้อมูลหรือ query จาก DB */];
 ?>
 
@@ -89,7 +92,7 @@ $tournaments = [/* ตัวอย่างข้อมูลหรือ query 
             <div class="user-menu">
                 <div class="user-info">
                     <?php include 'header.php'; ?>
-                    <span><?php echo htmlspecialchars($userData['username']); ?></span>
+                    <span><?php echo htmlspecialchars($_SESSION['conn']['username']); ?></span>
                     <div class="user-avatar">
                         <i class="fas fa-user"></i>
                     </div>

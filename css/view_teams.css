@@ -168,6 +168,29 @@
             letter-spacing: 1px;
         }
 
+        .back-link {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: #00ffff;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .back-link:hover {
+            background: rgb(200, 201, 201);
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+            text-decoration: none;
+            color: #00ffff;
+        }
+
         /* Navigation */
         .nav-container {
             display: flex;
@@ -473,3 +496,4 @@
             70% { transform: translate(-1px, 1px); }
             80% { transform: translate(1px, -1px); }
         }
+        

@@ -1,6 +1,8 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 // เชื่อมต่อฐานข้อมูล
-require 'db.php';
 require 'db_connect.php'; // $conn เป็น PDO
 
 // --- ดึงข้อมูล "รุ่น" ทั้งหมดมาเพื่อสร้างเมนูตัวเลือก ---
@@ -189,5 +191,4 @@ if ($team_count > 0) {
     backToTopButton.addEventListener("click", scrollToTop);
     </script>
     </body>
-
 </html>

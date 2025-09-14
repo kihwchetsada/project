@@ -4,9 +4,9 @@
     }
     // ข้อมูลการเชื่อมต่อฐานข้อมูล
     $db_host = 'localhost';     // ชื่อโฮสต์หรือที่อยู่ IP ของเซิร์ฟเวอร์ฐานข้อมูล
-    $db_name = 'tournament_registration';   // ชื่อฐานข้อมูล
-    $db_user = 'root';          // ชื่อผู้ใช้ฐานข้อมูล
-    $db_pass = '';              // รหัสผ่านฐานข้อมูล
+    $db_name = 'rmuti_esport_surin';   // ชื่อฐานข้อมูล
+    $db_user = 'certificate';          // ชื่อผู้ใช้ฐานข้อมูล
+    $db_pass = 'certificate1234';              // รหัสผ่านฐานข้อมูล
     $db_charset = 'utf8mb4';    // ชุดอักขระที่ใช้ (utf8mb4 รองรับ emoji และอักขระพิเศษ)
 
     // กำหนดค่า DSN (Data Source Name)

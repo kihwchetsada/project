@@ -1,70 +1,61 @@
 <?php
-header('Content-Type: application/json');
+// save_challonge_config.php
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-    exit;
-}
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// รับข้อมูลจากแบบฟอร์ม
-$api_key = isset($_POST['api_key']) ? $_POST['api_key'] : '';
+require '../db_connect.php'; 
 
-// ตรวจสอบข้อมูล
-if (empty($api_key)) {
-    echo json_encode(['success' => false, 'message' => 'กรุณากรอกข้อมูลให้ครบถ้วน']);
-    exit;
-}
-
-// เชื่อมต่อฐานข้อมูล
-$conn = new mysqli("localhost", "root", "", "tournament_registration");
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 if ($conn->connect_error) {
-    echo json_encode(['success' => false, 'message' => 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้']);
-    exit;
+    die("Connection failed: " . $conn->connect_error);
 }
 
-// ตรวจสอบว่ามีตารางหรือไม่ ถ้าไม่มีให้สร้าง
-$check_table = "SHOW TABLES LIKE 'challonge_config'";
-$result = $conn->query($check_table);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $api_key = $_POST['api_key'] ?? '';
 
-if ($result->num_rows == 0) {
-    // สร้างตาราง
-    $create_table = "CREATE TABLE challonge_config (
-        id INT(11) PRIMARY KEY AUTO_INCREMENT,
-        api_key VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )";
-
-    if (!$conn->query($create_table)) {
-        echo json_encode(['success' => false, 'message' => 'ไม่สามารถสร้างตารางในฐานข้อมูลได้']);
+    if (empty($api_key)) {
+        header('Location: challonge_config.php?status=error&message=API_Key_is_required');
         exit;
     }
-}
 
-// ตรวจสอบว่ามีข้อมูลในตารางหรือไม่
-$check_data = "SELECT * FROM challonge_config LIMIT 1";
-$result = $conn->query($check_data);
+    // --- ส่วนที่แก้ไข ---
 
-if ($result->num_rows > 0) {
-    // อัปเดตข้อมูลที่มีอยู่
-    $sql = "UPDATE challonge_config SET api_key = ? WHERE id = 1";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $api_key);
-} else {
-    // เพิ่มข้อมูลใหม่
-    $sql = "INSERT INTO challonge_config (id, api_key) VALUES (1, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $api_key);
-}
+    // 1. ตรวจสอบว่ามีข้อมูล config ที่ id = 1 อยู่แล้วหรือไม่ (เจาะจง id = 1)
+    $check_sql = "SELECT id FROM challong_config WHERE id = 1";
+    $result = $conn->query($check_sql);
 
-// ดำเนินการบันทึกข้อมูล
-if ($stmt->execute()) {
-    header("Location: challonge_config.php?success=1");
+    if ($result && $result->num_rows > 0) {
+        // 2. ถ้ามี id = 1 อยู่แล้ว -> ใช้คำสั่ง UPDATE ที่ id = 1 เท่านั้น
+        $stmt = $conn->prepare("UPDATE challong_config SET api_key = ?, updated_at = NOW() WHERE id = 1");
+        $stmt->bind_param("s", $api_key);
+
+    } else {
+        // 3. ถ้ายังไม่มีข้อมูล id = 1 -> ใช้คำสั่ง INSERT โดยบังคับ id = 1
+        $stmt = $conn->prepare("INSERT INTO challong_config (id, api_key, created_at, updated_at) VALUES (1, ?, NOW(), NOW())");
+        $stmt->bind_param("s", $api_key);
+    }
+
+    // --- จบส่วนที่แก้ไข ---
+
+    if ($stmt->execute()) {
+        header('Location: challonge_config.php?status=success');
+    } else {
+        // หากเกิด error ที่เกี่ยวกับการ INSERT id ซ้ำ (Duplicate entry '1' for key 'PRIMARY')
+        // ให้แจ้งผู้ใช้หรือจัดการเป็นพิเศษ
+        if ($conn->errno == 1062) {
+            header('Location: challonge_config.php?status=error&message=Duplicate_ID_error');
+        } else {
+             header('Location: challonge_config.php?status=error&message=' . urlencode($stmt->error));
+        }
+    }
+    
+    $stmt->close();
+    $conn->close();
     exit;
-} else {
-    echo json_encode(['success' => false, 'message' => 'ไม่สามารถบันทึกข้อมูลได้: ' . $stmt->error]);
-}
 
-$stmt->close();
-$conn->close();
+} else {
+    header('Location: challonge_config.php');
+    exit;
+}
 ?>

@@ -186,7 +186,7 @@ function formatStatus($is_approved) {
             <ul>
                 <li><a href="participant_dashboard.php" class="active"><i class="fas fa-home"></i><span>หน้าหลัก</span></a></li>
                 <li><a href="Certificate/index.php"><i class="fas fa-ranking-star"></i><span>เกียรติบัตร</span></a></li>
-                <li><a href="settings.php"><i class="fas fa-cog"></i><span>ตั้งค่า</span></a></li>
+                <li><a href="#"><i class="fas fa-cog"></i><span>ตั้งค่า</span></a></li>
                 <li><a href="?logout=1"><i class="fas fa-sign-out-alt"></i><span>ออกจากระบบ</span></a></li>
             </ul>
         </div>
@@ -198,7 +198,7 @@ function formatStatus($is_approved) {
         </div>
         <div class="dashboard-container">
             <div class="welcome-header">
-                <h2>ยินดีต้อนรับคุณ  <?php echo htmlspecialchars($_SESSION['conn']['username']); ?></h2>
+                <h2>ยินดีต้อนรับ, <?php echo htmlspecialchars($_SESSION['conn']['username']); ?></h2>
                 <p>จัดการทีมและดูข้อมูลการแข่งขันของคุณได้ที่นี่</p>
             </div>
              <?php if ($update_success): ?>

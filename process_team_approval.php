@@ -2,19 +2,17 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-session_start();
-require 'db.php';         // เชื่อม user_db → ใช้ $userDb
-require 'db_connect.php'; // เชื่อม tournament_db → ใช้ $conn
+session_start();        
+require 'db_connect.php'; 
 
 // ตรวจสอบว่าเข้าสู่ระบบหรือยัง
-if (!isset($_SESSION['userData']) || $_SESSION['userData']['role'] !== 'organizer') {
+if (!isset($_SESSION['conn']) || $_SESSION['conn']['role'] !== 'organizer') {
     die('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
 }
 
-$approved_by = $_SESSION['userData']['username'];
+$approved_by = $_SESSION['conn']['username'];
 
-//  ตรวจสอบ role ผ่าน userDb
-$stmt = $userDb->prepare("SELECT role FROM users WHERE username = ?");
+$stmt = $conn->prepare("SELECT role FROM users WHERE username = ?");
 $stmt->execute([$approved_by]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 

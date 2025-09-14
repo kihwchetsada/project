@@ -3,8 +3,13 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$conn = new mysqli("localhost", "root", "", "announcements_db");
+require 'db_connect.php';
+
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 $conn->set_charset("utf8");
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title']);

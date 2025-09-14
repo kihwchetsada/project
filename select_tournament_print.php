@@ -3,7 +3,7 @@ session_start();
 require 'db_connect.php'; // เชื่อมต่อฐานข้อมูล (PDO)
 
 // ตรวจสอบสิทธิ์ (ถ้าคุณต้องการให้เฉพาะ admin/organizer ใช้ได้)
-if (!isset($_SESSION['userData']) || $_SESSION['userData']['role'] !== 'organizer') {
+if (!isset($_SESSION['conn']) || $_SESSION['conn']['role'] !== 'organizer') {
     die('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
 }
 

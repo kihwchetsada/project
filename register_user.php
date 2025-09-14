@@ -1,5 +1,5 @@
 <?php
-require 'db.php';
+require 'db_connect.php';
 session_start();
 
 $success = '';
@@ -13,17 +13,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     try {
         // ตรวจสอบว่า username ซ้ำหรือไม่
-        $checkStmt = $userDb->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+        $checkStmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
         $checkStmt->execute([$username, $email]);
         $checkResult = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
         if ($checkResult) {
             // ตรวจสอบว่าซ้ำเพราะ username หรือ email
-            $checkUsernameStmt = $userDb->prepare("SELECT id FROM users WHERE username = ?");
+            $checkUsernameStmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
             $checkUsernameStmt->execute([$username]);
             $usernameExists = $checkUsernameStmt->fetch(PDO::FETCH_ASSOC);
 
-            $checkEmailStmt = $userDb->prepare("SELECT id FROM users WHERE email = ?");
+            $checkEmailStmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
             $checkEmailStmt->execute([$email]);
             $emailExists = $checkEmailStmt->fetch(PDO::FETCH_ASSOC);
             
@@ -41,12 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             } else {
                 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-                $stmt = $userDb->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
+                $stmt = $conn->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
                 if ($stmt->execute([$username, $email, $hashedPassword, $role])) {
-                    $user_id = $userDb->lastInsertId();
+                    $user_id = $conn->lastInsertId();
 
                     $_SESSION['loggedin'] = true;
-                    $_SESSION['userData'] = [
+                    $_SESSION['conn'] = [
                         'id' => $user_id,
                         'username' => $username,
                         'email' => $email,

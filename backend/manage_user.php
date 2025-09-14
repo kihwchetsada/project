@@ -1,9 +1,9 @@
 <?php
-require '../db.php';
+require '../db_connect.php';
 session_start();
 
 // ตรวจสอบว่าเป็นแอดมินหรือไม่
-if (!isset($_SESSION['userData']) || $_SESSION['userData']['role'] !== 'admin') {
+if (!isset($_SESSION['conn']) || $_SESSION['conn']['role'] !== 'admin') {
     header('Location: ../login.php');
     exit;
 }
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_role'])) {
 
     // อนุญาตเฉพาะการเปลี่ยนเป็น participant หรือ organizer เท่านั้น
     if ($new_role === 'participant' || $new_role === 'organizer') {
-        $stmt = $userDb->prepare("UPDATE users SET role = ? WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE users SET role = ? WHERE id = ?");
         $stmt->execute([$new_role, $user_id]);
 
         if ($stmt->rowCount()) {
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_role'])) {
 }
 
 // ดึงข้อมูลผู้ใช้ทั้งหมด (ยกเว้นแอดมิน)
-$stmt = $userDb->prepare("SELECT id, username, role, last_activity FROM users WHERE role != 'admin' ORDER BY username");
+$stmt = $conn->prepare("SELECT id, username, role, last_activity FROM users WHERE role != 'admin' ORDER BY username");
 $stmt->execute();
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>

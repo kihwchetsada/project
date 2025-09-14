@@ -1,5 +1,6 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "tournament_registration");
+require 'db_connect.php';
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
@@ -44,6 +45,10 @@ if ($result && $result->num_rows > 0) {
         <div class="header">
             <h1 class="main-title glitch">Tournament DASHBOARD</h1>
             <p class="subtitle">Gaming Tournament Management System</p>
+        </div>
+
+        <div class="back-link">
+            <a href="backend/admin_dashboard.php"><i class="fas fa-tachometer-alt"></i>กลับไปหน้าแดชบอร์ด</a>
         </div>
 
         <div class="stats-bar">

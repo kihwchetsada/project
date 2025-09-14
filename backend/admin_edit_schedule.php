@@ -1,22 +1,50 @@
 <?php
+// --- โค้ดส่วน PHP ที่แก้ไขแล้ว (แนะนำ) ---
+
 require '../db_connect.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $under18 = $_POST['under_18'] ?? '';
-    $above18 = $_POST['above_18'] ?? '';
+// เปิดใช้งานการแสดงข้อผิดพลาด (ดีสำหรับการดีบัก)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-    $stmt = $conn->prepare("UPDATE tournament_links SET iframe_url = ? WHERE category = ?");
-    $stmt->execute([$under18, 'under_18']);
-    $stmt->execute([$above18, 'above_18']);
+$message = ''; // กำหนดตัวแปร message ไว้ก่อน
+
+// ตรวจสอบว่ามีการส่งข้อมูลมาหรือไม่
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // รายการ category ที่เราต้องการจะบันทึก
+    $categories = [
+        'under_18' => $_POST['under_18'] ?? '',
+        'above_18' => $_POST['above_18'] ?? ''
+    ];
+
+    foreach ($categories as $category => $url) {
+        // 1. ตรวจสอบว่ามี category นี้ในฐานข้อมูลแล้วหรือยัง
+        $stmt_check = $conn->prepare("SELECT COUNT(*) FROM tournament_links WHERE category = ?");
+        $stmt_check->execute([$category]);
+        $count = $stmt_check->fetchColumn();
+
+        if ($count > 0) {
+            // 2. ถ้ามีอยู่แล้ว -> ใช้วิธี UPDATE
+            $stmt_update = $conn->prepare("UPDATE tournament_links SET iframe_url = ? WHERE category = ?");
+            $stmt_update->execute([$url, $category]);
+        } else {
+            // 3. ถ้ายังไม่มี -> ใช้วิธี INSERT
+            $stmt_insert = $conn->prepare("INSERT INTO tournament_links (category, iframe_url) VALUES (?, ?)");
+            $stmt_insert->execute([$category, $url]);
+        }
+    }
 
     $message = "อัปเดตลิงก์สำเร็จแล้ว!";
 }
 
+// ดึงข้อมูลทั้งหมดมาแสดงผล (โค้ดส่วนนี้เหมือนเดิม)
 $stmt = $conn->query("SELECT category, iframe_url FROM tournament_links");
 $iframes = [];
 while ($row = $stmt->fetch()) {
     $iframes[$row['category']] = $row['iframe_url'];
 }
+
+// --- จบส่วนที่แก้ไข ---
 ?>
 
 <!DOCTYPE html>
@@ -563,7 +591,7 @@ while ($row = $stmt->fetch()) {
                             name="under_18" 
                             class="form-input"
                             value="<?= htmlspecialchars($iframes['under_18'] ?? '') ?>"
-                            placeholder="https://example.com/embed/under18"
+                            placeholder="https://challonge.com/th/xxxxxx/module"
                         >
                         <i class="fas fa-link input-icon"></i>
                     </div>
@@ -581,7 +609,7 @@ while ($row = $stmt->fetch()) {
                             name="above_18" 
                             class="form-input"
                             value="<?= htmlspecialchars($iframes['above_18'] ?? '') ?>"
-                            placeholder="https://example.com/embed/above18"
+                            placeholder="https://challonge.com/th/xxxxxx/module"
                         >
                         <i class="fas fa-link input-icon"></i>
                     </div>

@@ -1,12 +1,11 @@
 <?php
-// Database connection configuration
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "announcements_db";
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require 'db_connect.php'; 
+
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 
 // Check connection
 if ($conn->connect_error) {
@@ -87,7 +86,7 @@ $main_params = $count_params; // Copy all the filter parameters
 $main_param_types = $count_param_types; // Copy parameter types
 
 // Main query with pagination - ใช้ created_at แทน date
-$sql = "SELECT id, title, description, created_at as date, category, priority, image_path 
+$sql = "SELECT id, title, description, category, priority, image_path, created_at as date
         FROM announcements" . $where_clause . " 
         ORDER BY created_at DESC LIMIT ?, ?";
         

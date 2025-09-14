@@ -1,7 +1,11 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 // เชื่อมต่อฐานข้อมูล
-$conn = new mysqli('localhost', 'root', '', 'competition_system');
+require '../db_connect.php';
+
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 $conn->set_charset("utf8");
 // ตรวจสอบการเชื่อมต่อ
 if ($conn->connect_error) {
@@ -9,12 +13,12 @@ if ($conn->connect_error) {
 }
 
 // ดึงข้อมูลการแข่งขัน
-$result = $conn->query("SELECT * FROM competitions_1 WHERE id = 1");
-$competitions_1 = $result ? $result->fetch_assoc() : null;
+$result = $conn->query("SELECT * FROM competitions WHERE id = 1");
+$competitions = $result ? $result->fetch_assoc() : null;
 
 // ตรวจสอบข้อมูล
-if (!$competitions_1) {
-    $competitions_1 = [
+if (!$competitions) {
+    $competitions = [
         'start_date' => '',
         'end_date' => '',
         'is_open' => 0,
@@ -393,6 +397,18 @@ $error_message = isset($_GET['error']) ? "เกิดข้อผิดพล�
             font-size: 1.2rem;
         }
 
+        .button-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .button-link:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
         .footer {
             text-align: center;
             color: #718096;
@@ -491,7 +507,9 @@ $error_message = isset($_GET['error']) ? "เกิดข้อผิดพล�
             <h1><i class="fas fa-calendar-alt"></i> จัดการการเปิดรับสมัคร</h1>
             <p>กำหนดวันที่เปิดรับสมัครและสถานะการรับสมัคร</p>
         </div>
-
+        <div>
+            <a href="admin_dashboard.php" class="button-link">กลับสู่หน้าหลัก</a>
+        </div>
         <div class="form-container">
             <?php if (isset($alert_message)): ?>
             <div class="alert alert-warning">
@@ -515,26 +533,27 @@ $error_message = isset($_GET['error']) ? "เกิดข้อผิดพล�
             <?php endif; ?>
 
             <form method="POST" action="update_competition.php" id="competitionForm">
+                
                 <div class="form-group">
                     <label for="start_date"><i class="fas fa-play"></i> วันที่เริ่มรับสมัคร:</label>
-                    <input type="date" id="start_date" name="start_date" value="<?= $competitions_1['start_date'] ?>" required>
+                    <input type="date" id="start_date" name="start_date" value="<?= $competitions['start_date'] ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label for="end_date"><i class="fas fa-flag-checkered"></i> วันที่สิ้นสุดการรับสมัคร:</label>
-                    <input type="date" id="end_date" name="end_date" value="<?= $competitions_1['end_date'] ?>" required>
+                    <input type="date" id="end_date" name="end_date" value="<?= $competitions['end_date'] ?>" required>
                 </div>
 
                 <div class="checkbox-container">
                     
                     <label class="custom-checkbox">
-                        <input type="checkbox" id="is_open" name="is_open" <?= $competitions_1['is_open'] ? 'checked' : '' ?>>
+                        <input type="checkbox" id="is_open" name="is_open" <?= $competitions['is_open'] ? 'checked' : '' ?>>
                         <span class="checkmark"></span>
                         <label for="is_open"><i class="fas fa-door-open"></i> เปิดรับสมัคร</label>
                     </label>
                 </div>
 
-                <input type="hidden" name="id" value="<?= $competitions_1['id'] ?>">
+                <input type="hidden" name="id" value="<?= $competitions['id'] ?>">
                 
                 <div class="button-container">
                     <button type="submit" class="button" id="submitBtn">

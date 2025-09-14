@@ -1,6 +1,6 @@
 <?php
 session_start();
-require 'db.php'; // เชื่อม DB
+require 'db_connect.php'; // เชื่อม DB
 require 'vendor/autoload.php'; // PHPMailer (ใช้ Composer โหลด)
 
 
@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "กรุณากรอก Username และ Email ให้ครบ";
     } else {
         // ตรวจสอบว่ามี username+email ตรงกันใน DB ไหม
-        $stmt = $userDb->prepare("SELECT id FROM users WHERE username = ? AND email = ?");
+        $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? AND email = ?");
         $stmt->execute([$username, $email]);
         $user = $stmt->fetch();
 

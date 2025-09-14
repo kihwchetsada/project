@@ -1,5 +1,5 @@
 <?php
-require 'db.php';
+require 'db_connect.php';
 session_start();
 
 if (!isset($_SESSION['otp_verified']) || $_SESSION['otp_verified'] !== true) {

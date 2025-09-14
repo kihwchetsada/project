@@ -1,8 +1,9 @@
 <?php
-
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 session_start();
 
-require 'db.php'; // เชื่อมต่อฐานข้อมูล
+require 'db_connect.php'; // เชื่อมต่อฐานข้อมูล
 
 // สร้าง CSRF Token ถ้ายังไม่มี
 if (empty($_SESSION['csrf_token'])) {
@@ -18,8 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    $stmt = $userDb->prepare("SELECT * FROM users WHERE username = ?");
+    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
     $stmt->execute([$username]);
+    var_dump($user);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
@@ -29,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
             $_SESSION['loggedin'] = true;
-            $_SESSION['userData'] = [
+            $_SESSION['conn'] = [
                 'username' => $user['username'],
                 'role' => $user['role'],
                 'id' => $user['id']

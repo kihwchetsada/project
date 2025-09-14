@@ -1,8 +1,13 @@
 <?php
 session_start();
-$conn = new mysqli("localhost", "root", "", "announcements_db");
-$conn->set_charset("utf8");
 
+require 'db_connect.php';
+
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+$conn->set_charset("utf8");
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 // ดึงข้อมูลทั้งหมด
 $result = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
 ?>

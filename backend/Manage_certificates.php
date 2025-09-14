@@ -22,6 +22,31 @@
             padding: 20px;
         }
 
+        .back-button{
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #fff;
+            color: #333;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .back-button:hover{
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #8bd0f8ff;
+            color: #ffffffff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
         .container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
@@ -176,6 +201,8 @@
     </style>
 </head>
 <body>
+    <a href="organizer_dashboard.php" class="back-button">กลับไปหน้าแดชบอร์ด</a>
+
     <div class="container">
         <h1 class="title">จัดการเกียรติบัตร</h1>
         <p class="subtitle">กรุณาเลือกหน้าที่ต้องการจะไปจากด้านล่าง</p>
@@ -204,17 +231,6 @@
                     <p class="option-desc">สร้างเกียรติบัตรจากรายชื่อและแม่แบบ</p>
                 </div>
             </a>
-
-        
-        <!--   
-              <a href="Certificate/view-history.php" style="text-decoration: none; color: inherit;">
-                <div class="option-card option-4">
-                    <span class="option-icon">📊</span>
-                    <h3 class="option-title">ประวัติการสร้าง</h3>
-                    <p class="option-desc">ดูประวัติการสร้างเกียรติบัตรที่ผ่านมา</p>
-                </div>
-            </a>
-        -->
 
         </div>
     </div>
