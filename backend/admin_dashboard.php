@@ -27,7 +27,7 @@ if (!isset($_SESSION['conn']) || $_SESSION['conn']['role'] !== 'admin') {
 $username = $_SESSION['conn']['username'];
 $role     = $_SESSION['conn']['role'];
 $user_id  = $_SESSION['conn']['id'];
-$tournaments = [/* ตัวอย่างข้อมูลหรือ query จาก DB */];
+
 ?>
 
 <!DOCTYPE html>

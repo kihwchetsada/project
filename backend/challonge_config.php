@@ -35,7 +35,7 @@ if ($config_result && $config_result->num_rows > 0) {
 
     body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: whitesmoke;
         min-height: 100vh;
         line-height: 1.6;
     }
@@ -53,6 +53,10 @@ if ($config_result && $config_result->num_rows > 0) {
     .header {
         text-align: center;
         margin-bottom: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     }
 
     .header h1 {

@@ -1,6 +1,5 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+
 session_start();
 
 require 'db_connect.php'; // เชื่อมต่อฐานข้อมูล
@@ -21,7 +20,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
     $stmt->execute([$username]);
-    var_dump($user);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {

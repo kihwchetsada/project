@@ -2,6 +2,12 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+
+$dashboard = ($_SESSION['conn']['role'] === 'admin') 
+    ? 'backend/admin_dashboard.php' 
+    : 'backend/organizer_dashboard.php';
+
 // เชื่อมต่อฐานข้อมูล
 require 'db_connect.php'; // $conn เป็น PDO
 
@@ -9,11 +15,10 @@ require 'db_connect.php'; // $conn เป็น PDO
 $stmt_tournament = $conn->query("SELECT id, tournament_name FROM tournaments ORDER BY tournament_name ASC");
 $tournaments = $stmt_tournament->fetchAll(PDO::FETCH_ASSOC);
 
-// --- (แก้ไข) ตรวจสอบว่ามีการเลือกรุ่นจากเมนูหรือไม่ โดยใช้ชื่อ 'tournament_id' ให้ตรงกับฟอร์ม ---
+// --- ตรวจสอบว่ามีการเลือกรุ่นจากเมนูหรือไม่ ---
 $selected_tournament_id = isset($_GET['tournament_id']) && !empty($_GET['tournament_id']) ? (int)$_GET['tournament_id'] : null;
 
-
-// --- สร้าง Query เพื่อดึงทีม โดยจะเพิ่มเงื่อนไขการกรองถ้ามีการเลือกรุ่น ---
+// --- สร้าง Query เพื่อดึงทีม ---
 $params = [];
 $sql_teams = "
     SELECT 
@@ -36,8 +41,7 @@ $stmt_teams->execute($params);
 $teams = $stmt_teams->fetchAll(PDO::FETCH_ASSOC);
 $team_count = count($teams);
 
-
-// --- ส่วนการดึงข้อมูลสมาชิกยังคงเหมือนเดิม ---
+// --- ดึงข้อมูลสมาชิกทีมทั้งหมด ---
 $members_by_team = [];
 if ($team_count > 0) {
     $team_ids = array_column($teams, 'team_id');
@@ -80,7 +84,7 @@ if ($team_count > 0) {
 
         <div class="filter-container">
             <form action="approved_teams.php" method="GET" style="display: flex; align-items: center; gap: 15px;">
-                <a href="backend/organizer_dashboard.php" class="btn">กลับไปหน้าแดชบอร์ด</a>
+                <a href="<?= $dashboard ?>" class="btn">กลับไปหน้าแดชบอร์ด</a>
                 <label for="tournament_id"><i class="fas fa-filter"></i> เลือกดูตามรุ่น:</label>
                 <select name="tournament_id" id="tournament_id">
                     <option value="">-- แสดงทุกรุ่น --</option>
@@ -111,49 +115,54 @@ if ($team_count > 0) {
             <div class="teams-grid">
                 <?php foreach ($teams as $team): ?>
                     <div class="team-card">
-                        <div class="card-header">
-                            <div class="team-name"><i class="fas fa-flag"></i><?= htmlspecialchars($team['team_name']) ?></div>
-                            <div class="team-school"><i class="fas fa-school"></i><?= htmlspecialchars($team['leader_school']) ?></div>
-                                <?php if (!empty($team['tournament_name'])): ?>
-                                <div class="competition-badge">
-                                    <i class="fas fa-tag"></i> <?= htmlspecialchars($team['tournament_name']) ?>
-                                </div>
-                            <?php endif; ?>
+                        <!-- ชื่อทีม (คลิกเพื่อขยาย/ยุบ) -->
+                        <div class="team-name toggle-btn" data-target="team-<?= $team['team_id'] ?>">
+                            <i class="fas fa-flag"></i> <?= htmlspecialchars($team['team_name']) ?>
+                            <small style="margin-left:10px; color:#666;">(กดเพื่อดูรายละเอียด)</small>
                         </div>
-                        <div class="card-body">
+
+                        <!-- รายละเอียดทีม (ซ่อนตอนแรก) -->
+                        <div id="team-<?= $team['team_id'] ?>" class="team-detail" style="display:none; margin-top:10px;">
                             <div class="card-section">
-                                <h4 class="section-title"><i class="fas fa-user-tie"></i>ข้อมูลผู้ควบคุมทีม</h4>
-                                <div class="info-row"><i class="fas fa-user"></i><span><?= htmlspecialchars($team['coach_name']) ?></span></div>
-                                <div class="info-row"><i class="fas fa-phone"></i><span><?= htmlspecialchars($team['coach_phone']) ?></span></div>
+                                <h4 class="section-title"><i class="fas fa-school"></i> โรงเรียน</h4>
+                                <div class="info-row"><?= htmlspecialchars($team['leader_school']) ?></div>
+                                <?php if (!empty($team['tournament_name'])): ?>
+                                    <div class="competition-badge"><i class="fas fa-tag"></i> <?= htmlspecialchars($team['tournament_name']) ?></div>
+                                <?php endif; ?>
                             </div>
+
                             <div class="card-section">
-                                <h4 class="section-title"><i class="fas fa-users"></i>รายชื่อสมาชิกในทีม</h4>
+                                <h4 class="section-title"><i class="fas fa-user-tie"></i> ข้อมูลผู้ควบคุมทีม</h4>
+                                <div class="info-row"><i class="fas fa-user"></i> <?= htmlspecialchars($team['coach_name']) ?></div>
+                                <div class="info-row"><i class="fas fa-phone"></i> <?= htmlspecialchars($team['coach_phone']) ?></div>
+                            </div>
+
+                            <div class="card-section">
+                                <h4 class="section-title"><i class="fas fa-users"></i> รายชื่อสมาชิกในทีม</h4>
                                 <div class="members-container">
                                     <?php 
                                     $current_members = $members_by_team[$team['team_id']] ?? [];
                                     if (!empty($current_members)):
-                                        foreach ($current_members as $member):
-                                    ?>
-                                    <div class="member-item">
-                                        <div class="member-info">
-                                            <span class="member-name"><i class="fas fa-user-circle"></i> <?= htmlspecialchars($member['member_name']) ?></span>
-                                            <span class="member-position"><?= htmlspecialchars($member['position']) ?></span>
-                                        </div>
-                                        <div class="member-details">
-                                            <span><i class="fas fa-gamepad"></i> <?= htmlspecialchars($member['game_name']) ?></span>
-                                            <span><i class="fas fa-birthday-cake"></i> <?= htmlspecialchars($member['age']) ?> ปี</span>
-                                        </div>
-                                    </div>
+                                        foreach ($current_members as $member): ?>
+                                            <div class="member-item">
+                                                <span class="member-name"><i class="fas fa-user-circle"></i> <?= htmlspecialchars($member['member_name']) ?></span>
+                                                <span class="member-position"><?= htmlspecialchars($member['position']) ?></span>
+                                                <div class="member-details">
+                                                    <span><i class="fas fa-gamepad"></i> <?= htmlspecialchars($member['game_name']) ?></span>
+                                                    <span><i class="fas fa-birthday-cake"></i> <?= htmlspecialchars($member['age']) ?> ปี</span>
+                                                </div>
+                                            </div>
                                     <?php endforeach; else: ?>
                                         <p class="no-members-info">ไม่มีข้อมูลสมาชิกในทีมนี้</p>
                                     <?php endif; ?>
                                 </div>
                             </div>
+
                             <div class="card-section">
-                                <h4 class="section-title"><i class="fas fa-clipboard-check"></i>ข้อมูลการอนุมัติ</h4>
+                                <h4 class="section-title"><i class="fas fa-clipboard-check"></i> ข้อมูลการอนุมัติ</h4>
                                 <div class="info-row">
-                                    <i class="fas fa-user-shield"></i>
-                                    <span><strong>อนุมัติโดย:</strong> <?php echo htmlspecialchars($team['approved_by']) ?></span>
+                                    <i class="fas fa-user-shield"></i> 
+                                    อนุมัติโดย: <?= htmlspecialchars($team['approved_by']) ?>
                                 </div>
                             </div>
                         </div>
@@ -168,27 +177,43 @@ if ($team_count > 0) {
             </div>
         <?php endif; ?>
     </div>
+
     <button id="backToTopBtn" title="กลับไปด้านบนสุด"><i class="fas fa-arrow-up"></i></button>
+
 <script>
+    // ปุ่มกลับไปด้านบน
     const backToTopButton = document.getElementById("backToTopBtn");
-    const scrollFunction = () => {
-      // ถ้าเลื่อนหน้าจอลงมาเกิน 300px
+    window.onscroll = () => {
         if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-        backToTopButton.classList.add("show"); // เพิ่มคลาส .show เพื่อแสดงปุ่ม
+            backToTopButton.classList.add("show");
         } else {
-        backToTopButton.classList.remove("show"); // เอาคลาส .show ออกเพื่อซ่อนปุ่ม
+            backToTopButton.classList.remove("show");
         }
     };
-    const scrollToTop = () => {
-        window.scrollTo({
-        top: 0,
-        behavior: 'smooth' 
+    backToTopButton.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Accordion: แสดงทีมเดียวที่เลือก
+    document.querySelectorAll(".toggle-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const target = document.getElementById(btn.dataset.target);
+
+            // ซ่อนทีมอื่นทั้งหมดก่อน
+            document.querySelectorAll(".team-detail").forEach(el => {
+                if (el !== target) {
+                    el.style.display = "none";
+                }
+            });
+
+            // Toggle เฉพาะทีมที่กด
+            if (target.style.display === "none" || target.style.display === "") {
+                target.style.display = "block";
+            } else {
+                target.style.display = "none";
+            }
         });
-    };
-    window.onscroll = () => {
-        scrollFunction();
-    };
-    backToTopButton.addEventListener("click", scrollToTop);
-    </script>
-    </body>
+    });
+</script>
+</body>
 </html>

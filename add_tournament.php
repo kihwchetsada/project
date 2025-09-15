@@ -91,7 +91,7 @@ $conn->close();
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
         * {margin:0;padding:0;box-sizing:border-box;}
-        body {font-family:'Segoe UI',Tahoma, Geneva, Verdana, sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px;}
+        body {font-family:'Segoe UI',Tahoma, Geneva, Verdana, sans-serif;background:whitesmoke;min-height:100vh;padding:20px;}
         .container {max-width:800px;margin:0 auto;background:#fff;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,0.1);overflow:hidden;}
         .header {background:linear-gradient(135deg,#2196F3,#21CBF3);color:#fff;padding:30px;text-align:center;}
         .header h1 {font-size:1.9rem;margin-bottom:6px;}
@@ -106,11 +106,12 @@ $conn->close();
         .form-group input, .form-group select {width:100%;padding:12px 14px;border:2px solid #e1e8ed;border-radius:12px;background:#f8f9fa;font-size:1rem;}
         .form-group input:focus, .form-group select:focus {outline:none;border-color:#2196F3;background:#fff;box-shadow:0 0 0 3px rgba(33,150,243,.1);}
         .mode-box {border:2px dashed #e1e8ed;border-radius:14px;padding:14px;}
+        .note{font-size:1rem;color:red;margin-bottom:8px;}
         .mode-line {display:flex;align-items:center;gap:10px;margin-bottom:10px;}
         .btn {background:linear-gradient(135deg,#2196F3,#21CBF3);color:#fff;padding:14px 18px;border:none;border-radius:12px;font-size:1.05rem;font-weight:700;cursor:pointer;width:100%;}
         .btn:hover {transform:translateY(-1px);box-shadow:0 8px 20px rgba(33,150,243,.25);}
-        .back-link {display:inline-flex;align-items:center;gap:8px;color:#6c757d;text-decoration:none;margin-top:18px;font-weight:500;}
-        .back-link:hover {color:#2196F3;}
+        .back-link {display:inline-flex;align-items:center;gap:8px;color:#6c757d;text-decoration:none;margin-top:18px;font-weight:500;border: 2px solid #555;padding: 10px 15px;border-radius: 8px;}
+        .back-link:hover {background-color:#555;color:#fff;}
         .table {width:100%;border-collapse:separate;border-spacing:0 8px;margin-top:26px;}
         .table th {text-align:left;font-size:.9rem;color:#555;padding:8px 10px;}
         .table td {background:#f8f9fa;padding:12px 10px;border-radius:10px;}
@@ -155,6 +156,7 @@ $conn->close();
                     </div>
 
                     <div class="mode-box">
+                        <p class="note">**สามารถเพิ่มได้สูงสุด 2 รายการเท่านั้น**</p>
                         <div class="mode-line">
                             <input type="radio" id="mode-insert" name="mode" value="insert"
                             <?php echo (!isset($_POST['mode']) || $_POST['mode'] === 'insert') ? 'checked' : ''; ?>

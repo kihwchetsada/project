@@ -30,7 +30,6 @@ $username = $_SESSION['conn']['username'];
 $role     = $_SESSION['conn']['role'];
 $user_id  = $_SESSION['conn']['id'];
 // ดึงข้อมูลผู้ใช้
-$tournaments = [/* ตัวอย่างข้อมูลหรือ query จาก DB */];
 ?>
 
 

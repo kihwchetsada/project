@@ -25,9 +25,18 @@ $stmt_comp = $conn->query("SELECT is_open, start_date, end_date FROM competition
 $competition = $stmt_comp->fetch(PDO::FETCH_ASSOC);
 
 $is_registration_open = false;
-// ตรวจสอบว่ามีข้อมูลการแข่งขัน และ สถานะ is_open เป็น 1 (เปิด) หรือไม่
-if ($competition && $competition['is_open'] == 1) {
-    $is_registration_open = true;
+
+if ($competition) {
+    $today = date("Y-m-d");
+
+    // เงื่อนไข: ต้องเปิดรับสมัคร + วันนี้ต้องอยู่ในช่วงเวลา
+    if (
+        $competition['is_open'] == 1 &&
+        $today >= $competition['start_date'] &&
+        $today <= $competition['end_date']
+    ) {
+        $is_registration_open = true;
+    }
 }
 
 if (!$is_registration_open) {
@@ -40,7 +49,7 @@ if (!$is_registration_open) {
         $end_date_th = date("d/m/Y", strtotime($competition['end_date']));
         $message .= '<p style="margin-top: 15px; font-size: 1.1em; color: #333;"><strong>กำหนดการรับสมัคร:</strong> ' . $start_date_th . ' ถึง ' . $end_date_th . '</p>';
     }
-    $message .= '<a href="index.php" style="text-decoration: none; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; margin-top: 20px; display: inline-block;">กลับหน้าหลัก</a>';
+    $message .= '<a href="backend/participant_dashboard.php" style="text-decoration: none; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 5px; margin-top: 20px; display: inline-block;">กลับหน้าหลัก</a>';
 
     die('<div style="text-align: center; margin-top: 50px; font-family: Kanit, sans-serif; color: #555;">' . $message . '</div>');
 }
