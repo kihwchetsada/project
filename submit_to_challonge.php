@@ -6,7 +6,8 @@ if (!isset($_POST['tournament_id'])) {
     die("ไม่ได้เลือกทัวร์นาเมนต์");
 }
 
-$conn = new mysqli("localhost", "root", "", "tournament_registration");
+require_once 'db_connect.php';
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
@@ -34,7 +35,7 @@ if ($teamQuery && $teamQuery->num_rows > 0) {
     die("ไม่พบทีมในทัวร์นาเมนต์นี้");
 }
 
-$api = $conn->query("SELECT api_key FROM challonge_config WHERE id = 1");
+$api = $conn->query("SELECT api_key FROM challong_config WHERE id = 1");
 $api_key = $api->fetch_assoc()['api_key']; 
 if (!$api_key) {
     die("ไม่พบ API Key");

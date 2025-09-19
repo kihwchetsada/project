@@ -53,12 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         'role' => $role
                     ];
 
-                    // เปลี่ยนเส้นทางตาม role
-                    if ($role === 'organizer') {
-                        header("Location: backend/organizer_dashboard.php");
-                    } else {
-                        header("Location: backend/participant_dashboard.php");
-                    }
+                    // --- แก้ไข: เนื่องจากไม่มี organizer แล้ว จึงส่งไปที่ participant dashboard เสมอ ---
+                    header("Location: backend/participant_dashboard.php");
                     exit;
                 } else {
                     $error = "เกิดข้อผิดพลาดขณะสมัครสมาชิก";
@@ -88,10 +84,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             display: flex;
             gap: 15px;
             margin-top: 10px;
+            justify-content: center; /* --- เพิ่ม: จัดให้อยู่ตรงกลาง --- */
         }
         
         .role-option {
-            flex: 1;
+            flex-grow: 0; /* --- แก้ไข: ไม่ต้องยืดเต็ม --- */
+            flex-basis: 50%; /* --- เพิ่ม: กำหนดความกว้างเริ่มต้น --- */
             position: relative;
         }
         
@@ -243,11 +241,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 flex-direction: column;
                 gap: 10px;
             }
+            .role-option {
+                flex-basis: 100%;
+            }
         }
     </style>
 </head>
 <body>
-     
+    
     <div class="login-container">
         <div class="login-logo">
             <i class="fas fa-user-plus"></i>
@@ -275,18 +276,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <div class="role-description">เข้าร่วมการแข่งขัน<br>ส่งผลงาน</div>
                         </div>
                     </div>
-                    <div class="role-option">
-                        <input type="radio" id="organizer" name="role" value="organizer" 
-                               <?php echo (isset($_POST['role']) && $_POST['role'] === 'organizer') ? 'checked' : ''; ?>>
-                        <div class="role-card" data-role="organizer">
-                            <div class="role-icon">
-                                <i class="fas fa-crown"></i>
-                            </div>
-                            <div class="role-title">ผู้จัดการแข่งขัน</div>
-                            <div class="role-description">สร้างการแข่งขัน<br>จัดการรายการ</div>
-                        </div>
                     </div>
-                </div>
             </div>
 
             <div class="form-group">
@@ -573,10 +563,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         function isPasswordStrong(password) {
             return password.length >= 8 &&
-                    /[a-z]/.test(password) &&
-                    /[A-Z]/.test(password) &&
-                    /[0-9]/.test(password) &&
-                    /[^A-Za-z0-9]/.test(password);
+                   /[a-z]/.test(password) &&
+                   /[A-Z]/.test(password) &&
+                   /[0-9]/.test(password) &&
+                   /[^A-Za-z0-9]/.test(password);
         }
 
         // การแสดง/ซ่อน รหัสผ่าน

@@ -201,7 +201,7 @@ function formatStatus($is_approved) {
                 <h2>ยินดีต้อนรับคุณ  <?php echo htmlspecialchars($_SESSION['conn']['username']); ?></h2>
                 <p>จัดการทีมและดูข้อมูลการแข่งขันของคุณได้ที่นี่</p>
             </div>
-             <?php if ($update_success): ?>
+                <?php if ($update_success): ?>
                 <div class="alert alert-success">อัปเดตข้อมูลทีมเรียบร้อยแล้ว! ข้อมูลของท่านจะถูกส่งให้ผู้ดูแลตรวจสอบอีกครั้ง</div>
             <?php elseif (!empty($update_error)): ?>
                 <div class="alert alert-danger"><?php echo htmlspecialchars($update_error); ?></div>
@@ -271,21 +271,21 @@ function formatStatus($is_approved) {
                     <div id="tournament-above_18" class="tournament-page active">
                         <h3>ตารางการแข่งขันรุ่นอายุ 18 ปีขึ้นไป</h3>
                         <?php if (!empty($iframes['above_18'])): ?>
-                            <div class="loading-spinner" id="loading-above-18"><i class="fas fa-spinner"></i><p>กำลังโหลด...</p></div>
-                            <iframe class="tournament-iframe" src="<?= htmlspecialchars($iframes['above_18']) ?>" onload="this.previousElementSibling.style.display='none'"></iframe>
+                            <?php echo $iframes['above_18']; ?>
                         <?php else: ?>
                             <div class="no-iframe-message"><i class="fas fa-exclamation-triangle"></i><p>ยังไม่มีตารางการแข่งขันสำหรับรุ่นนี้</p></div>
                         <?php endif; ?>
                     </div>
+
                     <div id="tournament-under_18" class="tournament-page">
                         <h3>ตารางการแข่งขันรุ่นอายุต่ำกว่า 18 ปี</h3>
                         <?php if (!empty($iframes['under_18'])): ?>
-                             <div class="loading-spinner" id="loading-under-18"><i class="fas fa-spinner"></i><p>กำลังโหลด...</p></div>
-                            <iframe class="tournament-iframe" src="<?= htmlspecialchars($iframes['under_18']) ?>" onload="this.previousElementSibling.style.display='none'"></iframe>
+                            <?php echo $iframes['under_18']; ?>
                         <?php else: ?>
                             <div class="no-iframe-message"><i class="fas fa-exclamation-triangle"></i><p>ยังไม่มีตารางการแข่งขันสำหรับรุ่นนี้</p></div>
                         <?php endif; ?>
                     </div>
+
                 </div>
             </div>
             <div id="content-pending" class="content-section">

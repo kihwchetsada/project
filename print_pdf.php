@@ -76,7 +76,7 @@ foreach ($teams as $team) {
     $pdf->Cell(12, 8, u_to_tis('อายุ'), 1, 0, 'C', true);
     $pdf->Cell(28, 8, u_to_tis('วันเกิด'), 1, 0, 'C', true);
     $pdf->Cell(30, 8, u_to_tis('เบอร์โทร'), 1, 0, 'C', true);
-    $pdf->Cell(40, 8, u_to_tis('เซ็นชื่อ'), 1, 1, 'C', true); // เลข 1 สุดท้ายคือให้ขึ้นบรรทัดใหม่
+    $pdf->Cell(40, 8, u_to_tis('ลงชื่อ'), 1, 1, 'C', true); // เลข 1 สุดท้ายคือให้ขึ้นบรรทัดใหม่
 
     // ดึงข้อมูลและสร้างแถวของสมาชิก
     $sqlMembers = "SELECT * FROM team_members WHERE team_id = :team_id";

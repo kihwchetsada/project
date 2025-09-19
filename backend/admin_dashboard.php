@@ -70,9 +70,6 @@ $user_id  = $_SESSION['conn']['id'];
                     <a href="../view_teams.php"><i class="fas fa-ranking-star"></i><span>ดูทัวร์นาเมนต์</span></a>
                 </li>
                 <li>
-                    <a href="../add_tournament.php"><i class="fas fa-chart-bar"></i><span>จัดการส่งข้อมูลรายชื่อทีม</span></a>
-                </li>
-                <li>
                     <a href="settings.php"><i class="fas fa-cog"></i><span>ตั้งค่า</span></a>
                 </li>
                 <li>

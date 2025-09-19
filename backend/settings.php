@@ -5,14 +5,25 @@ error_reporting(E_ALL);
 
 require '../db_connect.php'; 
 
-// --- 🔒 การจัดการ Session และการตรวจสอบสิทธิ์ ---
-if (!isset($_SESSION['conn']) || $_SESSION['conn']['role'] !== 'participant') {
+// --- จัดการการ Logout ---
+if (isset($_GET['logout']) && $_GET['logout'] == '1') {
+    session_unset();    // ลบตัวแปร session ทั้งหมด
+    session_destroy();  // ทำลาย session
+    header('Location: ../login.php'); // กลับไปหน้า login
+    exit;
+}
+
+// ---  การจัดการ Session และการตรวจสอบสิทธิ์ ---
+// กำหนด role ที่สามารถเข้าถึงหน้านี้ได้
+$allowed_roles = ['admin', 'organizer', 'participant'];
+if (!isset($_SESSION['conn']) || !in_array($_SESSION['conn']['role'], $allowed_roles)) {
     header('Location: ../login.php');
     exit;
 }
 
-// --- ⚙️ ส่วนจัดการข้อมูล (Backend Logic) ---
+// ---  ส่วนจัดการข้อมูล (Backend Logic) ---
 $user_id = $_SESSION['conn']['id'];
+$user_role = $_SESSION['conn']['role']; // ดึง role มาใช้
 $message = '';
 $message_type = '';
 
@@ -95,6 +106,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_settings'])) {
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
+
+// ---  lógica para determinar el enlace del dashboard ---
+$dashboard_link = '';
+if ($user_role === 'admin') {
+    $dashboard_link = 'admin_dashboard.php';
+} elseif ($user_role === 'organizer') {
+    $dashboard_link = 'organizer_dashboard.php';
+} else {
+    $dashboard_link = 'participant_dashboard.php';
+}
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -124,8 +145,12 @@ if (empty($_SESSION['csrf_token'])) {
         <div class="sidebar-header"><div class="logo"><i class="fas fa-trophy"></i><span>ROV Tournament</span></div></div>
         <div class="sidebar-menu">
             <ul>
-                <li><a href="participant_dashboard.php"><i class="fas fa-home"></i><span>หน้าหลัก</span></a></li>
-                <li><a href="Certificate/index.php"><i class="fas fa-ranking-star"></i><span>เกียรติบัตร</span></a></li>
+                <li><a href="<?php echo htmlspecialchars($dashboard_link); ?>"><i class="fas fa-home"></i><span>หน้าหลัก</span></a></li>
+                
+                <?php if ($user_role === 'participant'): ?>
+                    <li><a href="Certificate/index.php"><i class="fas fa-ranking-star"></i><span>เกียรติบัตร</span></a></li>
+                <?php endif; ?>
+                
                 <li><a href="settings.php" class="active"><i class="fas fa-cog"></i><span>ตั้งค่า</span></a></li>
                 <li><a href="?logout=1"><i class="fas fa-sign-out-alt"></i><span>ออกจากระบบ</span></a></li>
             </ul>
@@ -176,7 +201,7 @@ if (empty($_SESSION['csrf_token'])) {
 
                     <div class="form-section">
                         <h3><i class="fas fa-lock"></i> ยืนยันตัวตน</h3>
-                         <div class="form-field">
+                        <div class="form-field">
                             <label for="current_password">กรอกรหัสผ่านปัจจุบันเพื่อบันทึก:</label>
                             <input type="password" id="current_password" name="current_password" required>
                         </div>

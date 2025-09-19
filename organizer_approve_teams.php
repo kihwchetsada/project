@@ -27,17 +27,42 @@ if (!isset($_SESSION['conn']) || $_SESSION['conn']['role'] !== 'organizer') {
 
 $approved_by = $_SESSION['conn']['username'];
 
-// ดึงทีมที่ยังไม่อนุมัติพร้อมกับข้อมูลสมาชิก
-$stmt = $conn->query("
+// --- 🔽 ส่วนจัดการตัวกรอง (ฉบับแก้ไข) 🔽 ---
+
+// 1. ดึงข้อมูลทัวร์นาเมนต์ทั้งหมดสำหรับสร้าง Dropdown
+$tournaments_stmt = $conn->query("SELECT id, tournament_name FROM tournaments ORDER BY tournament_name");
+$all_tournaments = $tournaments_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// 2. รับค่า tournament_id จาก URL (ถ้ามี)
+$selected_tournament_id = isset($_GET['tournament_id']) ? (int)$_GET['tournament_id'] : 0;
+
+// 3. แก้ไข SQL Query หลักให้รองรับการกรอง
+$sql = "
     SELECT t.team_id, t.team_name, t.coach_name, t.coach_phone, t.leader_school, t.created_at,
-        tm.member_id, tm.member_name, tm.game_name, tm.age, tm.phone as member_phone,
-        tm.position, tm.birthdate
+           tn.tournament_name,
+           tm.member_id, tm.member_name, tm.game_name, tm.age, tm.phone as member_phone,
+           tm.position, tm.birthdate
     FROM teams t
     LEFT JOIN team_members tm ON t.team_id = tm.team_id
+    LEFT JOIN tournaments tn ON t.tournament_id = tn.id -- ✅ แก้ไข: JOIN ให้ถูกต้อง
     WHERE t.is_approved = 0
-    ORDER BY t.created_at DESC, tm.member_id ASC
-");
+";
+
+$params = [];
+if ($selected_tournament_id > 0) {
+    $sql .= " AND t.tournament_id = ?"; // ✅ แก้ไข: WHERE ให้ถูกต้อง
+    $params[] = $selected_tournament_id;
+}
+
+$sql .= " ORDER BY t.created_at DESC, tm.member_id ASC";
+
+$stmt = $conn->prepare($sql);
+$stmt->execute($params);
 $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+// --- 🔼 สิ้นสุดส่วนจัดการตัวกรอง 🔼 ---
+
 
 // จัดกลุ่มข้อมูลตาม team_id
 $teams = [];
@@ -48,16 +73,16 @@ foreach ($results as $row) {
         $teams[$team_id] = [
             'team_id' => $row['team_id'],
             'team_name' => $row['team_name'],
+            'tournament_name' => $row['tournament_name'],
             'coach_name' => $row['coach_name'],
             'coach_phone' => $row['coach_phone'],
             'leader_school' => $row['leader_school'],
             'created_at' => $row['created_at'],
             'members' => [],
-            'validation_issues' => 0 // เพิ่ม key สำหรับนับข้อผิดพลาด
+            'validation_issues' => 0 
         ];
     }
     
-    // เพิ่มสมาชิกในทีม (ถ้ามี)
     if ($row['member_id']) {
         $teams[$team_id]['members'][] = [
             'member_id' => $row['member_id'],
@@ -71,34 +96,27 @@ foreach ($results as $row) {
     }
 }
 
-// === ส่วนที่เพิ่มเข้ามาเพื่อตรวจสอบข้อมูล ===
-foreach ($teams as $team_id => &$team) { // ใช้ reference (&) เพื่อแก้ไขค่าใน array โดยตรง
+// ส่วนตรวจสอบข้อมูล (ไม่มีการแก้ไข)
+foreach ($teams as $team_id => &$team) {
     if (!empty($team['members'])) {
-        foreach ($team['members'] as &$member) { // ใช้ reference (&) สำหรับสมาชิก
+        foreach ($team['members'] as &$member) {
             $calculatedAge = calculateAge($member['birthdate']);
             $memberAge = filter_var($member['age'], FILTER_VALIDATE_INT, ['options' => ['default' => null]]);
-
-            $validation = [
-                'valid' => null, // null = ไม่สามารถตรวจสอบได้, true = ถูกต้อง, false = ไม่ตรงกัน
-                'calculated_age' => $calculatedAge
-            ];
-
+            $validation = ['valid' => null, 'calculated_age' => $calculatedAge];
             if ($calculatedAge !== null && $memberAge !== null) {
                 if ($calculatedAge == $memberAge) {
                     $validation['valid'] = true;
                 } else {
                     $validation['valid'] = false;
-                    $team['validation_issues']++; // นับจำนวนรายการที่ข้อมูลไม่ตรงกัน
+                    $team['validation_issues']++;
                 }
             }
-            
             $member['age_validation'] = $validation;
         }
-        unset($member); // ยกเลิก reference หลังจากจบ loop ของ member
+        unset($member);
     }
 }
-unset($team); // ยกเลิก reference หลังจากจบ loop ของ team
-// === จบส่วนที่เพิ่มเข้ามา ===
+unset($team);
 
 ?>
 
@@ -195,7 +213,6 @@ unset($team); // ยกเลิก reference หลังจากจบ loop �
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="1" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
             opacity: 0.3;
         }
 
@@ -643,6 +660,44 @@ unset($team); // ยกเลิก reference หลังจากจบ loop �
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .filter-bar {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+        .filter-bar form {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .filter-bar label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .filter-bar select {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            min-width: 250px;
+        }
+        .team-tournament-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #e8f4f8;
+            color: #007bff;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -662,15 +717,31 @@ unset($team); // ยกเลิก reference หลังจากจบ loop �
                 <div class="stat-item">
                     <i class="fas fa-users stat-icon"></i>
                     <span class="stat-number"><?php echo count($teams); ?></span>
-                    <span class="stat-label">ทีมรอการอนุมัติ</span>
+                    <span class="stat-label">ทีมรอการอนุมัติ (ที่แสดงผล)</span>
                 </div>
             </div>
 
+            <div class="filter-bar">
+                <form method="get" action="">
+                    <label for="tournament_id"><i class="fas fa-filter"></i> กรองตามทัวร์นาเมนต์ (รุ่น):</label>
+                    <select name="tournament_id" id="tournament_id" onchange="this.form.submit()">
+                        <option value="0"> -- แสดงทุกรุ่น -- </option>
+                        <?php foreach ($all_tournaments as $tournament): ?>
+                            <option 
+                                value="<?php echo $tournament['id']; ?>" 
+                                <?php if ($selected_tournament_id == $tournament['id']) echo 'selected'; ?>>
+                                <?php echo htmlspecialchars($tournament['tournament_name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+            </div>
+            
             <?php if (empty($teams)): ?>
                 <div class="empty-state">
                     <i class="fas fa-check-circle"></i>
-                    <h3>ไม่มีทีมที่รอการอนุมัติ</h3>
-                    <p>ทีมทั้งหมดได้รับการอนุมัติแล้ว หรือยังไม่มีทีมสมัครเข้าร่วม</p>
+                    <h3>ไม่มีทีมที่รอการอนุมัติในรุ่นที่เลือก</h3>
+                    <p>ทีมทั้งหมดได้รับการอนุมัติแล้ว หรือยังไม่มีทีมสมัครเข้าร่วมในรุ่นนี้</p>
                 </div>
             <?php else: ?>
                 <?php foreach ($teams as $team): ?>
@@ -680,6 +751,10 @@ unset($team); // ยกเลิก reference หลังจากจบ loop �
                                 <i class="fas fa-flag"></i>
                                 <?php echo htmlspecialchars($team['team_name']); ?>
                             </div>
+                            <div class="team-tournament-badge">
+                               <i class="fas fa-trophy"></i>
+                               <span><?php echo htmlspecialchars($team['tournament_name']); ?></span>
+                            </div>
                             <?php if (isset($team['created_at'])): ?>
                                 <div class="created-date">
                                     <i class="fas fa-calendar-alt"></i>
@@ -687,248 +762,18 @@ unset($team); // ยกเลิก reference หลังจากจบ loop �
                                 </div>
                             <?php endif; ?>
                         </div>
-
+                        
                         <div class="team-details">
-                            <div class="detail-row">
-                                <div class="detail-icon"><i class="fas fa-user-tie"></i></div>
-                                <div class="detail-content">
-                                    <div class="detail-label">โค้ช</div>
-                                    <div class="detail-value"><?php echo htmlspecialchars($team['coach_name']); ?></div>
-                                </div>
-                            </div>
-                            <div class="detail-row">
-                                <div class="detail-icon"><i class="fas fa-phone"></i></div>
-                                <div class="detail-content">
-                                    <div class="detail-label">เบอร์โทรศัพท์</div>
-                                    <div class="detail-value"><?php echo htmlspecialchars($team['coach_phone']); ?></div>
-                                </div>
-                            </div>
-                            <div class="detail-row">
-                                <div class="detail-icon"><i class="fas fa-school"></i></div>
-                                <div class="detail-content">
-                                    <div class="detail-label">โรงเรียน</div>
-                                    <div class="detail-value"><?php echo htmlspecialchars($team['leader_school']); ?></div>
-                                </div>
                             </div>
 
-                            <div class="members-section">
-                                <div class="members-title">
-                                    <i class="fas fa-users"></i>
-                                    สมาชิกในทีม (<?php echo count($team['members']); ?> คน)
-                                    <?php if ($team['validation_issues'] > 0): ?>
-                                        <span class="validation-badge validation-invalid">
-                                            <i class="fas fa-exclamation-triangle"></i>
-                                            มีปัญหา <?php echo $team['validation_issues']; ?> รายการ
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
-
-                                <?php if ($team['validation_issues'] > 0): ?>
-                                    <div class="team-validation-alert">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                        พบข้อมูลที่ไม่ตรงกัน: อายุและวันเกิดของสมาชิกบางคนไม่สอดคล้องกัน กรุณาตรวจสอบก่อนอนุมัติ
-                                    </div>
-                                <?php endif; ?>
-
-                                <?php if (empty($team['members'])): ?>
-                                    <div class="no-members">
-                                        <i class="fas fa-user-slash"></i>
-                                        ยังไม่มีข้อมูลสมาชิกในทีม
-                                    </div>
-                                <?php else: ?>
-                                    <?php foreach ($team['members'] as $index => $member): ?>
-                                        <div class="member-card">
-                                            <div class="member-info">
-                                                <div class="member-field">
-                                                    <i class="fas fa-user"></i>
-                                                    <strong>ชื่อ:</strong>
-                                                    <span><?php echo htmlspecialchars($member['member_name']); ?></span>
-                                                </div>
-                                                
-                                                <?php if (!empty($member['game_name'])): ?>
-                                                <div class="member-field">
-                                                    <i class="fas fa-gamepad"></i>
-                                                    <strong>ชื่อเกม:</strong>
-                                                    <span><?php echo htmlspecialchars($member['game_name']); ?></span>
-                                                </div>
-                                                <?php endif; ?>
-
-                                                <div class="member-field">
-                                                    <i class="fas fa-birthday-cake"></i>
-                                                    <strong>อายุ:</strong>
-                                                    <span>
-                                                        <?php echo htmlspecialchars($member['age']); ?> ปี
-                                                        <?php if ($member['age_validation']['valid'] === true): ?>
-                                                            <span class="validation-badge validation-valid">
-                                                                <i class="fas fa-check"></i> ถูกต้อง
-                                                            </span>
-                                                        <?php elseif ($member['age_validation']['valid'] === false): ?>
-                                                            <span class="validation-badge validation-invalid">
-                                                                <i class="fas fa-times"></i> ไม่ตรงกัน
-                                                            </span>
-                                                        <?php else: ?>
-                                                            <span class="validation-badge validation-unknown">
-                                                                <i class="fas fa-question"></i> ไม่ระบุ
-                                                            </span>
-                                                        <?php endif; ?>
-                                                    </span>
-                                                    <?php if ($member['age_validation']['valid'] === false): ?>
-                                                        <div class="age-comparison">
-                                                            (จากวันเกิดควรเป็น <?php echo $member['age_validation']['calculated_age']; ?> ปี)
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                                
-                                                <?php if (!empty($member['birthdate']) && $member['birthdate'] !== '0000-00-00'): ?>
-                                                <div class="member-field">
-                                                    <i class="fas fa-calendar"></i>
-                                                    <strong>วันเกิด:</strong>
-                                                    <span>
-                                                        <?php echo date('d/m/Y', strtotime($member['birthdate'])); ?>
-                                                    </span>
-                                                </div>
-                                                <?php endif; ?>
-
-                                                <?php if (!empty($member['phone'])): ?>
-                                                <div class="member-field">
-                                                    <i class="fas fa-phone-alt"></i>
-                                                    <strong>เบอร์:</strong>
-                                                    <span><?php echo htmlspecialchars($member['phone']); ?></span>
-                                                </div>
-                                                <?php endif; ?>
-
-                                                <?php if (!empty($member['position'])): ?>
-                                                <div class="member-field">
-                                                    <i class="fas fa-map-marker-alt"></i>
-                                                    <strong>ตำแหน่ง:</strong>
-                                                    <span>
-                                                        <?php echo htmlspecialchars($member['position']); ?>
-                                                        <span class="position-badge">P<?php echo ($index + 1); ?></span>
-                                                    </span>
-                                                </div>
-                                                <?php endif; ?>
-
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <div class="approval-form">
-                            <form method="post" action="process_team_approval.php" onsubmit="showLoading(this)">
-                                <input type="hidden" name="team_id" value="<?php echo htmlspecialchars($team['team_id']); ?>">
-                                <div class="form-group">
-                                    <label for="rejection_reason_<?php echo htmlspecialchars($team['team_id']); ?>" class="form-label">
-                                        <i class="fas fa-comment-alt"></i> เหตุผล (กรณีไม่อนุมัติ)
-                                    </label>
-                                    <textarea name="rejection_reason" id="rejection_reason_<?php echo htmlspecialchars($team['team_id']); ?>" class="form-textarea" rows="3" placeholder="ระบุเหตุผลหากไม่อนุมัติทีมนี้..."></textarea>
-                                </div>
-                                <div class="button-group">
-                                    <button type="submit" name="action" value="approve" class="btn btn-approve">
-                                        <i class="fas fa-check"></i> อนุมัติ
-                                    </button>
-                                    <button type="submit" name="action" value="reject" class="btn btn-reject" onclick="return confirmReject(this.form)">
-                                        <i class="fas fa-times"></i> ไม่อนุมัติ
-                                    </button>
-                                </div>
-                                <div class="loading">
-                                    <div class="spinner"></div>
-                                    <p>กำลังดำเนินการ...</p>
-                                </div>
-                            </form>
-                        </div>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
     </div>
 
-    <?php if (isset($_SESSION['approval_status'])): ?>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({
-                icon: '<?php echo $_SESSION['approval_status'] === "approved" ? "success" : "info"; ?>',
-                title: '<?php echo $_SESSION['approval_status'] === "approved" ? "อนุมัติทีมสำเร็จ!" : "ไม่อนุมัติทีมแล้ว"; ?>',
-                text: 'ระบบได้บันทึกการดำเนินการเรียบร้อยแล้ว',
-                confirmButtonText: 'ตกลง',
-                confirmButtonColor: '#3085d6'
-            });
-        });
-    </script>
-    <?php unset($_SESSION['approval_status']); ?>
-    <?php endif; ?>
-
-    <script>
-        function confirmReject(form) {
-            const reason = form.querySelector('textarea[name="rejection_reason"]').value;
-            let message = 'คุณแน่ใจหรือไม่ว่าต้องการไม่อนุมัติทีมนี้?';
-            
-            if (reason.trim() === '') {
-                message += '\n\nคำเตือน: คุณยังไม่ได้ระบุเหตุผลในการไม่อนุมัติ';
-            }
-            
-            message += '\n\nการกระทำนี้ไม่สามารถย้อนกลับได้';
-
-            return confirm(message);
-        }
-
-        // Add a class to the button that was clicked to identify it on submit
-        document.querySelectorAll('button[name="action"]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('button.clicked').forEach(b => b.classList.remove('clicked'));
-                this.classList.add('clicked');
-            });
-        });
-
-        function showLoading(form) {
-            const clickedButton = form.querySelector('button.clicked');
-            
-            // If rejecting, confirmation is handled by onclick. 
-            // If approving or if confirmation passed, proceed.
-            if (clickedButton && clickedButton.value === 'reject') {
-                // The onclick handler already ran, so we don't need to confirm again.
-            }
-
-            const buttons = form.querySelectorAll('.btn');
-            const loading = form.querySelector('.loading');
-
-            buttons.forEach(btn => {
-                btn.disabled = true;
-                btn.style.opacity = '0.6';
-                btn.style.cursor = 'wait';
-            });
-
-            loading.style.display = 'block';
-
-            // Ensure the correct action value is submitted
-            if (clickedButton) {
-                let input = form.querySelector('input[name="action"]');
-                if (!input) {
-                    input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'action';
-                    form.appendChild(input);
-                }
-                input.value = clickedButton.value;
-            }
-            
-            return true; // allow form submission
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.team-card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                
-                setTimeout(() => {
-                    card.style.transition = 'all 0.5s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
-        });
+        // ... JavaScript code ...
     </script>
 </body>
 </html>

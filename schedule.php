@@ -20,7 +20,6 @@ while ($row = $stmt->fetch()) {
     <link rel="stylesheet" href="css/schedule.css">
 </head>
 <body>
-    <!-- Animated background particles -->
     <div class="particles">
         <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
         <div class="particle" style="left: 20%; animation-delay: 2s;"></div>
@@ -59,7 +58,6 @@ while ($row = $stmt->fetch()) {
             </p>
         </div>
 
-        <!-- รุ่นอายุไม่เกิน 18 ปี -->
         <div class="tournament-section">
             <div class="section-header">
                 <h2 class="section-title">
@@ -71,18 +69,9 @@ while ($row = $stmt->fetch()) {
             <div class="iframe-wrapper">
                 <div class="iframe-container">
                     <?php if (!empty($iframes['under_18'])): ?>
-
-                        <div class="loading-overlay" id="loading-under-18">
-                            <div class="loading-spinner"></div>
-                            <div class="loading-text">กำลังโหลดตารางการแข่งขัน...</div>
-                        </div>
-
-                        <iframe 
-                            src="<?= htmlspecialchars($iframes['under_18']) ?>" 
-                            onload="document.getElementById('loading-under-18').style.display='none'"
-                            title="ตารางการแข่งขันรุ่นอายุไม่เกิน 18 ปี">
-                        </iframe>
-                    <?php else: ?>
+                        
+                        <?php echo stripslashes($iframes['under_18']); ?>
+                        <?php else: ?>
                         <div class="no-schedule">
                             <i class="fas fa-calendar-times"></i>
                             <p>ยังไม่มีตารางการแข่งขันสำหรับรุ่นอายุไม่เกิน 18 ปี</p>
@@ -93,7 +82,6 @@ while ($row = $stmt->fetch()) {
             </div>
         </div>
 
-        <!-- รุ่นอายุตั้งแต่ 18 ปีขึ้นไป --> <!-- ถ้าไม่มีให้แสดงไม่มีหรือไม่แสดง -->
         <div class="tournament-section">
             <div class="section-header">
                 <h2 class="section-title">
@@ -105,17 +93,9 @@ while ($row = $stmt->fetch()) {
             <div class="iframe-wrapper">
                 <div class="iframe-container">
                     <?php if (!empty($iframes['above_18'])): ?>
-                        <div class="loading-overlay" id="loading-above-18">
-                            <div class="loading-spinner"></div>
-                            <div class="loading-text">กำลังโหลดตารางการแข่งขัน...</div>
-                        </div>
 
-                        <iframe 
-                            src="<?= htmlspecialchars($iframes['above_18']) ?>" 
-                            onload="document.getElementById('loading-above-18').style.display='none'"
-                            title="ตารางการแข่งขันรุ่นอายุตั้งแต่ 18 ปีขึ้นไป">
-                        </iframe> 
-                    <?php else: ?>
+                        <?php echo stripslashes($iframes['above_18']); ?>
+                        <?php else: ?>
                         <div class="no-schedule">
                             <i class="fas fa-calendar-times"></i>
                             <p>ยังไม่มีตารางการแข่งขันสำหรับรุ่นอายุตั้งแต่ 18 ปีขึ้นไป</p>

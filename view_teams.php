@@ -63,9 +63,9 @@ if ($result && $result->num_rows > 0) {
         </div>
 
         <div class="nav-container">
-            <a href="add_team.php" class="nav-btn primary">
+            <a href="add_tournament.php" class="nav-btn primary">
                 <i class="fas fa-plus-circle"></i>
-                Add New Team
+                Add New Tournament
             </a>
             <a href="select_tournament.php" class="nav-btn">
                 <i class="fas fa-rocket"></i>
@@ -82,9 +82,9 @@ if ($result && $result->num_rows > 0) {
                 <p style="color: rgba(255,255,255,0.5); margin-bottom: 30px;">
                     Start building your tournament by adding the first team!
                 </p>
-                <a href="add_team.php" class="nav-btn primary">
+                <a href="add_tournament.php" class="nav-btn primary">
                     <i class="fas fa-plus-circle"></i>
-                    Create First Team
+                    Create First Tournament
                 </a>
             </div>
         <?php else: ?>
