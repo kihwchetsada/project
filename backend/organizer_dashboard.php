@@ -59,22 +59,13 @@ $user_id  = $_SESSION['conn']['id'];
         <div class="sidebar-menu">
             <ul>
                 <li>
-                    <a href="organizer_dashboard.php"><i class="fas fa-home"></i><span>หน้าหลัก</span></a>
-                </li>
-                <li>
-                    <a href="organizer_view_the_teams.php"><i class="fas fa-users"></i><span>จัดการทีม</span></a>
+                    <a href="../backend/organizer_dashboard.php"><i class="fas fa-home"></i><span>หน้าหลัก</span></a>
                 </li>
                 <li>
                     <a href="Manage_certificates.php"><i class="bi bi-collection-fill"></i><span>จัดการเกียรติบัตร</span></a>
                 </li>
                 <li>
-                    <a href="https://challonge.com/th/dashboard"><i class="fas fa-calendar-days"></i><span>จัดตารางการแข่งขัน</span></a>
-                </li>
-                <li>
                     <a href="../select_tournament_print.php"><i class="fas fa-ranking-star"></i><span>พิมพ์รายชื่อทีม</span></a>
-                </li>
-                <li>
-                    <a href="stats.php"><i class="fas fa-chart-bar"></i><span>สถิติ</span></a>
                 </li>
                 <li>
                     <a href="settings.php"><i class="fas fa-cog"></i><span>ตั้งค่า</span></a>
@@ -113,10 +104,9 @@ $user_id  = $_SESSION['conn']['id'];
 
             <!-- ส่วนการกรอง -->
             <div class="schedule-filters">
-                <button class="filter-button" data-filter="all" onclick="location.href='../organizer_approve_teams.php'">รายชื่อทีมที่รออนุมัติ</button>
+                <button class="filter-button" data-filter="all" onclick="location.href='organizer_approve_teams.php'">รายชื่อทีมที่รออนุมัติ</button>
                 <button class="filter-button" data-filter="completed" onclick="location.href='../approved_teams.php'">รายชื่อทีมที่อนุมัติแล้ว</button>
                 <button class="filter-button" data-filter="upcoming" onclick="location.href='../og_view_announcement.php'">จัดการข่าวสาร</button>
-                <button class="filter-button" data-filter="pending" onclick="location.href='../add_announcement.php'">เพิ่มข่าวสาร</button>
             </div>
 
 

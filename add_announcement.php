@@ -5,6 +5,7 @@ ini_set('display_errors', 1);
 
 require 'db_connect.php';
 
+// --- (ส่วนนี้ไม่มีการแก้ไข) ---
 $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 $conn->set_charset("utf8");
 if ($conn->connect_error) {
@@ -12,14 +13,17 @@ if ($conn->connect_error) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // ▼▼▼ 1. เพิ่มการดึง user_id จาก session ▼▼▼
+    $user_id = $_SESSION['conn']['id']; 
+
     $title = trim($_POST['title']);
     $description = trim($_POST['description']);
     $category = trim($_POST['category']);
     $priority = trim($_POST['priority']);
-    $status = 'active'; // ใส่สถานะเริ่มต้น
-    $imagePath = null;  // ตั้งค่าเริ่มต้น
+    $status = 'active'; 
+    $imagePath = null;
 
-    // ตรวจสอบและจัดการไฟล์รูปภาพ
+    // --- (ส่วนจัดการอัปโหลดรูปภาพไม่มีการแก้ไข) ---
     if (!empty($_FILES['image']['name'])) {
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
         $maxSize = 5 * 1024 * 1024; // 5MB
@@ -28,10 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fileSize = $_FILES['image']['size'];
         $tmpName = $_FILES['image']['tmp_name'];
         $fileName = uniqid() . '_' . basename($_FILES['image']['name']);
-        $targetDir = '../uploads/';
+        $targetDir = 'uploads/';
         $targetPath = $targetDir . $fileName;
 
-        // ตรวจสอบประเภทไฟล์และขนาด
         if (in_array($fileType, $allowedTypes) && $fileSize <= $maxSize) {
             if (!is_dir($targetDir)) {
                 mkdir($targetDir, 0777, true);
@@ -47,8 +50,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    $stmt = $conn->prepare("INSERT INTO announcements (title, description, category, priority, image_path, status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-    $stmt->bind_param("ssssss", $title, $description, $category, $priority, $imagePath, $status);
+    // ▼▼▼ 2. เพิ่ม user_id ในคำสั่ง INSERT ▼▼▼
+    $stmt = $conn->prepare("INSERT INTO announcements (title, description, category, priority, image_path, status, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+    
+    // ▼▼▼ 3. เพิ่ม "i" และ $user_id ใน bind_param ▼▼▼
+    $stmt->bind_param("ssssssi", $title, $description, $category, $priority, $imagePath, $status, $user_id);
 
     if ($stmt->execute()) {
         $success = "✅ บันทึกข้อมูลเรียบร้อยแล้ว";
@@ -70,7 +76,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="elegant-bg min-h-screen py-8 px-4">
     <div class="max-w-4xl mx-auto">
-        <!-- Header Section -->
         <div class="text-center mb-12 fade-in">
             <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-lg mb-6">
                 <i class="fas fa-bullhorn text-2xl text-blue-600"></i>
@@ -79,8 +84,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p class="text-lg text-gray-600">สร้างประกาศที่มีประสิทธิภาพและน่าสนใจ</p>
         </div>
 
-        <!-- Main Form Card -->
         <div class="bg-white rounded-3xl card-shadow p-8 md:p-12 slide-up">
+            <?php if (!empty($success)): ?>
+                <div class="bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-xl mb-8 flex items-center">
+                    <i class="fas fa-check-circle mr-3 text-lg"></i>
+                    <span><?php echo $success; ?></span>
+                </div>
+            <?php endif; ?>
             <?php if (!empty($error)): ?>
                 <div class="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl mb-8 flex items-center">
                     <i class="fas fa-exclamation-triangle mr-3 text-lg"></i>
@@ -89,7 +99,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form method="POST" enctype="multipart/form-data" class="space-y-8">
-                <!-- Title Field -->
                 <div class="space-y-2">
                     <label class="flex items-center text-gray-700 font-semibold text-lg">
                         <span class="icon-wrapper">
@@ -102,7 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         placeholder="กรอกหัวข้อประกาศที่ชัดเจนและน่าสนใจ">
                 </div>
 
-                <!-- Description Field -->
                 <div class="space-y-2">
                     <label class="flex items-center text-gray-700 font-semibold text-lg">
                         <span class="icon-wrapper">
@@ -115,7 +123,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             placeholder="อธิบายรายละเอียดประกาศอย่างชัดเจน"></textarea>
                 </div>
 
-                <!-- Category Field -->
                 <div class="space-y-2">
                     <label class="flex items-center text-gray-700 font-semibold text-lg">
                         <span class="icon-wrapper">
@@ -132,7 +139,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </select>
                 </div>
 
-                <!-- Priority Field -->
                 <div class="space-y-4">
                     <label class="flex items-center text-gray-700 font-semibold text-lg">
                         <span class="icon-wrapper">
@@ -170,7 +176,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <!-- Image Upload Field -->
                 <div class="space-y-4">
                     <label class="flex items-center text-gray-700 font-semibold text-lg">
                         <span class="icon-wrapper">
@@ -211,7 +216,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <!-- Submit Section -->
                 <div class="pt-8 border-t border-gray-100">
                     <div class="flex flex-col sm:flex-row gap-4">
                         <button type="submit" class="btn-primary flex-1 text-white px-8 py-4 rounded-xl font-semibold text-lg flex items-center justify-center">

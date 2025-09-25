@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_team'])) {
         if (empty($team_id) || empty($team_name) || empty($coach_name) || empty($coach_phone)) {
             $update_error = 'กรุณากรอกข้อมูลทีมให้ครบถ้วน (ชื่อทีม, ผู้ควบคุม, เบอร์โทร)';
         } else {
-             try {
+            try {
                 $conn->beginTransaction();
                 // ✅ FIX: แก้ไข WHERE id เป็น WHERE team_id
                 $stmt = $conn->prepare("UPDATE teams SET team_name = :team_name, coach_name = :coach_name, coach_phone = :coach_phone, leader_school = :leader_school, updated_at = NOW(), is_approved = 0 WHERE team_id = :team_id AND user_id = :user_id");
@@ -55,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_team'])) {
                             $stmt_member = $conn->prepare("UPDATE team_members SET member_name = ?, game_name = ?, age = ?, phone = ?, position = ?, birthdate = ? WHERE member_id = ? AND team_id = ?");
                             $stmt_member->execute([$member_name, ...$member_data, $member_id, $team_id]);
                         } else {
-                             $stmt_member = $conn->prepare("INSERT INTO team_members (team_id, member_name, game_name, age, phone, position, birthdate) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                             $stmt_member->execute([$team_id, $member_name, ...$member_data]);
+                            $stmt_member = $conn->prepare("INSERT INTO team_members (team_id, member_name, game_name, age, phone, position, birthdate) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                            $stmt_member->execute([$team_id, $member_name, ...$member_data]);
                         }
                     } elseif (!empty($member_id)) {
                         $stmt_delete = $conn->prepare("DELETE FROM team_members WHERE member_id = ? AND team_id = ?");
@@ -177,6 +177,30 @@ function formatStatus($is_approved) {
         .rejection-reason-box { text-align: left; max-width: 600px; margin: 20px auto; padding: 15px; background-color: #ffcdd2; border: 1px solid #ef9a9a; border-radius: 8px; color: #c62828; }
         .rejection-reason-box p { margin-top: 5px; word-wrap: break-word; }
         .call-to-action { margin-top: 20px; font-weight: 500; }
+        
+        /* --- CSS ที่เพิ่มเข้ามาใหม่ --- */
+        .member-card.hidden {
+            display: none;
+        }
+        .add-member-btn {
+            background-color: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-top: 15px;
+            transition: background-color 0.2s;
+        }
+        .add-member-btn:hover {
+            background-color: #059669;
+        }
+        .add-member-btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -227,21 +251,30 @@ function formatStatus($is_approved) {
                                 <div class="form-field"><label for="leader_school">สังกัด/โรงเรียน:</label><input type="text" id="leader_school" name="leader_school" value="<?php echo htmlspecialchars($team['leader_school']); ?>"></div>
                             </div>
                         </div>
+                        
                         <div class="form-section">
-                             <h3><i class="fas fa-user-friends"></i> รายชื่อสมาชิกในทีม</h3>
-                             <?php for ($i = 1; $i <= 8; $i++): $member = $members[$i - 1] ?? null; ?>
+                            <h3><i class="fas fa-user-friends"></i> รายชื่อสมาชิกในทีม</h3>
+                            
+                            <?php
+                            $max_members = 8;
+                            $existing_member_count = count($members);
+
+                            // 1. แสดงสมาชิกที่มีข้อมูลอยู่แล้ว
+                            foreach ($members as $index => $member):
+                                $i = $index + 1;
+                            ?>
                                 <div class="member-card">
                                     <h4>สมาชิกคนที่ <?php echo $i; ?></h4>
                                     <input type="hidden" name="member_id_<?php echo $i; ?>" value="<?php echo $member['member_id'] ?? ''; ?>">
                                     <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-                                        <div class="form-field"><label for="member_name_<?php echo $i; ?>">ชื่อ-นามสกุล:</label><input type="text" id="member_name_<?php echo $i; ?>" name="member_name_<?php echo $i; ?>" value="<?php echo htmlspecialchars($member['member_name'] ?? ''); ?>"></div>
+                                        <div class="form-field"><label for="member_name_<?php echo $i; ?>">ชื่อ-นามสกุล:</label><input type="text" id="member_name_<?php echo $i; ?>" name="member_name_<?php echo $i; ?>" value="<?php echo htmlspecialchars($member['member_name'] ?? ''); ?>" required></div>
                                         <div class="form-field"><label for="member_game_name_<?php echo $i; ?>">ชื่อในเกม:</label><input type="text" id="member_game_name_<?php echo $i; ?>" name="member_game_name_<?php echo $i; ?>" value="<?php echo htmlspecialchars($member['game_name'] ?? ''); ?>"></div>
                                         <div class="form-field"><label for="member_age_<?php echo $i; ?>">อายุ:</label><input type="number" id="member_age_<?php echo $i; ?>" name="member_age_<?php echo $i; ?>" value="<?php echo htmlspecialchars($member['age'] ?? ''); ?>"></div>
                                         <div class="form-field"><label for="member_phone_<?php echo $i; ?>">เบอร์โทร:</label><input type="tel" id="member_phone_<?php echo $i; ?>" name="member_phone_<?php echo $i; ?>" value="<?php echo htmlspecialchars($member['phone'] ?? ''); ?>"></div>
                                         <div class="form-field"><label for="member_birthdate_<?php echo $i; ?>">วันเกิด:</label><input type="date" id="member_birthdate_<?php echo $i; ?>" name="member_birthdate_<?php echo $i; ?>" value="<?php echo htmlspecialchars($member['birthdate'] ?? ''); ?>"></div>
                                         <div class="form-field"><label for="member_position_<?php echo $i; ?>">ตำแหน่ง:</label>
                                             <select name="member_position_<?php echo $i; ?>" id="member_position_<?php echo $i; ?>">
-                                                 <option value="">เลือกตำแหน่ง</option>
+                                                <option value="">เลือกตำแหน่ง</option>
                                                 <?php $positions = ["เลน Dark Slayer / ออฟเลน", "เลนกลาง / เมท", "เลน Abyssal Dragon / แครี่", "ซัพพอร์ต / แทงค์", "ฟาร์มป่า / แอสซาซิน"];
                                                 foreach ($positions as $pos) {
                                                     $selected = (isset($member['position']) && $member['position'] == $pos) ? 'selected' : '';
@@ -251,8 +284,37 @@ function formatStatus($is_approved) {
                                         </div>
                                     </div>
                                 </div>
-                             <?php endfor; ?>
+                            <?php endforeach; ?>
+
+                            <?php
+                            // 2. สร้างฟอร์มสำหรับสมาชิกใหม่ (ซ่อนไว้ก่อน)
+                            for ($i = $existing_member_count + 1; $i <= $max_members; $i++):
+                            ?>
+                                <div class="member-card hidden" id="member_card_<?php echo $i; ?>">
+                                    <h4>สมาชิกคนที่ <?php echo $i; ?> (ใหม่)</h4>
+                                    <input type="hidden" name="member_id_<?php echo $i; ?>" value="">
+                                    <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                                        <div class="form-field"><label for="member_name_<?php echo $i; ?>">ชื่อ-นามสกุล:</label><input type="text" id="member_name_<?php echo $i; ?>" name="member_name_<?php echo $i; ?>" value=""></div>
+                                        <div class="form-field"><label for="member_game_name_<?php echo $i; ?>">ชื่อในเกม:</label><input type="text" id="member_game_name_<?php echo $i; ?>" name="member_game_name_<?php echo $i; ?>" value=""></div>
+                                        <div class="form-field"><label for="member_age_<?php echo $i; ?>">อายุ:</label><input type="number" id="member_age_<?php echo $i; ?>" name="member_age_<?php echo $i; ?>" value=""></div>
+                                        <div class="form-field"><label for="member_phone_<?php echo $i; ?>">เบอร์โทร:</label><input type="tel" id="member_phone_<?php echo $i; ?>" name="member_phone_<?php echo $i; ?>" value=""></div>
+                                        <div class="form-field"><label for="member_birthdate_<?php echo $i; ?>">วันเกิด:</label><input type="date" id="member_birthdate_<?php echo $i; ?>" name="member_birthdate_<?php echo $i; ?>" value=""></div>
+                                        <div class="form-field"><label for="member_position_<?php echo $i; ?>">ตำแหน่ง:</label>
+                                            <select name="member_position_<?php echo $i; ?>" id="member_position_<?php echo $i; ?>">
+                                                <option value="">เลือกตำแหน่ง</option>
+                                                <?php $positions = ["เลน Dark Slayer / ออฟเลน", "เลนกลาง / เมท", "เลน Abyssal Dragon / แครี่", "ซัพพอร์ต / แทงค์", "ฟาร์มป่า / แอสซาซิน"];
+                                                foreach ($positions as $pos) {
+                                                    echo "<option value=\"$pos\">$pos</option>";
+                                                }?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endfor; ?>
+                            
+                            <button type="button" id="addMemberBtn" class="add-member-btn"><i class="fas fa-plus-circle"></i> เพิ่มสมาชิก</button>
                         </div>
+                        
                         <div style="text-align: center;">
                             <button type="submit" name="update_team" class="submit-button"><i class="fas fa-save"></i> บันทึกการเปลี่ยนแปลง</button>
                         </div>
@@ -335,6 +397,40 @@ function formatStatus($is_approved) {
             document.querySelectorAll('.tournament-tab').forEach(t => t.classList.remove('active'));
             event.currentTarget.classList.add('active');
         }
+
+        // --- JavaScript ที่เพิ่มเข้ามาใหม่ ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const addMemberBtn = document.getElementById('addMemberBtn');
+            if (!addMemberBtn) return;
+
+            let currentMemberCount = document.querySelectorAll('.member-card:not(.hidden)').length;
+            const maxMembers = 8;
+
+            function updateButtonVisibility() {
+                if (currentMemberCount >= maxMembers) {
+                    addMemberBtn.style.display = 'none'; // ซ่อนปุ่มเมื่อสมาชิกเต็ม
+                } else {
+                    addMemberBtn.style.display = 'inline-block'; // แสดงปุ่มถ้ายังไม่เต็ม
+                }
+            }
+
+            addMemberBtn.addEventListener('click', function() {
+                const nextMemberCard = document.querySelector('.member-card.hidden');
+                if (nextMemberCard) {
+                    nextMemberCard.classList.remove('hidden');
+                    // ทำให้ช่องชื่อ-นามสกุลเป็น required เมื่อแสดงฟอร์ม
+                    const nameInput = nextMemberCard.querySelector('input[name^="member_name_"]');
+                    if(nameInput) {
+                        nameInput.required = true;
+                    }
+                    currentMemberCount++;
+                    updateButtonVisibility();
+                }
+            });
+            
+            // เรียกใช้ฟังก์ชันครั้งแรกเพื่อตั้งค่าการแสดงผลของปุ่มให้ถูกต้อง
+            updateButtonVisibility();
+        });
     </script>
 </body>
 </html>

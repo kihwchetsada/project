@@ -3,7 +3,7 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 session_start();        
-require 'db_connect.php'; 
+require '../db_connect.php'; 
 
 // ตรวจสอบว่าเข้าสู่ระบบหรือยัง
 if (!isset($_SESSION['conn']) || $_SESSION['conn']['role'] !== 'organizer') {

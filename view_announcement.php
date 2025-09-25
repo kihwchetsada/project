@@ -1,11 +1,8 @@
 <?php
 // Database connection
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "announcements_db";
+require 'db_connect.php';
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
@@ -18,9 +15,11 @@ if ($id <= 0) {
 }
 
 // ดึงข้อมูลประกาศ
-$sql = "SELECT id, title, description, created_at, category, priority, image_path 
-        FROM announcements 
-        WHERE id = ? AND status = 'active' 
+$sql = "SELECT a.id, a.title, a.description, a.created_at, a.category, a.priority, a.image_path,
+               u.username AS creator_name
+        FROM announcements a
+        INNER JOIN users u ON a.user_id = u.id
+        WHERE a.id = ? AND a.status = 'active'
         LIMIT 1";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $id);
@@ -82,12 +81,15 @@ $priorityDetails = match($announcement['priority']) {
                 <span><?php echo $priorityDetails['icon']; ?></span>
                 <?php echo htmlspecialchars($announcement['title']); ?>
             </h1>
-            <div class="flex flex-wrap gap-3 text-gray-600 text-sm mb-6">
-                <span class="flex items-center gap-1">
+            <div class="flex flex-wrap gap-4 text-gray-600 text-sm mb-6 items-center"> <span class="flex items-center gap-1">
                     📅 <?php echo $date_formatted; ?>
                 </span>
                 <span class="flex items-center gap-1">
                     📂 <?php echo htmlspecialchars($announcement['category']); ?>
+                </span>
+
+                <span class="flex items-center gap-1">
+                    👤 <?php echo htmlspecialchars($announcement['creator_name']); ?>
                 </span>
                 <span class="px-3 py-1 rounded-full text-xs font-medium <?php echo $priorityDetails['color']; ?>">
                     <?php echo htmlspecialchars($announcement['priority']); ?>
@@ -95,7 +97,7 @@ $priorityDetails = match($announcement['priority']) {
             </div>
 
             <?php if (!empty($announcement['image_path'])): ?>
-                <img src="../uploads/<?php echo htmlspecialchars($announcement['image_path']); ?>" alt="ภาพประกาศ" class="w-full rounded-lg mb-6 shadow">
+                <img src="uploads/<?php echo htmlspecialchars($announcement['image_path']); ?>" alt="ภาพประกาศ" class="w-full rounded-lg mb-6 shadow">
             <?php endif; ?>
             <div class="prose max-w-none text-gray-800 leading-relaxed text-lg mb-6">
                 <?php echo nl2br(htmlspecialchars($announcement['description'])); ?>

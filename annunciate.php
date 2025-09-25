@@ -30,7 +30,7 @@ $count_param_types = "";
 
 // Add search filter if provided
 if (!empty($search_query)) {
-    $where_conditions[] = "(title LIKE ? OR description LIKE ?)";
+    $where_conditions[] = "(a.title LIKE ? OR a.description LIKE ?)";
     $search_param = '%' . $search_query . '%';
     $count_params[] = $search_param;
     $count_params[] = $search_param;
@@ -39,20 +39,20 @@ if (!empty($search_query)) {
 
 // Add category filter if provided
 if (!empty($category_filter)) {
-    $where_conditions[] = "category = ?";
+    $where_conditions[] = "a.category = ?";
     $count_params[] = $category_filter;
     $count_param_types .= "s";
 }
 
 // Add priority filter if provided
 if (!empty($priority_filter)) {
-    $where_conditions[] = "priority = ?";
+    $where_conditions[] = "a.priority = ?";
     $count_params[] = $priority_filter;
     $count_param_types .= "s";
 }
 
 // Add status filter to show only active announcements
-$where_conditions[] = "status = 'active'";
+$where_conditions[] = "a.status = 'active'";
 
 // Build the WHERE clause
 $where_clause = "";
@@ -61,7 +61,7 @@ if (!empty($where_conditions)) {
 }
 
 // Count total records for pagination
-$count_sql = "SELECT COUNT(*) FROM announcements" . $where_clause;
+$count_sql = "SELECT COUNT(*) FROM announcements a" . $where_clause;
 $count_stmt = $conn->prepare($count_sql);
 
 if (!$count_stmt) {
@@ -85,10 +85,12 @@ $count_stmt->close();
 $main_params = $count_params; // Copy all the filter parameters
 $main_param_types = $count_param_types; // Copy parameter types
 
-// Main query with pagination - ใช้ created_at แทน date
-$sql = "SELECT id, title, description, category, priority, image_path, created_at as date
-        FROM announcements" . $where_clause . " 
-        ORDER BY created_at DESC LIMIT ?, ?";
+// ▼▼▼ (แก้ไข) Main query with JOIN to get username ▼▼▼
+$sql = "SELECT a.id, a.title, a.description, a.category, a.priority, a.image_path, a.created_at as date,
+               u.username AS creator_name
+        FROM announcements a
+        INNER JOIN users u ON a.user_id = u.id" . $where_clause . " 
+        ORDER BY a.created_at DESC LIMIT ?, ?";
         
 $stmt = $conn->prepare($sql);
 
@@ -157,14 +159,6 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-        /* Skeleton loading animation */
-        @keyframes pulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 0.3; }
-        }
-        .skeleton {
-            animation: pulse 1.5s infinite;
-        }
     </style>
 </head>
 <body class="flex flex-col">
@@ -197,7 +191,7 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
                 <div class="flex items-center">
                     <form action="" method="GET" class="flex flex-wrap md:flex-nowrap gap-2">
                         <input type="text" name="search" placeholder="ค้นหาประกาศ" value="<?php echo htmlspecialchars($search_query); ?>" 
-                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 flex-grow">
+                                class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 flex-grow">
                         <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition whitespace-nowrap">
                             ค้นหา
                         </button>
@@ -211,7 +205,6 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
                     </form>
                 </div>
             </div>
-            <!-- Filters -->
             <div x-show="showFilters" x-transition class="bg-white p-4 rounded-lg shadow-md mb-6">
                 <form action="" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -261,7 +254,6 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
                 </div>
             <?php endif; ?>
 
-            <!-- Announcements Grid -->
             <?php if ($result && $result->num_rows > 0): ?>
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <?php while($row = $result->fetch_assoc()): ?>
@@ -277,8 +269,8 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
                         // Format date to Thai format
                         $date_formatted = date('d/m/Y H:i', strtotime($row['date']));
                         ?>
-                        <div class="announcement-card bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-                            <div class="p-6">
+                        <div class="announcement-card bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 flex flex-col">
+                            <div class="p-6 flex-grow">
                                 <div class="flex justify-between items-start mb-4">
                                     <div class="flex items-center space-x-3">
                                         <span class="text-2xl"><?php echo $priorityDetails['icon']; ?></span>
@@ -293,22 +285,36 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
                                 <p class="text-gray-600 mb-5 line-clamp-3">
                                     <?php echo htmlspecialchars($row['description']); ?>
                                 </p>
+                                
                                 <div class="flex justify-between items-center text-sm text-gray-500 mb-4">
-                                    <div class="flex items-center space-x-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        <span><?php echo $date_formatted; ?></span>
+                                    <div class="flex items-center space-x-4">
+                                        <div class="flex items-center space-x-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <span><?php echo $date_formatted; ?></span>
+                                        </div>
+                                        
+                                        <div class="flex items-center space-x-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span><?php echo htmlspecialchars($row['creator_name']); ?></span>
+                                        </div>
                                     </div>
+
                                     <span class="border rounded-md px-2 py-1 text-xs <?php echo $priorityDetails['badge']; ?>">
                                         <?php echo htmlspecialchars($row['category']); ?>
                                     </span>
                                 </div>
+                                
                                 <?php if (!empty($row['image_path'])): ?>
-                                    <img src="../uploads/<?php echo htmlspecialchars($row['image_path']); ?>" 
-                                        alt="รูปภาพประกาศ" 
-                                        class="w-full h-48 object-cover rounded-t-2xl">
+                                    <img src="uploads/<?php echo htmlspecialchars($row['image_path']); ?>" 
+                                         alt="รูปภาพประกาศ" 
+                                         class="w-full h-48 object-cover rounded-lg mt-4">
                                 <?php endif; ?>
+                            </div>
+                            <div class="p-6 pt-0 mt-auto">
                                 <a href="view_announcement.php?id=<?php echo $row['id']; ?>" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 text-center py-2 rounded-lg transition font-medium">
                                     อ่านเพิ่มเติม
                                 </a>
@@ -317,7 +323,6 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
                     <?php endwhile; ?>
                 </div>
 
-                <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
                     <div class="mt-10 flex justify-center">
                         <div class="inline-flex rounded-md shadow-sm">
@@ -412,12 +417,6 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
             </div>
         </div>
     </footer>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.body.classList.add('opacity-100');
-            document.body.classList.remove('opacity-0');
-        });
-    </script>
     <?php 
     if ($stmt) $stmt->close();
     $conn->close(); 

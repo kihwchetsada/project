@@ -271,7 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
                         </div>
                         <div>
                             <label for="coach_phone" class="block mb-2 font-medium text-gray-700">เบอร์โทรผู้ควบคุมทีม <span class="text-danger-500">*</span></label>
-                            <input type="tel" id="coach_phone" name="coach_phone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" pattern="[0-9]{9,10}" placeholder="0xxxxxxxxx" required>
+                            <input type="tel" id="coach_phone" name="coach_phone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" pattern="[0-9]{9,10}" placeholder="0xxxxxxxxx" required maxlength="10">
                         </div>
                     </div>
                     <div class="mb-6">
@@ -311,7 +311,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
                             </div>
                             <div>
                                 <label for="member_phone_<?php echo $i; ?>" class="block mb-2 font-medium text-gray-700">เบอร์โทรศัพท์</label>
-                                <input type="tel" id="member_phone_<?php echo $i; ?>" name="member_phone_<?php echo $i; ?>" pattern="[0-9]{9,10}" placeholder="0xxxxxxxxx" class="w-full px-4 py-2 border rounded-lg">
+                                <input type="tel" id="member_phone_<?php echo $i; ?>" name="member_phone_<?php echo $i; ?>" pattern="[0-9]{9,10}" placeholder="0xxxxxxxxx" class="w-full px-4 py-2 border rounded-lg" maxlength="10">
                             </div>
                             <div>
                                 <label for="member_position_<?php echo $i; ?>" class="block mb-2 font-medium text-gray-700">ตำแหน่ง</label>

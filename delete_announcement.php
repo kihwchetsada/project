@@ -1,8 +1,12 @@
 <?php
 session_start();
-$conn = new mysqli("localhost", "root", "", "announcements_db");
-$conn->set_charset("utf8");
+require 'db_connect.php';
 
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+$conn->set_charset("utf8");
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 if (!isset($_GET['id'])) {
     die("❌ ไม่พบ ID ที่ต้องการลบ");
 }

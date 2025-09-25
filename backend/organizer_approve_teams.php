@@ -4,18 +4,21 @@ error_reporting(E_ALL);
 
 session_start();
 
-require 'db_connect.php'; // competition_db
+require '../db_connect.php'; // competition_db
 
-// ฟังก์ชันคำนวณอายุจากวันเกิด
+// ฟังก์ชันคำนวณอายุจากปีเกิดเท่านั้น
 function calculateAge($birthdate) {
     if (!$birthdate || $birthdate === '0000-00-00') return null;
     try {
-        $birth = new DateTime($birthdate);
-        $today = new DateTime();
-        $age = $today->diff($birth)->y;
+        $birthYear = (int) substr($birthdate, 0, 4);
+        if ($birthYear <= 1900) {
+            return null;
+        }
+        $currentYear = (int) date('Y');
+        $age = $currentYear - $birthYear;
         return $age;
     } catch (Exception $e) {
-        return null; // Handle invalid date format
+        return null;
     }
 }
 
@@ -27,16 +30,14 @@ if (!isset($_SESSION['conn']) || $_SESSION['conn']['role'] !== 'organizer') {
 
 $approved_by = $_SESSION['conn']['username'];
 
-// --- 🔽 ส่วนจัดการตัวกรอง (ฉบับแก้ไข) 🔽 ---
-
-// 1. ดึงข้อมูลทัวร์นาเมนต์ทั้งหมดสำหรับสร้าง Dropdown
+// ดึงข้อมูลทัวร์นาเมนต์ทั้งหมดสำหรับสร้าง Dropdown
 $tournaments_stmt = $conn->query("SELECT id, tournament_name FROM tournaments ORDER BY tournament_name");
 $all_tournaments = $tournaments_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 2. รับค่า tournament_id จาก URL (ถ้ามี)
+// รับค่า tournament_id จาก URL (ถ้ามี)
 $selected_tournament_id = isset($_GET['tournament_id']) ? (int)$_GET['tournament_id'] : 0;
 
-// 3. แก้ไข SQL Query หลักให้รองรับการกรอง
+// SQL Query หลักให้รองรับการกรอง
 $sql = "
     SELECT t.team_id, t.team_name, t.coach_name, t.coach_phone, t.leader_school, t.created_at,
            tn.tournament_name,
@@ -44,13 +45,13 @@ $sql = "
            tm.position, tm.birthdate
     FROM teams t
     LEFT JOIN team_members tm ON t.team_id = tm.team_id
-    LEFT JOIN tournaments tn ON t.tournament_id = tn.id -- ✅ แก้ไข: JOIN ให้ถูกต้อง
+    LEFT JOIN tournaments tn ON t.tournament_id = tn.id
     WHERE t.is_approved = 0
 ";
 
 $params = [];
 if ($selected_tournament_id > 0) {
-    $sql .= " AND t.tournament_id = ?"; // ✅ แก้ไข: WHERE ให้ถูกต้อง
+    $sql .= " AND t.tournament_id = ?";
     $params[] = $selected_tournament_id;
 }
 
@@ -59,10 +60,6 @@ $sql .= " ORDER BY t.created_at DESC, tm.member_id ASC";
 $stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-
-// --- 🔼 สิ้นสุดส่วนจัดการตัวกรอง 🔼 ---
-
 
 // จัดกลุ่มข้อมูลตาม team_id
 $teams = [];
@@ -96,7 +93,7 @@ foreach ($results as $row) {
     }
 }
 
-// ส่วนตรวจสอบข้อมูล (ไม่มีการแก้ไข)
+// ส่วนตรวจสอบข้อมูล
 foreach ($teams as $team_id => &$team) {
     if (!empty($team['members'])) {
         foreach ($team['members'] as &$member) {
@@ -130,7 +127,7 @@ unset($team);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* CSS Styles from the original file... (no changes needed here) */
+        /* CSS Styles */
         * {
             margin: 0;
             padding: 0;
@@ -500,8 +497,8 @@ unset($team);
 
         .position-badge {
             display: inline-block;
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-            color: white;
+            background: linear-gradient(135deg, #89e73cff, #fffb00ff);
+            color: #333;
             padding: 4px 10px;
             border-radius: 15px;
             font-size: 0.8rem;
@@ -557,7 +554,30 @@ unset($team);
             justify-content: flex-end;
             align-items: center;
         }
+        
+        .btn-toggle-members {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #3498db;
+            background-color: #f1f8ff;
+            border: 2px solid #e3f2fd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
 
+        .btn-toggle-members:hover {
+            background-color: #e3f2fd;
+            color: #2980b9;
+        }
+        
         .btn {
             padding: 12px 25px;
             border: none;
@@ -702,7 +722,34 @@ unset($team);
 </head>
 <body>
 
-    <button class="card" onclick="location.href='backend/organizer_dashboard.php'" style="margin: 0 auto 20px auto; display: block; max-width: 250px;">
+    <?php if (isset($_SESSION['approval_status'])): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                <?php if ($_SESSION['approval_status'] === 'approved'): ?>
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'อนุมัติสำเร็จ!',
+                        text: 'ทีมได้รับการอนุมัติเรียบร้อยแล้ว',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                <?php elseif ($_SESSION['approval_status'] === 'rejected'): ?>
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'ดำเนินการเรียบร้อย',
+                        text: 'ทีมถูกปฏิเสธตามที่ระบุ',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                <?php endif; ?>
+            });
+        </script>
+    <?php 
+        unset($_SESSION['approval_status']); 
+    ?>
+    <?php endif; ?>
+
+    <button class="card" onclick="location.href='organizer_dashboard.php'" style="margin: 0 auto 20px auto; display: block; max-width: 250px;">
         <span class="text"><i class="fas fa-arrow-left"></i> กลับไปหน้าหลัก</span>
     </button>
 
@@ -764,16 +811,194 @@ unset($team);
                         </div>
                         
                         <div class="team-details">
+                            <div class="detail-row">
+                                <div class="detail-icon"><i class="fas fa-user-tie"></i></div>
+                                <div class="detail-content">
+                                    <div class="detail-label">ผู้ควบคุมทีม (โค้ช)</div>
+                                    <div class="detail-value"><?php echo htmlspecialchars($team['coach_name'] ?? 'ไม่มีข้อมูล'); ?></div>
+                                </div>
                             </div>
+                            <div class="detail-row">
+                                <div class="detail-icon"><i class="fas fa-phone"></i></div>
+                                <div class="detail-content">
+                                    <div class="detail-label">เบอร์โทรโค้ช</div>
+                                    <div class="detail-value"><?php echo htmlspecialchars($team['coach_phone'] ?? 'ไม่มีข้อมูล'); ?></div>
+                                </div>
+                            </div>
+                             <div class="detail-row">
+                                <div class="detail-icon"><i class="fas fa-school"></i></div>
+                                <div class="detail-content">
+                                    <div class="detail-label">โรงเรียน/สถาบัน</div>
+                                    <div class="detail-value"><?php echo htmlspecialchars($team['leader_school'] ?? 'ไม่มีข้อมูล'); ?></div>
+                                </div>
+                            </div>
+                            
+                            <button class="btn-toggle-members" onclick="toggleMembers('<?php echo $team['team_id']; ?>')">
+                                ดูข้อมูลสมาชิก (<?php echo count($team['members']); ?> คน)
+                                <i id="toggle-icon-<?php echo $team['team_id']; ?>" class="fas fa-chevron-down"></i>
+                            </button>
 
+                            <div class="members-section" id="members-section-<?php echo $team['team_id']; ?>" style="display: none;">
+                                <div class="members-title">
+                                    <i class="fas fa-users"></i> รายชื่อสมาชิกในทีม
+                                    <?php if ($team['validation_issues'] > 0): ?>
+                                         <div class="team-validation-alert" style="width: 100%; margin-top:15px;">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>แจ้งเตือน:</strong> พบข้อมูลอายุของสมาชิกไม่ตรงกับปีเกิด <?php echo $team['validation_issues']; ?> คน กรุณาตรวจสอบ
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php if (empty($team['members'])): ?>
+                                    <p class="no-members">ไม่มีข้อมูลสมาชิกในทีมนี้</p>
+                                <?php else: ?>
+                                    <?php foreach ($team['members'] as $member): ?>
+                                        <div class="member-card">
+                                            <div class="member-info">
+                                                <div class="member-field">
+                                                    <i class="fas fa-user"></i>
+                                                    <span><strong>ชื่อ:</strong> <?php echo htmlspecialchars($member['member_name']); ?></span>
+                                                </div>
+                                                <div class="member-field">
+                                                    <i class="fas fa-gamepad"></i>
+                                                    <span><strong>ชื่อในเกม:</strong> <?php echo htmlspecialchars($member['game_name']); ?></span>
+                                                </div>
+                                                <div class="member-field">
+                                                    <i class="fas fa-birthday-cake"></i>
+                                                    <span>
+                                                        <strong>อายุ (ที่กรอก):</strong> <?php echo htmlspecialchars($member['age']); ?>
+                                                        
+                                                        <?php 
+                                                        $validation = $member['age_validation'];
+                                                        if ($validation['valid'] === true) {
+                                                            echo '<span class="validation-badge validation-valid"><i class="fas fa-check"></i>ตรงกัน</span>';
+                                                        } elseif ($validation['valid'] === false) {
+                                                            echo '<span class="validation-badge validation-invalid"><i class="fas fa-times"></i>ไม่ตรง</span>';
+                                                            if($validation['calculated_age'] !== null) {
+                                                                echo '<span class="age-comparison">(คำนวณจากปีเกิดได้: ' . $validation['calculated_age'] . ' ปี)</span>';
+                                                            }
+                                                        } else {
+                                                             echo '<span class="validation-badge validation-unknown"><i class="fas fa-question"></i>ไม่ทราบ</span>';
+                                                        }
+                                                        ?>
+                                                    </span>
+                                                </div>
+                                                <div class="member-field">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                    <span><strong>วันเกิด:</strong> <?php echo htmlspecialchars($member['birthdate']); ?></span>
+                                                </div>
+                                                <div class="member-field">
+                                                    <i class="fas fa-phone-alt"></i>
+                                                    <span><strong>เบอร์โทร:</strong> <?php echo htmlspecialchars($member['phone']); ?></span>
+                                                </div>
+                                                <div class="member-field">
+                                                    <i class="fas fa-crosshairs"></i>
+                                                    <span><strong>ตำแหน่ง:</strong> <span class="position-badge"><?php echo htmlspecialchars($member['position']); ?></span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <div class="approval-form">
+                            <form action="process_team_approval.php" method="POST" onsubmit="return confirmSubmission(event, '<?php echo $team['team_id']; ?>')">
+                                <input type="hidden" name="team_id" value="<?php echo $team['team_id']; ?>">
+                                <input type="hidden" name="action" id="action_<?php echo $team['team_id']; ?>" value="">
+                                
+                                <div class="form-group">
+                                    <label for="rejection_reason_<?php echo $team['team_id']; ?>" class="form-label">
+                                        <i class="fas fa-comment-dots"></i> เหตุผล (กรณีไม่อนุมัติ)
+                                    </label>
+                                    <textarea name="rejection_reason" id="rejection_reason_<?php echo $team['team_id']; ?>" class="form-textarea" rows="3" placeholder="ระบุเหตุผลที่ไม่อนุมัติทีม..."></textarea>
+                                </div>
+                                <div class="button-group">
+                                    <button type="submit" value="reject" class="btn btn-reject">
+                                        <i class="fas fa-times-circle"></i> ไม่อนุมัติ
+                                    </button>
+                                    <button type="submit" value="approve" class="btn btn-approve">
+                                        <i class="fas fa-check-circle"></i> อนุมัติทีม
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
     </div>
 
+    
     <script>
-        // ... JavaScript code ...
+        function toggleMembers(teamId) {
+            const membersSection = document.getElementById('members-section-' + teamId);
+            const toggleIcon = document.getElementById('toggle-icon-' + teamId);
+
+            if (membersSection.style.display === 'none' || membersSection.style.display === '') {
+                membersSection.style.display = 'block';
+                toggleIcon.classList.remove('fa-chevron-down');
+                toggleIcon.classList.add('fa-chevron-up');
+            } else {
+                membersSection.style.display = 'none';
+                toggleIcon.classList.remove('fa-chevron-up');
+                toggleIcon.classList.add('fa-chevron-down');
+            }
+        }
+
+        // ▼▼▼ จุดที่ 3: แก้ไขฟังก์ชัน JavaScript ให้รับ teamId ▼▼▼
+        function confirmSubmission(event, teamId) {
+            event.preventDefault(); // หยุดการส่งฟอร์มปกติ
+            const form = event.target;
+            const action = document.activeElement.value; // ค่าของปุ่มที่ถูกกด (approve/reject)
+            const reason = form.querySelector('textarea[name="rejection_reason"]').value;
+
+            // กำหนดค่า action ให้กับ hidden input ที่ถูกต้อง
+            document.getElementById('action_' + teamId).value = action;
+
+            if (action === 'approve') {
+                Swal.fire({
+                    title: 'ยืนยันการอนุมัติทีม?',
+                    text: "คุณต้องการอนุมัติทีมนี้ใช่หรือไม่",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'ใช่, อนุมัติเลย!',
+                    cancelButtonText: 'ยกเลิก'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            } else if (action === 'reject') {
+                if (reason.trim() === '') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: 'กรุณากรอกเหตุผลที่ไม่อนุมัติทีมก่อน',
+                    });
+                    return false;
+                }
+                
+                Swal.fire({
+                    title: 'ยืนยันการไม่อนุมัติทีม?',
+                    text: "คุณต้องการปฏิเสธทีมนี้ใช่หรือไม่ การกระทำนี้ไม่สามารถย้อนกลับได้",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'ใช่, ไม่อนุมัติ',
+                    cancelButtonText: 'ยกเลิก'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            }
+            return false;
+        }
     </script>
+    
 </body>
 </html>
