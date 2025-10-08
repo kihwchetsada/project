@@ -1,4 +1,4 @@
-
+/* ========== รีเซ็ตพื้นฐาน ========== */
 * {
   margin: 0;
   padding: 0;
@@ -6,25 +6,137 @@
   font-family: 'Kanit', sans-serif;
 }
 
+:root {
+  --primary-color: #2e91ca;
+  --secondary-color: #8e44ad;
+  --accent-color: #e74c3c;
+  --dark-bg: #0a0e17;
+  --light-text: #ffffff;
+  --nav-hover: #2980b9;
+}
 
+/* ========== พื้นหลังและโครงสร้างหลัก ========== */
 body {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  margin: 0;
+  padding: 0;
 }
 
+/* ========== Navbar E-SPORT STYLE ========== */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 5%;
+  background: linear-gradient(180deg, rgba(10, 14, 23, 0.95) 0%, rgba(10, 14, 23, 0.98) 100%);
+  border-bottom: 2px solid #2e91ca;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  box-shadow: 0 2px 25px rgba(0, 0, 0, 0.6);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* โลโก้ซ้าย */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo img {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #2e91ca;
+  box-shadow: 0 0 12px rgba(46, 145, 202, 0.6);
+  transition: all 0.3s ease;
+}
+
+.logo img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 18px rgba(46, 145, 202, 0.9);
+}
+
+.logo h2 {
+  color: #2e91ca;
+  font-weight: 700;
+  font-size: 1.3rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(46, 145, 202, 0.4);
+  transition: color 0.3s ease;
+}
+
+.logo h2:hover {
+  color: #57b7ff;
+}
+
+/* เมนูขวา */
+nav {
+  display: flex;
+  gap: 40px;
+}
+
+nav a {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  font-size: 1.3rem;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+nav a:hover {
+  color: #2e91ca;
+}
+
+/* เส้นขีดใต้ตอน hover */
+nav a::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  background-color: #2e91ca;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
+  border-radius: 2px;
+}
+
+nav a:hover::after {
+  width: 60%;
+}
+
+/* ========== กล่องสมัครสมาชิก ========== */
 .login-container {
-  background-color: white;
-  width: 100%;
-  max-width: 420px;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  padding: 32px;
+  background: rgba(255, 255, 255, 0.97);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  padding: 40px;
+  max-width: 460px;
+  width: 90%;
+  margin-top: 120px;
+  text-align: left;
   position: relative;
   overflow: hidden;
+  animation: fadeInUp 0.6s ease;
 }
 
 .login-container::before {
@@ -37,6 +149,7 @@ body {
   background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
 }
 
+/* โลโก้ในฟอร์ม */
 .login-logo {
   width: 80px;
   height: 80px;
@@ -51,6 +164,7 @@ body {
   box-shadow: 0 6px 15px rgba(131, 93, 233, 0.3);
 }
 
+/* หัวข้อหลัก */
 h2 {
   text-align: center;
   color: #444;
@@ -64,6 +178,7 @@ h2 {
   margin-top: 24px;
 }
 
+/* ========== Input & Form ========== */
 .form-group {
   margin-bottom: 20px;
 }
@@ -116,6 +231,7 @@ input[type="password"]::placeholder {
   color: #bbb;
 }
 
+/* toggle password */
 .toggle-password {
   position: absolute;
   right: 15px;
@@ -131,37 +247,7 @@ input[type="password"]::placeholder {
   color: #8E54E9;
 }
 
-.form-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  font-size: 14px;
-}
-
-.remember-me {
-  display: flex;
-  align-items: center;
-}
-
-.remember-me input[type="checkbox"] {
-  margin-right: 8px;
-  accent-color: #8E54E9;
-  width: 16px;
-  height: 16px;
-}
-
-.forgot-password {
-  color: #8E54E9;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.forgot-password:hover {
-  color: #6942b0;
-  text-decoration: underline;
-}
-
+/* ========== ปุ่ม ========== */
 .login-button {
   width: 100%;
   padding: 14px;
@@ -184,13 +270,14 @@ input[type="password"]::placeholder {
 
 .login-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(131, 93, 233, 0.3);
+  box-shadow: 0 6px 20px rgba(142, 84, 233, 0.4);
 }
 
 .login-button:active {
   transform: translateY(0);
 }
 
+/* ========== ลิงก์สมัคร / เข้าสู่ระบบ ========== */
 .register-link {
   text-align: center;
   margin-top: 20px;
@@ -210,6 +297,7 @@ input[type="password"]::placeholder {
   text-decoration: underline;
 }
 
+/* ========== Error Message ========== */
 .error-message {
   background-color: #fff0f0;
   color: #e74c3c;
@@ -227,25 +315,51 @@ input[type="password"]::placeholder {
   font-size: 16px;
 }
 
-/* รองรับหน้าจอขนาดเล็ก */
+/* ========== Animation ========== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+  nav {
+    gap: 20px;
+  }
+  .logo h2 {
+    font-size: 1.1rem;
+  }
+  .logo img {
+    width: 45px;
+    height: 45px;
+  }
+}
+
 @media (max-width: 480px) {
   .login-container {
-      padding: 24px;
+    padding: 24px;
+    margin-top: 100px;
   }
-  
+
   .login-logo {
-      width: 70px;
-      height: 70px;
-      font-size: 30px;
+    width: 70px;
+    height: 70px;
+    font-size: 30px;
   }
-  
+
   h2 {
-      font-size: 22px;
+    font-size: 22px;
   }
-  
+
   input[type="text"],
   input[type="email"],
   input[type="password"] {
-      padding: 12px 12px 12px 40px;
+    padding: 12px 12px 12px 40px;
   }
 }

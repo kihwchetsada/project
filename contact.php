@@ -6,6 +6,7 @@
     <link rel="icon" type="image/png" href="img/logo.jpg">
     <link rel="stylesheet" href="css/contact-styles.css">
     <title>ติดต่อเรา - RMUTI SURIN E-Sport Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="contact-container">
@@ -28,7 +29,7 @@
         <h1 class="contact-title text-glow">ติดต่อเรา</h1>
         
         <div class="contact-info">
-            <h2>ชมรม RMUTI SURIN E-Sport Club</h2>
+            <h1>ชมรม RMUTI SURIN E-Sport Club</h1>
             <h2>มหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน วิทยาเขต สุรินทร์</h2>
             <h2>อาคาร อาทิตยาทร ชั้น 5</h2>
             <h2>คณะเกษตรศาสตร์และเทคโนโลยี</h2>

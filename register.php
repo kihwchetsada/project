@@ -253,7 +253,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['pdpa_accept'])) {
                         <div>
                             <label for="tournament_id" class="block mb-2 font-medium text-gray-700">ประเภทการแข่งขัน <span class="text-danger-500">*</span></label>
                             <select id="tournament_id" name="tournament_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" required>
-                                <option value=""> -- เลือกทัวร์นาเมนต์ -- </option>
+                                <option value=""> -- เลือกรายการแข่งขัน -- </option>
                                 <?php foreach ($tournaments as $t): ?>
                                     <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['tournament_name']); ?></option>
                                 <?php endforeach; ?>

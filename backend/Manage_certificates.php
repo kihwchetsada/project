@@ -208,7 +208,7 @@
         <p class="subtitle">กรุณาเลือกหน้าที่ต้องการจะไปจากด้านล่าง</p>
 
         <div class="options-grid">
-            <a href="Certificate/backend-index.php" style="text-decoration: none; color: inherit;">
+            <a href="Certificate/add_personnel.php" style="text-decoration: none; color: inherit;">
                 <div class="option-card option-1">
                     <span class="option-icon">👥</span>
                     <h3 class="option-title">เพิ่มรายชื่อ</h3>
@@ -231,7 +231,14 @@
                     <p class="option-desc">สร้างเกียรติบัตรจากรายชื่อและแม่แบบ</p>
                 </div>
             </a>
-
+            
+            <a href="Certificate/assign_awards.php" style="text-decoration: none; color: inherit;">
+                <div class="option-card option-4">
+                    <span class="option-icon">🏆</span>
+                    <h3 class="option-title">มอบรางวัล</h3>
+                    <p class="option-desc">มอบรางวัลให้กับสมาชิกในทีมที่ชนะ</p>
+                </div>
+            </a>
         </div>
     </div>
 

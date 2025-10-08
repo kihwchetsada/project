@@ -136,7 +136,7 @@ $priorities = ['สูง', 'ปานกลาง', 'ต่ำ'];
     <link rel="icon" type="image/png" href="img/logo.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/s.css">
     <style>
         body {

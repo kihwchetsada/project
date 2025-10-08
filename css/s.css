@@ -2,7 +2,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Kanit', sans-serif;
 }
 
 :root {
@@ -303,7 +303,7 @@ nav a:hover::after {
     
     nav a {
         padding: 8px 12px;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
     
     .hero-content {
