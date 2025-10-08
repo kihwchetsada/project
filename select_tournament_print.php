@@ -22,7 +22,7 @@ $tournaments = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
+<style>
         * {
             margin: 0;
             padding: 0;
@@ -192,31 +192,31 @@ $tournaments = $stmt->fetchAll(PDO::FETCH_ASSOC);
             font-size: 18px;
         }
 
-        .back-btn {
-            position: fixed;
+        .back-button{
+            position: absolute;
             top: 20px;
             left: 20px;
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 50%;
-            color: #666;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: #fff;
+            color: #333;
+            padding: 10px 15px;
+            border-radius: 5px;
             text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .back-button:hover{
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #8bd0f8ff;
+            color: #ffffffff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        .back-btn:hover {
-            background: white;
-            color: #4CAF50;
-            transform: translateX(-5px);
-        }
 
         /* Loading state */
         .btn.loading {
@@ -280,11 +280,11 @@ $tournaments = $stmt->fetchAll(PDO::FETCH_ASSOC);
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
-    </style>
+</style>
 </head>
 <body>
-    <a href="backend\organizer_dashboard.php" class="back-btn" title="กลับ">
-        <i class="fas fa-arrow-left"></i>
+    <a href="backend\organizer_dashboard.php" class="back-button" title="กลับ">
+        กลับไปหน้าแดชบอร์ด
     </a>
 
     <div class="container">

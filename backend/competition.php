@@ -45,20 +45,23 @@ $error_message = isset($_GET['error']) ? "เกิดข้อผิดพล�
     <link rel="stylesheet" href="../css/competition.css">
 </head>
 <body>
+
     <div class="floating-shapes">
         <div class="shape"></div>
         <div class="shape"></div>
         <div class="shape"></div>
         <div class="shape"></div>
     </div>
-
+<a href="admin_dashboard.php" class="button-link fixed-back-button">
+    กลับสู่หน้าหลัก
+</a>
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-calendar-alt"></i> จัดการการเปิดรับสมัคร</h1>
             <p>กำหนดวันที่เปิดรับสมัครและสถานะการรับสมัคร</p>
         </div>
         <div>
-            <a href="admin_dashboard.php" class="button-link">กลับสู่หน้าหลัก</a>
+            
         </div>
         <div class="form-container">
             <?php if (isset($alert_message)): ?>

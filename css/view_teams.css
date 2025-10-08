@@ -1,4 +1,4 @@
-        * {
+* {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -11,6 +11,7 @@
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
+            padding-top: 80px; /* 💥 โค้ดที่เพิ่ม: เพื่อดันเนื้อหาลงมาไม่ให้ปุ่ม Fixed บัง */
         }
 
         /* Animated Background */
@@ -56,6 +57,7 @@
             padding: 20px;
             position: relative;
             z-index: 1;
+            /* Note: padding-top ถูกย้ายไปที่ body เพื่อให้ครอบคลุมการเว้นระยะห่างของปุ่ม fixed */
         }
 
         /* Header */
@@ -168,28 +170,52 @@
             letter-spacing: 1px;
         }
 
-        .back-link {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: #00ffff;
-            padding: 10px 20px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .back-link:hover {
-            background: rgb(200, 201, 201);
-            border-color: #00ffff;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
-            text-decoration: none;
-            color: #00ffff;
-        }
+       /* 💥 สไตล์ปุ่มย้อนกลับที่ปรับปรุงความชัดเจนและสีสัน 💥 */
+.fixed-back-button {
+    /* ตำแหน่งคงที่ (Fixed) */
+    position: fixed;
+    top: 25px;       
+    left: 25px;      
+    right: auto;     
+    z-index: 1000;   
+
+    /* สไตล์ Neon สว่างพิเศษ */
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 18px; 
+    
+    /* 💥 เปลี่ยนสีหลักเป็นสีเขียวนีออนสว่าง (Bright Cyan) */
+    border: 3px solid #60ffff; 
+    color: #60ffff; 
+    background-color: rgba(5, 10, 20, 0.9); /* พื้นหลังเข้มขึ้นเพื่อเน้นปุ่ม */
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    
+    border-radius: 8px; 
+    text-decoration: none;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    
+    /* 💥 เพิ่มเงาที่สว่างและชัดเจนขึ้น */
+    box-shadow: 0 0 15px rgba(96, 255, 255, 0.8), 0 0 3px rgba(255, 255, 255, 0.5); 
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Transition ที่นุ่มนวลขึ้น */
+}
+
+/* สไตล์เมื่อนำเมาส์ไปวาง (Hover Effect) */
+.fixed-back-button:hover {
+    background-color: #60ffff; /* 💥 เปลี่ยนพื้นหลังเป็นสี Neon สว่างเมื่อ Hover */
+    color: #000000; /* 💥 เปลี่ยนสีตัวอักษรเป็นสีดำเพื่อให้ตัดกับพื้นหลัง */
+    border-color: #ffffff;
+    transform: scale(1.08); /* ขยายใหญ่ขึ้นเล็กน้อย */
+    box-shadow: 0 0 20px #60ffff, 0 0 40px #60ffff, 0 0 60px rgba(255, 255, 255, 0.5); /* เพิ่มความสว่างสูงสุด */
+}
+
+/* สไตล์ไอคอน */
+.fixed-back-button i {
+    margin-right: 8px;
+    font-size: 18px;
+}
 
         /* Navigation */
         .nav-container {
@@ -496,4 +522,3 @@
             70% { transform: translate(-1px, 1px); }
             80% { transform: translate(1px, -1px); }
         }
-        

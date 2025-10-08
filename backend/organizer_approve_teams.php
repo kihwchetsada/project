@@ -140,6 +140,32 @@ unset($team);
             min-height: 100vh;
             padding: 20px;
         }
+
+        .back-button{
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #fff;
+            color: #333;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .back-button:hover{
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #8bd0f8ff;
+            color: #ffffffff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
         .card {
         align-items: center;
         background-image: linear-gradient(144deg, #af40ff, #5b42f3 50%, #00ddeb);
@@ -721,7 +747,7 @@ unset($team);
     </style>
 </head>
 <body>
-
+    <a href="organizer_dashboard.php" class="back-button">กลับไปหน้าหลัก</a>
     <?php if (isset($_SESSION['approval_status'])): ?>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -749,9 +775,7 @@ unset($team);
     ?>
     <?php endif; ?>
 
-    <button class="card" onclick="location.href='organizer_dashboard.php'" style="margin: 0 auto 20px auto; display: block; max-width: 250px;">
-        <span class="text"><i class="fas fa-arrow-left"></i> กลับไปหน้าหลัก</span>
-    </button>
+    
 
     <div class="container">
         <div class="header">

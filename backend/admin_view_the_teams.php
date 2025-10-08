@@ -16,17 +16,18 @@ include '../db_connect.php';
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $category = isset($_GET['category']) ? trim($_GET['category']) : '';
 
-// ดึงประเภทการแข่งขันทั้งหมดจาก teams
-$stmt = $conn->prepare("SELECT DISTINCT tournament_id FROM teams ORDER BY tournament_id ASC");
+// ดึงประเภทการแข่งขันทั้งหมดจาก teams (ควรดึงจาก tournaments เพื่อให้ได้ชื่อมาด้วย)
+// **ปรับปรุง: ดึงชื่อ Tournament แทน ID เพื่อแสดงผลใน Dropdown ได้ทันที**
+$stmt = $conn->prepare("SELECT id, tournament_name FROM tournaments ORDER BY id ASC");
 $stmt->execute();
-$tournament_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+$tournaments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // ดึงทีมทั้งหมด
 $sql = "SELECT t.team_id, t.team_name, t.coach_name, t.coach_phone, t.leader_school, 
-               t.status, tr.tournament_name
-        FROM teams t
-        LEFT JOIN tournaments tr ON t.tournament_id = tr.id
-        WHERE 1";
+             t.status, tr.tournament_name
+         FROM teams t
+         LEFT JOIN tournaments tr ON t.tournament_id = tr.id
+         WHERE 1";
 
 $params = [];
 if (!empty($search)) {
@@ -34,6 +35,7 @@ if (!empty($search)) {
     $params[':search'] = "%" . $search . "%";
 }
 if (!empty($category)) {
+    // กรองด้วย ID
     $sql .= " AND t.tournament_id = :category";
     $params[':category'] = $category;
 }
@@ -41,16 +43,18 @@ $sql .= " ORDER BY tr.tournament_name ASC, t.team_name ASC";
 
 $stmt = $conn->prepare($sql);
 foreach ($params as $key => $value) {
-    $stmt->bindValue($key, $value, PDO::PARAM_STR);
+    // ต้องตรวจสอบประเภทของค่าที่ผูก หากเป็นตัวเลข (category) ควรใช้ PARAM_INT
+    $param_type = ($key === ':category') ? PDO::PARAM_INT : PDO::PARAM_STR;
+    $stmt->bindValue($key, $value, $param_type);
 }
 $stmt->execute();
 $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// เตรียมคำสั่ง SQL สำหรับดึงสมาชิกทีม (จากตาราง team_members ตาม ER Diagram)
+// เตรียมคำสั่ง SQL สำหรับดึงสมาชิกทีม
 $stmt_members = $conn->prepare("SELECT member_name, game_name, position 
-                                FROM team_members 
-                                WHERE team_id = :team_id 
-                                ORDER BY member_name ASC");
+                                 FROM team_members 
+                                 WHERE team_id = :team_id 
+                                 ORDER BY member_name ASC");
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -76,7 +80,7 @@ $stmt_members = $conn->prepare("SELECT member_name, game_name, position
             border-bottom: none;
         }
         
-        /* --- เพิ่มสไตล์สำหรับปุ่มและคอนเทนเนอร์ --- */
+        /* --- สไตล์สำหรับปุ่มและคอนเทนเนอร์ --- */
         .btn-toggle-members {
             background-color: #007bff; /* Blue */
             color: white;
@@ -95,30 +99,74 @@ $stmt_members = $conn->prepare("SELECT member_name, game_name, position
             color: #ffc107; /* สีไอคอนตอนซ่อน */
         }
         .members-container {
-            /* display: none; ถูกกำหนดใน HTML inline */
             margin-top: 10px;
             border-top: 1px solid #eee;
             padding-top: 5px;
+            /* ต้องมี CSS หลักสำหรับตารางไม่ให้ความสูงเซลล์เพี้ยนเมื่อแสดงผล */
         }
         /* ----------------------------------------- */
+
+        /* 💥 โค้ดที่เพิ่ม: สไตล์สำหรับปุ่มย้อนกลับที่ชัดเจน (btn-dashboard) */
+        .btn-dashboard {
+            /* 1. ตำแหน่งคงที่ (Fixed Position) */
+            position: fixed;
+            top: 20px;       
+            left: 20px;      
+            z-index: 1000;   
+        
+            /* 2. สไตล์ Neon สว่างพิเศษ (เพื่อความชัดเจน) */
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 18px; 
+            
+            /* 💥 สีหลัก: เขียวนีออนสว่าง (เพื่อตัดกับพื้นหลังเข้ม) */
+            border: 3px solid #00ffc8; 
+            color: #00ffc8; 
+            background-color: rgba(0, 0, 0, 0.7); 
+            
+            border-radius: 6px; 
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            
+            /* 💥 เพิ่มเงาที่สว่างและชัดเจน */
+            box-shadow: 0 0 15px rgba(0, 255, 200, 0.8), 0 0 5px rgba(255, 255, 255, 0.3); 
+            transition: all 0.3s ease;
+        }
+        
+        /* 3. สไตล์เมื่อนำเมาส์ไปวาง (Hover Effect) */
+        .btn-dashboard:hover {
+            background-color: #00ffc8; 
+            color: #000000; 
+            border-color: #ffffff;
+            transform: scale(1.05); 
+            box-shadow: 0 0 20px #00ffc8, 0 0 40px #00ffc8; 
+        }
+        
+        /* 4. สไตล์ไอคอน */
+        .btn-dashboard i {
+            margin-right: 8px;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
+    <a href="admin_dashboard.php" class="btn-dashboard"><i class="fas fa-tachometer-alt"></i> กลับไปหน้าแดชบอร์ด</a>
     <div class="container">
         <h1><i class="fas fa-users"></i> จัดการทีม</h1>
-        <a href="admin_dashboard.php" class="btn-dashboard"><i class="fas fa-tachometer-alt"></i>กลับไปหน้าแดชบอร์ด</a>
+        
         <form method="get">
             <input type="text" name="search" placeholder="ค้นหาชื่อทีม..." value="<?= htmlspecialchars($search) ?>">
             <select name="category">
                 <option value="">-- ทุกประเภทการแข่งขัน --</option>
-                <?php foreach ($tournament_ids as $tid): ?>
-                    <option value="<?= $tid ?>" <?= ($category == $tid) ? 'selected' : '' ?>>
-                        <?= "Tournament ID #" . $tid ?>
+                <?php foreach ($tournaments as $tr): ?>
+                    <option value="<?= $tr['id'] ?>" <?= ($category == $tr['id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($tr['tournament_name']) ?>
                     </option>
                 <?php endforeach; ?>
             </select>
             <button type="submit"><i class="fas fa-search"></i> ค้นหา</button>
-            <a href="admin_view_the_teams.php"><i class="fas fa-times"></i> ล้าง</a>
+            <a href="admin_view_the_teams.php" class="btn-clear"><i class="fas fa-times"></i> ล้าง</a>
         </form>
 
         <table>

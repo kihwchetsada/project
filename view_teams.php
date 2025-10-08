@@ -37,6 +37,10 @@ if ($result && $result->num_rows > 0) {
     <link rel="stylesheet" href="css/view_teams.css">
 </head>
 <body>
+    <a href="backend/admin_dashboard.php" class="fixed-back-button">
+        <i class="fas fa-tachometer-alt"></i> กลับไปหน้าแดชบอร์ด
+    </a>
+    
     <div class="loading-animation" id="loadingAnimation">
         <div class="spinner"></div>
     </div>
@@ -45,10 +49,6 @@ if ($result && $result->num_rows > 0) {
         <div class="header">
             <h1 class="main-title glitch">Tournament DASHBOARD</h1>
             <p class="subtitle">Gaming Tournament Management System</p>
-        </div>
-
-        <div class="back-link">
-            <a href="backend/admin_dashboard.php"><i class="fas fa-tachometer-alt"></i>กลับไปหน้าแดชบอร์ด</a>
         </div>
 
         <div class="stats-bar">
@@ -159,8 +159,15 @@ if ($result && $result->num_rows > 0) {
             const navBtns = document.querySelectorAll('.nav-btn');
             navBtns.forEach(btn => {
                 btn.addEventListener('click', function(e) {
-                    loading.classList.add('active');
-                    // Let the navigation proceed naturally
+                    // Check if it's not an external link
+                    if(this.href.includes(window.location.host)) {
+                        e.preventDefault(); 
+                        loading.classList.add('active');
+                        // Delay navigation slightly to show animation
+                        setTimeout(() => {
+                            window.location.href = this.href;
+                        }, 300);
+                    }
                 });
             });
 

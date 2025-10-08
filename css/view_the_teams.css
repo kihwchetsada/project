@@ -31,7 +31,30 @@
     line-height: 1.6;
     padding-bottom: 80px;
   }
-  
+  .back-button{
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #fff;
+            color: #333;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .back-button:hover{
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #8bd0f8ff;
+            color: #ffffffff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, color 0.3s;
+        }
   /* ตัวจัดการคอนเทนเนอร์ */
   .container {
     max-width: 1200px;

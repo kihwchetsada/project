@@ -23,6 +23,7 @@ $result = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Styles remain the same until the Modal/Table sections */
         * {
             margin: 0;
             padding: 0;
@@ -393,9 +394,75 @@ $result = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
                 transform: translateY(0);
             }
         }
+        
+        /* === NEW MODAL STYLES === */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.6); 
+            backdrop-filter: blur(5px);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; 
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%; 
+            max-width: 800px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            animation: modalOpen 0.3s ease-out;
+        }
+        
+        @keyframes modalOpen {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-body h2 {
+            color: #4CAF50;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .modal-body p {
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap; 
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
+    <a href="backend/organizer_dashboard.php" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    กลับไปหน้าหลัก
+                </a>
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-bullhorn"></i> จัดการประกาศ</h1>
@@ -403,7 +470,6 @@ $result = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
         </div>
 
         <div class="content">
-            <!-- Stats Bar -->
             <div class="stats-bar">
                 <div class="stat-card">
                     <div class="stat-number"><?= $result->num_rows ?></div>
@@ -421,19 +487,14 @@ $result = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
                 </div>
             </div>
 
-            <!-- Action Buttons -->
             <div class="actions">
                 <a href="add_announcement.php" class="btn btn-primary">
                     <i class="fas fa-plus"></i>
                     เพิ่มประกาศใหม่
                 </a>
-                <a href="backend/organizer_dashboard.php" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i>
-                    กลับไปหน้าหลัก
-                </a>
+                
             </div>
 
-            <!-- Table -->
             <div class="table-container">
                 <?php if ($result->num_rows > 0): ?>
                     <table class="table">
@@ -457,7 +518,7 @@ $result = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
                                 <tr>
                                     <td><strong>#<?= $row['id'] ?></strong></td>
                                     <td>
-                                        <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                                        <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                             <?= htmlspecialchars($row['title']) ?>
                                         </div>
                                     </td>
@@ -470,7 +531,7 @@ $result = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
                                         <?php 
                                         $priorityClass = '';
                                         $priorityIcon = '';
-                                        switch($row['priority']) {
+                                        switch(strtolower($row['priority'])) {
                                             case 'สูง':
                                             case 'high':
                                                 $priorityClass = 'priority-high';
@@ -510,9 +571,9 @@ $result = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
                                     </td>
                                     <td>
                                         <div class="action-buttons">
-                                            <a href="view_announcement.php?id=<?= $row['id'] ?>" class="btn-sm btn-view" title="ดูรายละเอียด">
+                                            <button onclick="showAnnouncementPreview(<?= $row['id'] ?>)" class="btn-sm btn-view" title="ดูรายละเอียด">
                                                 <i class="fas fa-eye"></i>
-                                            </a>
+                                            </button>
                                             <a href="edit_announcement.php?id=<?= $row['id'] ?>" class="btn-sm btn-edit" title="แก้ไข">
                                                 <i class="fas fa-edit"></i>
                                             </a>
@@ -539,6 +600,18 @@ $result = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
             </div>
         </div>
     </div>
+    
+    <div id="announcementModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="document.getElementById('announcementModal').style.display='none'">&times;</span>
+            <div class="modal-body">
+                <h2 id="modalTitle"><i class="fas fa-bullhorn"></i> รายละเอียดประกาศ</h2>
+                <div id="modalDetails">
+                    <p style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> กำลังโหลด...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Confirm delete function
@@ -556,6 +629,105 @@ $result = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
                 }, 500);
             }
         }
+        
+        // Helper function สำหรับกำหนด Class สีตามความสำคัญ
+        function getPriorityClass(priority) {
+            switch(priority.toLowerCase()) {
+                case 'สูง':
+                case 'high':
+                    return 'priority-high';
+                case 'ปานกลาง':
+                case 'medium':
+                    return 'priority-medium';
+                case 'ต่ำ':
+                case 'low':
+                    return 'priority-low';
+                default:
+                    return '';
+            }
+        }
+
+        // --- NEW JAVASCRIPT FOR PREVIEW MODAL (ดึงข้อมูลด้วย AJAX) ---
+        function showAnnouncementPreview(id) {
+            const modal = document.getElementById('announcementModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalDetails = document.getElementById('modalDetails');
+            
+            // 1. Show modal and loading state
+            modal.style.display = 'block';
+            modalTitle.innerHTML = `<i class="fas fa-spinner fa-spin"></i> กำลังโหลดประกาศ #${id}`;
+            modalDetails.innerHTML = '<p style="text-align:center;">กรุณารอสักครู่...</p>';
+
+            // 2. Fetch data via AJAX (เรียกไฟล์ fetch_announcement_details.php)
+            fetch(`fetch_announcement_details.php?id=${id}`)
+                .then(response => {
+                    if (!response.ok) {
+                        // หาก Server ตอบกลับด้วยสถานะ 404, 500 หรืออื่น ๆ
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    // การตรวจสอบ response.text() และ JSON.parse() ช่วยในการดีบั๊ก SyntaxError 
+                    return response.text(); 
+                })
+                .then(text => {
+                    try {
+                        const data = JSON.parse(text);
+                        
+                        if (data.error) {
+                            modalTitle.innerHTML = `<i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i> ข้อผิดพลาด`;
+                            modalDetails.innerHTML = `<p style="color:#dc3545;">${data.error}</p>`;
+                            console.error('Backend Error:', data.error);
+                            return;
+                        }
+                        
+                        // === การจัดการรูปภาพ: ใช้ data.image_url ===
+                        const imageUrl = data.image_url; 
+                        // **สำคัญ:** แก้ไข Path ใน src ให้ตรงกับโฟลเดอร์ที่คุณใช้เก็บรูปภาพ
+                        const imageHtml = imageUrl && imageUrl.trim() !== '' 
+                            ? `<div style="text-align:center; margin-bottom: 20px;">
+                                 <img src="uploads/${imageUrl}" alt="รูปภาพประกอบประกาศ" 
+                                      style="max-width: 100%; height: auto; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                               </div>`
+                            : ''; 
+                        
+                        // 3. Update modal content with fetched data
+                        modalTitle.innerHTML = `<i class="fas fa-bullhorn"></i> ${data.title}`;
+                        modalDetails.innerHTML = `
+                            ${imageHtml} <p><strong>ID:</strong> #${data.id}</p>
+                            <p><strong>หมวดหมู่:</strong> ${data.category}</p>
+                            <p><strong>ความสำคัญ:</strong> <span class="${getPriorityClass(data.priority)}">${data.priority}</span></p>
+                            <p><strong>สถานะ:</strong> <span class="status-badge ${data.status === 'active' ? 'status-active' : 'status-inactive'}">${data.status === 'active' ? '<i class="fas fa-check-circle"></i> ใช้งาน' : '<i class="fas fa-times-circle"></i> ปิด'}</span></p>
+                            <p><strong>วันที่สร้าง:</strong> ${data.created_at}</p>
+                            <hr style="margin: 15px 0;">
+                            <p><strong>รายละเอียด:</strong></p>
+                            <div style="padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                                <p>${data.description || data.content || 'ไม่มีรายละเอียด'}</p> 
+                            </div>
+                        `;
+                    } catch (e) {
+                        // ดักจับ SyntaxError: unexpected token '<' หรือ "is not valid JSON"
+                        console.error('JSON Parse Error:', e, 'Raw Response:', text);
+                        modalTitle.innerHTML = `<i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i> ข้อผิดพลาด`;
+                        modalDetails.innerHTML = `<p style="color:#dc3545;">**ข้อมูลที่ Server ส่งกลับมาไม่ใช่ JSON ที่ถูกต้อง**<br>
+                        สาเหตุ: มักเกิดจากมี PHP Error/Warning ที่ถูกแสดงผลออกมาก่อน JSON<br>
+                        กรุณาตรวจสอบ Console และไฟล์ **fetch_announcement_details.php**</p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    // แสดงข้อความ error ที่ชัดเจนขึ้นใน modal
+                    modalTitle.innerHTML = `<i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i> ข้อผิดพลาด HTTP`;
+                    modalDetails.innerHTML = `<p style="color:#dc3545;">ไม่สามารถดึงข้อมูลประกาศได้<br>Error: ${error.message}</p>`;
+                });
+        }
+        
+        // ปิด Modal เมื่อคลิกนอกกรอบ
+        window.onclick = function(event) {
+            const modal = document.getElementById('announcementModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        // --- END NEW JAVASCRIPT ---
 
         // Add loading state to buttons
         document.querySelectorAll('.btn').forEach(btn => {

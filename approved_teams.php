@@ -76,6 +76,7 @@ if ($team_count > 0) {
     <link rel="stylesheet" href="css/approved_teams.css">
 </head>
 <body>
+    <a href="<?= $dashboard ?>" class="btn">กลับไปหน้าแดชบอร์ด</a>
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-trophy"></i> รายชื่อทีมที่ได้รับการอนุมัติ</h1>
@@ -84,7 +85,7 @@ if ($team_count > 0) {
 
         <div class="filter-container">
             <form action="approved_teams.php" method="GET" style="display: flex; align-items: center; gap: 15px;">
-                <a href="<?= $dashboard ?>" class="btn">กลับไปหน้าแดชบอร์ด</a>
+                
                 <label for="tournament_id"><i class="fas fa-filter"></i> เลือกดูตามรุ่น:</label>
                 <select name="tournament_id" id="tournament_id">
                     <option value="">-- แสดงทุกรุ่น --</option>

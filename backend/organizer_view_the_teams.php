@@ -179,7 +179,7 @@ try {
     <link rel="stylesheet" href="../css/view_the_teams.css">
 </head>
 <body>
-    
+    <a href="organizer_dashboard.php" class="back-button">กลับไปหน้าแดชบอร์ด</a>
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-users"></i> ระบบข้อมูลทีม</h1>
@@ -191,7 +191,7 @@ try {
         </div>
         <?php endif; ?>
 
-        <a href="organizer_dashboard.php" class="back-to-dashboard-btn"><i class="fas fa-arrow-left"></i> กลับไปหน้าหลัก</a>
+        
 
         <?php if ($selected_team_id && $team_data): ?>
             <a href="?" class="back-to-teams-btn"><i class="fas fa-chevron-left"></i> กลับไปหน้ารายชื่อทีม</a>

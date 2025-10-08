@@ -183,7 +183,11 @@ if ($config_result && $config_result->num_rows > 0) {
 </style>
 </head>
 <body>
+    <a href="admin_dashboard.php" class="btn btn-secondary">
+                    กลับหน้าหลัก
+                </a>
 <div class="container">
+    
     <div class="header">
         <h1><i class="fas fa-cogs"></i> ตั้งค่า Challonge API</h1>
     </div>
@@ -223,9 +227,7 @@ if ($config_result && $config_result->num_rows > 0) {
                 <button type="submit" class="btn">
                     <i class="fas fa-save"></i> บันทึกการตั้งค่า
                 </button>
-                <a href="admin_dashboard.php" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> กลับหน้าหลัก
-                </a>
+                
             </div>
         </form>
     </div>

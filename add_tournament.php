@@ -119,6 +119,9 @@ $conn->close();
     </style>
 </head>
 <body>
+     <a href="backend/admin_dashboard.php" class="back-link">
+                <i class="fas fa-arrow-left"></i> กลับไปหน้าแดชบอร์ด
+            </a>
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-trophy"></i> เพิ่ม/แทนที่ทัวร์นาเมนต์</h1>
@@ -196,9 +199,7 @@ $conn->close();
                 </button>
             </form>
 
-            <a href="backend/admin_dashboard.php" class="back-link">
-                <i class="fas fa-arrow-left"></i> กลับไปหน้าแดชบอร์ด
-            </a>
+           
 
             <h3 style="margin-top:28px;margin-bottom:8px;">รายการที่มีอยู่</h3>
             <table class="table">

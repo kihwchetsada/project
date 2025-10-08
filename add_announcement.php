@@ -75,6 +75,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="css/add_announcement.css">
 </head>
 <body class="elegant-bg min-h-screen py-8 px-4">
+    <a href="backend/organizer_dashboard.php" 
+    class="fixed top-4 left-4 z-50 flex items-center px-4 py-2 bg-white/90 backdrop-blur-sm border border-gray-200 hover:bg-gray-100 text-gray-700 rounded-lg shadow-lg transition-all text-base md:text-lg">
+    กลับไปหน้าหลัก
+</a>
     <div class="max-w-4xl mx-auto">
         <div class="text-center mb-12 fade-in">
             <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-lg mb-6">
@@ -222,11 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <i class="fas fa-save mr-3"></i>
                             บันทึกประกาศ
                         </button>
-                        <a href="backend/organizer_dashboard.php" 
-                        class="flex items-center justify-center px-8 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all text-lg">
-                            <i class="fas fa-arrow-left mr-3"></i>
-                            ย้อนกลับ
-                        </a>
+                        
                     </div>
                 </div>
             </form>
