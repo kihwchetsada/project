@@ -148,7 +148,7 @@ if ($user_role === 'admin') {
                 <li><a href="<?php echo htmlspecialchars($dashboard_link); ?>"><i class="fas fa-home"></i><span>หน้าหลัก</span></a></li>
                 
                 <?php if ($user_role === 'participant'): ?>
-                    <li><a href="Certificate/index.php"><i class="fas fa-ranking-star"></i><span>เกียรติบัตร</span></a></li>
+                    <li><a href="Certificate/index_p.php"><i class="fas fa-ranking-star"></i><span>เกียรติบัตร</span></a></li>
                 <?php endif; ?>
                 
                 <li><a href="settings.php" class="active"><i class="fas fa-cog"></i><span>ตั้งค่า</span></a></li>
